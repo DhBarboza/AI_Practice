@@ -11,3 +11,7 @@ Artificial Intelligence in Practice
 ### Materiais:
 
 - [Fundamentos](./Files/Fundamentos%20de%20IA%20e%20LLMs.pdf)
+- [Leituras - Guias de IA](./Files/Guia%20de%20Leitura%20-%20Fundamentos%20de%20IA.pdf)
+- [Techhable Machine](https://teachablemachine.withgoogle.com/)
+- [Dogs data set images](https://www.kaggle.com/datasets/gpiosenka/70-dog-breedsimage-data-set)
+- [TensorFlow.js](https://www.tensorflow.org/js?hl=pt-br)
