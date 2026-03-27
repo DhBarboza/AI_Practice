@@ -36,5 +36,6 @@ const tensorLabels = [
 const inputXs = tf.tensor2d(tensorPessoasNormalizado);
 const outputYs = tf.tensor2d(tensorLabels);
 
-inputXs.print();
-outputYs.print();
+
+// Etapa de treinamento:
+const model = trainModel(inputXs, outputYs)
