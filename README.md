@@ -18,6 +18,6 @@ Artificial Intelligence in Practice
 
 ### Projeto 01:
 
-- [Understend Tensorflow](./01-Undestand_TensorFlow/index.js)
+- [Understend Neural Networks](./01-Undestand_Neural_Networks/index.js)
 
 Criando sua primeira rede neural do zero para categorizar pessoas usando TensorFlow.Js (Tensores) e treinado o modelo, adicionando cammadas de redes neurais, retornando camadas categorizando todas as informações e validando a categoria de cada umd eles
