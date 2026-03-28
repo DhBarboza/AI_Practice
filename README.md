@@ -16,8 +16,18 @@ Artificial Intelligence in Practice
 - [Dogs data set images](https://www.kaggle.com/datasets/gpiosenka/70-dog-breedsimage-data-set)
 - [TensorFlow.js](https://www.tensorflow.org/js?hl=pt-br)
 
-### Projeto 01:
+### Exemplo 01:
 
 - [Understend Neural Networks](./01-Undestand_Neural_Networks/index.js)
 
 Criando sua primeira rede neural do zero para categorizar pessoas usando TensorFlow.Js (Tensores) e treinado o modelo, adicionando cammadas de redes neurais, retornando camadas categorizando todas as informações e validando a categoria de cada umd eles
+
+### Projeto 01:
+
+Sistema de recomendação de produtos (e-commerce)
+
+Files:
+- [Exemplo - Ecommerce Recomendation System](./01-Ex-Product_Recommendation_System/)
+
+
+
