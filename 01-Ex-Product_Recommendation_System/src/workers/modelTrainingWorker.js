@@ -4,11 +4,96 @@ import { workerEvents } from '../events/constants.js';
 console.log('Model training worker initialized');
 let _globalCtx = {};
 
+// Normalização
+/*
+Normalizar valores contínuos (preço, idade) para o intervalo de 0 a 1
+Por quê?
+Mantém todas as variáveis equilibradas, evitando que uma tenha mais influência que as outras durante o treinamento.
+
+Fórmula:
+(val−min)/(max−min)
+
+Exemplo:
+preço = 129.99
+preço mínimo = 39.99
+preço máximo = 199.99
+
+Resultado ≈ 0,56
+*/
+
+const normalize = (value, min, max) => (value - min) / ((max - min) || 1)
+
+function makeContext(catalog, users){
+    const ages = users.map(u => u.age)
+    const prices = catalog.map(p => p.price)
+
+    const minAge = Math.min(...ages)
+    const maxAge = Math.max(...ages)
+
+    const minPrice = Math.min(...prices)
+    const maxPrice = Math.max(...prices)
+
+    const colors = [...new Set(catalog.map(p => p.color))]
+    const categories = [...new Set(catalog.map(p => p.category))]
+
+    const colorIndex = Object.entries(colors.map((color, index) => {
+        return [color, index]
+    }))
+
+    const categoriesIndex = Object.entries(categories.map((category, index) => {
+        return [category, index]
+    }))
+
+    // Computar a média de idade dos compradores por produto (ajuda a personalisar)
+    const midAge = (minAge + maxAge) / 2
+    const ageSums = {}
+    const ageCounts = {}
+
+    users.forEach(user => {
+        user.purchases.forEach(p => {
+            ageSums[p.name] = (ageSums[p.name] || 0) + user.age
+            ageCounts[p.name] = (ageCounts[p.name] || 0) + 1
+        })
+    })
+
+    // Tranformou os valores entre 0 -> 1
+    const productAvgAgeNorm = Object.fromEntries(
+        catalog.map(product => {
+            const avg = ageCounts[product.name] ? ageSums[product.name] / ageCounts[product.name]: midAge
+             return [product.name, normalize(avg, minAge, maxAge)]
+            }
+
+        )
+    )
+
+    return {
+        catalog,
+        users,
+        categoriesIndex,
+        colorIndex,
+        minAge,
+        maxAge,
+        minPrice,
+        maxPrice,
+        numCategories: categories.length,
+        numColors: colors.length,
+        // price + age+ colors + categories
+        dimentions: 2 + categories.length + colors.length
+    }
+    
+}
 
 async function trainModel({ users }) {
     console.log('Training model with users:', users)
 
     postMessage({ type: workerEvents.progressUpdate, progress: { progress: 50 } });
+
+    // Carregar os produtos da base de dados em memória:
+    const catalog = await (await fetch("/data/products.json")).json()
+
+    const contex = makeContext(catalog, users)
+
+    debugger
     postMessage({
         type: workerEvents.trainingLog,
         epoch: 1,
