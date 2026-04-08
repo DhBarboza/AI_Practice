@@ -32,7 +32,11 @@ Files:
 
 ### Projeto 02:
 
-Vencendo games com aprendizado de máquina, reconhecimento de padrões e objetos
+Vencendo games com aprendizado de máquina, reconhecimento de padrões e objetos.
+Transforma imagens em vetores. e transforma os dados do modelo gerado em dados de coordenadas para executar ação d eclick na tela.
+
+Como funciona:
+Ele tira print da tela, envia esse frame para o modelo, o modelo identifica as coordenadas de onde estão os objetos, e executa a ação dentro das coordenadas
 
 Files:
 
