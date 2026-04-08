@@ -18,7 +18,7 @@ Artificial Intelligence in Practice
 
 ### Exemplo 01:
 
-- [Understend Neural Networks](./01-Undestand_Neural_Networks/index.js)
+- [Understend Neural Networks](./00-Undestand_Neural_Networks/index.js)
 
 Criando sua primeira rede neural do zero para categorizar pessoas usando TensorFlow.Js (Tensores) e treinado o modelo, adicionando cammadas de redes neurais, retornando camadas categorizando todas as informações e validando a categoria de cada umd eles
 
@@ -27,7 +27,13 @@ Criando sua primeira rede neural do zero para categorizar pessoas usando TensorF
 Sistema de recomendação de produtos (e-commerce)
 
 Files:
+
 - [Exemplo - Ecommerce Recomendation System](./01-Ex-Product_Recommendation_System/)
 
+### Projeto 02:
 
+Vencendo games com aprendizado de máquina, reconhecimento de padrões e objetos
 
+Files:
+
+- [Duck Hunt](./02-DuckHunt_JS/)
