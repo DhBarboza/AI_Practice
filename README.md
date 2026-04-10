@@ -147,3 +147,15 @@ ESCREVENDO TEXTOS > 1.0 Palavras mais variadas
 - quanto maior o prompt (mais tokens de entrada), mais trabalho para começar; quanto maior a resposta (mais tokens gerados), mais iterações e mais custo;
 - quanto maior o prompt (mais tokens de entrada), mais trabalho para começar; quanto maior a resposta (mais tokens gerados), mais iterações e mais custo; e quanto maior a "janela de contexto", mais memória o sistema precisa manter durante a geração.
 - CALCULAR PROBABILIDADES DO PRÓXIMO TOKEN DADO O CONTEXTO
+
+### embutir modelos de IA nativamente nos navegadores
+
+Usando modelo do Gemini no navegador
+
+### Projeto 03
+
+Executando um modelo de inteligência artificial, diretamente do navegador
+
+File:
+
+- [Web AI 01](./03-Web_AI-01/index.html)
