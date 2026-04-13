@@ -152,10 +152,199 @@ ESCREVENDO TEXTOS > 1.0 Palavras mais variadas
 
 Usando modelo do Gemini no navegador
 
-### Projeto 03
+### Projeto 03, 04, 05
 
 Executando um modelo de inteligência artificial, diretamente do navegador
 
 File:
 
 - [Web AI 01](./03-Web_AI-01/index.html)
+- [Web AI 02](./04-Web_IA-02/index.html)
+- [Web AI 03](./05-Web_IA-03_Multimodal/index.html)
+
+### Engenharia de Prompts
+
+- Para prompts mais exatos é necessário refinar o que você quer
+- Detalhar o máximo possível para obter o resultado esperado com apenas um Prompt
+
+Estrutura ideal para prompts
+
+1. Contexto da Tarefa: **Usuário** Vocé vai atuar como um coach de carreira IA chamodo Joe criado pela empresa AdAstra Carreiras. Seu objetivo é dar conselhos de carreira aos usuários do site Ad-Astra que podem ficar confusos se você não agir no personagem.
+
+2. Contexto de Tom: Você deve manter um tom amigável de atendimento ao cliente.
+
+3. Dados de antecedentes, documentos e imagens: Aqui está o documento de orientação de carreiro que você deve consultar ao responder ao usuário: <guia>{DOCUMENT}</guia>
+
+4. Descrição detalhada da terafa e regras: Aqui estão algumas regras importantes para a interação:
+
+- Sempre fique no personagem, como Joe, um IA da AdAstrta.
+- Se não souber responder, diga: "Desculpe, não entendi isso. - Pode repetir a pergunta?"
+- Caso algo seja irrelevante, diga: "Desculpe,
+  eu sou Joe e dou conselhos de carreira. Você tem conselhos de carreira
+  com a quál eu possa ajudar?" Jene tem uma pergunta de carreira.
+
+5. Exemplos: Aqui está um exemplo de como responder em uma interação padrão:
+   <exemplo>
+   Usuário: Oi Joe, como você foi criado e o que você faz?
+   Joe: óló! Meu nome é Joe e fui criado pela AdAstra Carreiras para dar conselhos
+   de carreira. Em que posso ajudar hoje? </exemplo>
+
+6. Histórico da conversa: Aqui está o histórico da conversa entre o usuário e você. Pode estar vazia se náo houver histórico: <histórico> {HISTÓRICO} </histórico>
+
+7. Descrição ou pedido imediato: Aqui está a pergunta do usuário: <pergunta> {PERGUNTA} </pergunta>
+
+8. Pensar passo a passo / respirar fundo: Como você responde à pergunta do usuário?
+
+9. Formatação de Saída: Coloque sua resposta em <resposta></resposta> tags.
+
+10. Resposta pré-preenchida (se houver): Coloque sua resposta em <resposta></resposta> tags.
+    <resposta> [RESPOSTA AQUI] </resposta>
+
+O que mais faz a IA alucinar:
+
+- Falta de Contexto: Pedir algo como: "Crie um plano de carreira para mim" sem dizer qual é a sua área de interesse, seus objetivos, suas habilidades, etc.
+- Ambiguidade: Deixar o modelo chutar entre duas ou mais interpretações "Quero a descrição do projeto" e não informo qual projeto, qual público, qual objetivo, etc.
+
+#### JSON Prompt
+
+- A ideia é utilizar formatos de dados estruturados ao invés de JSON simples
+
+1. Menos Ambiguidade (Menos Alucinação): Transformar texto em uma especificação
+2. Mais previsível para integrar com código: força o modelo a retornar algo que seu código valida
+3. Escalabilidade (Prompts varam "config"): Tratar o prompt como configuração versionável
+4. JSON reduz:
+
+- você reduz retrabalho ("responde de novo, agora no formato certo")
+- reduz mensagens de correção ("não era isso, eu quis tal coisa")
+- e evita respostas longas/erradas que queimam tokens,
+
+##### Como estrutura um Prompt com JSON:
+
+1. META: nome/versão do prompt, idioma, objetivo
+2. ROLE: o "papel" (ex,: especialista, revisor, tutor)
+3. CONTEXT: dados que o modelo precisa saber
+4. TASK: o que exatamente fazer
+5. CONSTRAINTS: limites e regras (não inventar, não extrapolar, etc.)
+6. OUTPUT: formato de saída e validação
+
+Exemplo:
+
+```json
+{
+    "meta": {
+        "name": "gerador-de-resumos-v2",
+        "version": "2.0",
+        "language": "pt-br"
+    },
+    "role": "Você é um editor de notícias especializado em resumir textos longos de forma clara e objetiva.",
+    "context": "Você receberá um artigo de notícias e deverá extrair os pontos principais.",
+    "task": "Resuma o artigo fornecido em no máximo 3 frases.",
+    "constraints": [
+        "Não inclua opiniões pessoais.",
+        "Mantenha o tom neutro.",
+        "Foque nos fatos mais importantes."
+    ],
+    "output": {
+        "format": "json",
+        "schema": {
+            "summary": "string",
+            "word_count": "integer"
+        }
+    }
+}
+```
+
+Como isso pode ajudar a reduzir alucinações?
+
+- não tem dados suficientes,
+- ou tem liberdade demais,
+- ou está tentando "agradar" e preencher lacunas,
+
+Exemplos de keyword
+
+- "do not invent": true
+- "if_missing_data": "say_you_dont_know"
+- "cite_source_fields": ["context,source"]
+- "allowed_assumptions": [ ]
+
+Marque incertezas:
+
+```json
+{
+    "constraints": {
+        "uncertainty_policy": "Se não tiver certeza diga 'não tenho dados suficientes' e peça o campo faltante"
+    }
+}
+```
+
+#### TOON (Token Oriented Object Notation)
+
+Um formato de serialização para representar o mesmo formato mental do JSON, porém com menos pontuações
+Token-efficient
+
+O que o TOON pode ajudar:
+
+- O JSON possuí um custo fixo de sintaxe e possui muita repetição de estrutura
+- O TOON corta o escesso de simbolos aspas, símbolos e chaves
+
+```json
+[
+    {
+        "name": "Recriando o Player de Vídeo da Netflix",
+        "url": "https://ew.academy/recriando-a-netflix?utm_source=ne04j-vector-demo"
+    },
+    {
+        "name": "Criando seu Próprio App Zoom com WebRTC e WebSockets",
+        "url": "https://ew.academy/zoom?utm_source=ne04j-vector-demo"
+    },
+    {
+        "name": "Recriando o App Clubhouse",
+        "url": "https://ew.academy/recriando-o-clubhouse?utm_source=ne04j-vector-demo"
+    },
+    {
+        "name": "Reimaginando o Multi-Upload de Arquivos do Google Drive",
+        "url": "https://ew.academy/recriando-o-google-drive?utm_source=ne04j-vector-demo"
+    },
+    {
+        "name": "Reimaginando um Rádio Musical Online Usando Spotify como Exemplo",
+        "url": "https://ew.academy/recriando-o-spotify?utm_source=ne04j-vector-demo"
+    }
+]
+```
+
+```toon
+[10] {name,url}:
+  Formação JavaScript Expert,"https://ew.academy/javascript—expert?utm_source=ne04j—vector—demo"
+  Método Testes Automatizados em JavaScript, "https://ew.academy/metodo—tajs?
+  utm_sou rce=ne04j —vecto r—demo"
+  Mastering Node.js Streams,"https://ew.academy/nodejsstreams?utm_source=ne04j—vector—demo"
+  Recriando o Player de Vídeo da Netflix, "https://ew.academy/recriando-a-netflix?
+  utm_sou rce=ne04j -vecto r-demo"
+  Criando seu Próprio App Zoom com WebRTC e WebSockets,"https://ew.academy/zoom?
+  utm_sou rce=ne04j -vecto r-demo"
+  Recriando o App Clubhouse, "https://ew.academy/recriando—club—house?
+  utm_sou rce=ne04j —vecto r—demo"
+  Reimaginando o Multi—Upload de Arquivos do Google Drive, "https://ew.academy/
+  rec riando—google-d rive?utm_sou rce=ne04j —vecto r-demo"
+  Reimaginando um Rádio Musical Online Usando Spotify como Exemplo, "https://ew.academy/
+  rce=ne04j -vector-demo"
+  Machine Learning em Navegadores, "https://ew.academy/machine-learning?
+  utm_sou rce=ne04j —vecto r-demo"
+  Reimaginando o Processamento de Vídeos do Maior Site do Mundo, "https://ew.academy/
+  reimaginando-o-processamento-de-videos-do-maio r-s -vecto r-demo"
+```
+
+Tokenizer Open IA, comparar custo
+[tokenizer](https://platform.openai.com/tokenizer)
+
+##### Quando JSON pode ser melhor? Dados tabulares
+
+```json
+{
+    "cols": ["id", "name", "role"],
+    "rows": [
+        [1, "Alice", "admin"],
+        [2, "Bob", "user"]
+    ]
+}
+```
