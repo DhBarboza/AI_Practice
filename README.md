@@ -1,4 +1,4 @@
-# AI_Practice
+# AI Practice
 
 Artificial Intelligence in Practice
 
@@ -348,3 +348,124 @@ Tokenizer Open IA, comparar custo
     ]
 }
 ```
+
+### Aonde Vibe-Coding falha:
+
+O que faz um Software quebrar:
+
+- Lógica
+- Segurança
+- Estado
+- Permissionamento
+- Dados
+
+IA Acelera muito, mais o output deve ser tratado com seriedade
+
+Atalhos perigosos:
+
+- autenticação falha
+- validação inexistente
+- permissões abertas
+
+Padrões Ruins:
+
+- auto acoplamento
+- duplicação de código
+- gambiarra pra funcionar
+
+#### Em um editor, você encaixa isso em um processo com:
+
+- Code review
+- Linters
+- Testes automátizados
+- CI/CD
+- Auditoria de Dependências
+- Observabilidade
+- Logs DC
+
+Prompt to Apps tende a esconde o essencial, limits e contratos, o que salva seu projeto:
+
+- Contrato de API
+- Regras de Autorização
+- Validação consistente
+- Limites de acesso ao Banco
+- Migrações ou versões de Schema
+- Testes Automátizados
+
+Defina regras e restrições como:
+
+- Nunca acessar banco direto do frontend
+- Toda rota exige autorização customizada
+- Toda entrada do usuário é validada (schema)
+- Sem secrets ou acesso direto ao banco de dados no client
+- Sem concatenar SQL
+- Sem permissões amplas por padrão
+
+CONFIAR E CONFERIR, SEMPRE:
+
+- Revisão
+- Testes
+- Políticas
+- Escopo
+- Segurança
+- Observabilidade
+
+### Agentes de IA
+
+UM AGENTE DE IA RESOLVE ISSO CRIANDO
+UM CICLO CONTROLADO:
+
+- Objetivo (o que o usuário quer)
+- Plano (como chegar lá)
+- Ações (rodar ferramentas, buscar mais contexto)
+- Observações (ver resultados: logs/testes/erros)
+- Iteração (corrigir e repetir)
+- Entrega final (com evidências e relatório final)
+
+1. Planejamento: Quebrar em etapas pequenas
+   O QUE UM BOM ACENTE FAZ:
+    - cria um plano com passos aplicáveis
+    - define o que é "pronto" (critérios de aceite)
+    - escolhe a ordem de execução
+2. Seleção de ferramentas: "Qual Action resolve isso"
+   Exemplo:
+   "PRECISO SABER A ESTRUTURA DO REPOSITÓRIO" <-> FERRAMENTA DE BUSCA DE ARQUIVOS NO DIRETÓRIO LOCAL
+   "PRECISO ENTENDER API ATUALIZADA" <-> FERRAMENTA DE DOCUMENTAÇÃO
+   "PRECISO GARANTIR PADRÃO" <-> FERRAMENTA PARA RODAR SCRIPTS DE LINTER E FORMATAÇÃO
+3. Observação e Iteração: "O feedback a verdade"
+
+- Planner: só planeja, não edita nada
+- Implementer: edita código e toda testes
+- Reviewer: lê diff e aponta riscos
+- ZQA: valida contrato e fluxo ponta a ponta
+- Docs Agent: escreve READM E/changelog
+- Ops Agent: consulta observabilidade e sugere mitigação
+
+### Spec Driven Development
+
+O que uma spec boa tem (pra dev)
+
+- Contexto: onde isso roda, stack, constraints
+- Requisitos: o que deve existir
+- Não-requisitos: o que não faz parte (evita feature creep)
+- Critérios de aceite: como validar que terminou
+- Contrato: shape de API, formatos de resposta
+- Plano de teste: como verificar
+
+### Fluxo simples de utilização de IA:
+
+1. Primeiro a especificação:
+
+- define contrato da API
+- define interface de usuário mínima
+- define validação
+
+2. Agentes com papéis:
+
+- Backend implementa API
+- Frontend implementa Ul
+- QA valida e gera checklist
+
+3. Integração:
+
+- rodar testes e validar
