@@ -469,3 +469,51 @@ O que uma spec boa tem (pra dev)
 3. Integração:
 
 - rodar testes e validar
+
+### MCPS (Model Context Protocol)
+
+- É um protocolo para conectar LLMs a outras ferramentas (arquivos, bancos, API´s, etc)
+- Reconhecido como um USB-C para aplicaçãoes de IA
+
+Tools: Ações que o modelo pode desparar
+
+Resources: Dados para contexto
+
+```json
+{
+    "contents": [
+        {
+            "uri": "erickwendel://about",
+            "mimeType": "application/json",
+            "text": "{\"name\": \"Erick Wendel\", \"bio\": \"Developer Advocate, Microsoft MVP, and content creator focused... \"}"
+        }
+    ]
+}
+```
+
+Lista de Prompts: Templates de Prompts para ajudar o client final a retornar resultado
+
+Obs: A LLM não vê o servidor MCP, ele enxerga uma lisat de ferramentas
+
+Exemplos:
+
+1. MCP "filesystem":
+   tool: read_file(path)
+   tool: list_dir(path)
+
+2. MCP "github":
+   tool: diff()
+   tool: status()
+
+3. MCP "database":
+   tools: select_query(sql)
+
+#### Como as LLMs defidem qual MCP chamar:
+
+- Na prática eles percorem pelo parâmetro mais fiel ao que é pedido via prompt
+- Pela descrição da "tool"
+- formato dos parâmetros
+
+### Playwright Tests
+
+- MCP para automatizar a criação de testes em códigos JavaScript
