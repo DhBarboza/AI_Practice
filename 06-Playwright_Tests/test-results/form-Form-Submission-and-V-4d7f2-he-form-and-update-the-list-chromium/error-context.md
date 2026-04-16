@@ -12,38 +12,7 @@
 # Error details
 
 ```
-Test timeout of 5000ms exceeded.
-```
-
-```
-Error: locator.fill: Test timeout of 5000ms exceeded.
-Call log:
-  - waiting for locator('#title')
-
-```
-
-# Page snapshot
-
-```yaml
-- generic [ref=e2]:
-  - heading "404" [level=1] [ref=e3]
-  - paragraph [ref=e4]:
-    - strong [ref=e5]: There isn't a GitHub Pages site here.
-  - paragraph [ref=e6]:
-    - text: If you're trying to publish one,
-    - link "read the full documentation" [ref=e7] [cursor=pointer]:
-      - /url: https://help.github.com/pages/
-    - text: to learn how to set up
-    - strong [ref=e8]: GitHub Pages
-    - text: for your repository, organization, or user account.
-  - generic [ref=e9]:
-    - link "GitHub Status" [ref=e10] [cursor=pointer]:
-      - /url: https://githubstatus.com
-    - text: —
-    - link "@githubstatus" [ref=e11] [cursor=pointer]:
-      - /url: https://twitter.com/githubstatus
-  - link [ref=e12] [cursor=pointer]:
-    - /url: /
+Error: page.goto: Target page, context or browser has been closed
 ```
 
 # Test source
@@ -53,25 +22,33 @@ Call log:
   2  | 
   3  | test.describe("Form Submission and Validation", () => {
   4  |     test("should submit the form and update the list", async ({ page }) => {
-  5  |         await page.goto("/");
+> 5  |         await page.goto("/");
+     |                    ^ Error: page.goto: Target page, context or browser has been closed
   6  |         // Fill the form fields
-> 7  |         await page.locator('#title').fill('Alien Test');
-     |                                      ^ Error: locator.fill: Test timeout of 5000ms exceeded.
-  8  |         await page.locator('#imageUrl').fill('https://img.com/alien.png');
-  9  |         await page.locator('#btnSubmit').click();
+  7  |         await page.locator("#title").fill("Alien Test");
+  8  |         await page.locator("#imageUrl").fill("https://img.com/alien.png");
+  9  |         await page.locator("#btnSubmit").click();
   10 |         // Check that the list was updated
-  11 |         await expect(page.locator('h4')).toContainText('Alien Test');
-  12 |         await expect(page.locator('img')).toHaveAttribute('src', 'https://img.com/alien.png');
-  13 |     });
-  14 | 
-  15 |     test("should show validation errors for empty form", async ({ page }) => {
-  16 |         await page.goto("/");
-  17 |         // Submit the form without filling fields
-  18 |         await page.locator('#btnSubmit').click();
-  19 |         // Check for validation error messages (using aria-describedby feedback)
-  20 |         await expect(page.locator('#title[aria-describedby]')).toHaveAttribute('aria-invalid', 'true');
-  21 |         await expect(page.locator('#imageUrl[aria-describedby]')).toHaveAttribute('aria-invalid', 'true');
-  22 |     });
-  23 | });
-  24 | 
+  11 |         await expect(page.locator("h4")).toContainText("Alien Test");
+  12 |         await expect(page.locator("img")).toHaveAttribute(
+  13 |             "src",
+  14 |             "https://img.com/alien.png",
+  15 |         );
+  16 |     });
+  17 | 
+  18 |     test("should show validation errors for empty form", async ({ page }) => {
+  19 |         await page.goto("/");
+  20 |         // Submit the form without filling fields
+  21 |         await page.locator("#btnSubmit").click();
+  22 |         // Check for validation error messages (using aria-describedby feedback)
+  23 |         await expect(page.locator("#title[aria-describedby]")).toHaveAttribute(
+  24 |             "aria-invalid",
+  25 |             "true",
+  26 |         );
+  27 |         await expect(
+  28 |             page.locator("#imageUrl[aria-describedby]"),
+  29 |         ).toHaveAttribute("aria-invalid", "true");
+  30 |     });
+  31 | });
+  32 | 
 ```
