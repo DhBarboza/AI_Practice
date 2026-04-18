@@ -1,3 +1,28 @@
 Material para públicação
 - Módulo 02
 - Aula 3
+
+Quanto mais eu estudo e acompanho as novidades de IA, mais fica claro uma coisa, e não só para mim, mas todos os meus amigos que converso e são da area.
+
+Aquilo que era mais negligenciado pelos desenvolvedores, seja durante a faculdade ou em outros momentos de estudos, cada vez mais se prova ser o mais importante dentro de qualquer área do mercado de trabalho principalmente tecnologia "COMUNICAÇÃO"
+
+Quanto mais maturidade eu ganho na area de desenvolvimento de software (que é minha especialidade) mais eu entendo que tudo dentro da area se trata de PESSOAS e de como você vai resolver os problemas dela.
+
+E não adianta dominar todas as ferramentas do mercado (o que é impossível) porque todo mês tem novidade, um exemplo claro foi o N8N ano passado, agora o Claude, e daqui alguns meses qual será?
+
+E o conhecimento técnico não é importante? Sim, claro que é, ele que possibilita você de fato construir um sistema/solução e resolver um PROBLEMA. Mas de que vale saber :
+- todas as linguagens de programação (Java, Python, JavaScript, etc)
+- conhecer todas as ferramentas (Power BI, Power Apps, Excel, Power Automate, N8N, Figma, etc)
+- conhecer todas as metodologias (Scrum, Kanban, etc)
+
+Se você não:
+- ENTENDE sobre pessoas
+- ENTENDE sobre comunicação
+- ENTENDE sobre negócio
+
+Por trás de todo problema, tem uma empresa, que por trás dessa empresa tem uma pessoa.
+
+E não importa para ela se você vai usar ferramenta X, Y ou Z (é claro que a escolha da ferramenta correta é IMPORTANTE, mas não é o principal). O que importa no final do dia é se o problema dela foi solucionado de forma eficiente e com o menor risco e custo possível.
+
+Então, quer melhorar seu trabalho e o resultado que gera/entrega, foque primeiro, antes de tudo entender sobre requisitos, e pensar como resolver o problema da pessoa. Esse é o passo mais importante, e nunca foi tão importante as Soft Skills e essa citada em específico.
+
