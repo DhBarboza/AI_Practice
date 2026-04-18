@@ -516,4 +516,18 @@ Exemplos:
 
 ### Playwright Tests
 
+File:
+
+- [Playwright Testes](./06-Playwright_Tests/)
 - MCP para automatizar a criação de testes em códigos JavaScript
+
+### Playwright Navegação
+
+File:
+
+- [Playwright Navigate](./07-Playwright_NavegacaoWeb/)
+- MCP para automatizar a navegação entre páginas e preenchimento de formulários e outros afins
+
+### Ferramenta para baixar MCPs OpenSource e testar
+
+- Tome
