@@ -531,3 +531,26 @@ File:
 ### Ferramenta para baixar MCPs OpenSource e testar
 
 - Tome
+
+### Context7
+
+[Site](https://context7.com/)
+
+- Um biblioteca MCP utilizada para consultar documentações atualizadas e gerar aplicações do zero com base na documentação
+
+Sem o Context7:
+
+- cola blocos enormes de docs no prompt
+- manda links e pede "use isso"
+- reexplica o setup inteiro a cada tentativa
+
+Com o Context7:
+
+- Manda a intenção ("crie um CRUD em Node,js, integre o Prisma + Postgres e use context7")
+- o agent chama Context7, traz trechos curtos e precisos
+- e só então gera o código com base na doc atual
+
+Resultado:
+
+- Menos token no Prompt
+- Menos tentativas e correções

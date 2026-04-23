@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 70, "column": 0}, "map": {"version":3,"sources":["file:///home/atom/projects/AI_Practice/08-Context7/lib/auth.ts"],"sourcesContent":["import { betterAuth } from \"better-auth\";\nimport Database from \"better-sqlite3\";\n\nexport const auth = betterAuth({\n    database: new Database(\"./better-auth.sqlite\"),\n    socialProviders: {\n        github: {\n            clientId: process.env.GITHUB_CLIENT_ID!,\n            clientSecret: process.env.GITHUB_CLIENT_SECRET!,\n        },\n    },\n});\n"],"names":["auth","database","socialProviders","github","clientId","process","env","GITHUB_CLIENT_ID","clientSecret","GITHUB_CLIENT_SECRET"],"mappings":";;;;AAAA;AACA;;;AAEO,MAAMA,OAAO,IAAA,uKAAU,EAAC;IAC3BC,UAAU,IAAI,8LAAQ,CAAC;IACvBC,iBAAiB;QACbC,QAAQ;YACJC,UAAUC,QAAQC,GAAG,CAACC,gBAAgB;YACtCC,cAAcH,QAAQC,GAAG,CAACG,oBAAoB;QAClD;IACJ;AACJ"}},
+    {"offset": {"line": 91, "column": 0}, "map": {"version":3,"sources":["file:///home/atom/projects/AI_Practice/08-Context7/app/api/auth/%5B...all%5D/route.ts"],"sourcesContent":["// app/api/auth/[...all]/route.ts\nimport { auth } from \"@/lib/auth\";\nimport { toNextJsHandler } from \"better-auth/next-js\";\n\nexport const { GET, POST } = toNextJsHandler(auth);\n"],"names":["GET","POST"],"mappings":";;;;;;AAAA,iCAAiC;AACjC;AACA;;;AAEO,MAAM,EAAEA,GAAG,EAAEC,IAAI,EAAE,GAAG,IAAA,0LAAe,EAAC,qHAAI"}}]
+}

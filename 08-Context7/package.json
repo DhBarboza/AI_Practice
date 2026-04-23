@@ -1,0 +1,26 @@
+{
+    "name": "next-better-auth-demo",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start"
+    },
+    "dependencies": {
+        "@better-auth/cli": "latest",
+        "@daveyplate/better-auth-ui": "latest",
+        "@tailwindcss/postcss": "^4.2.4",
+        "better-auth": "latest",
+        "better-sqlite3": "latest",
+        "next": "latest",
+        "react": "latest",
+        "react-dom": "latest",
+        "tailwindcss": "latest",
+        "typescript": "latest"
+    },
+    "devDependencies": {
+        "@types/better-sqlite3": "^7.6.13",
+        "@types/react": "19.2.14"
+    }
+}
