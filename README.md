@@ -554,3 +554,12 @@ Resultado:
 
 - Menos token no Prompt
 - Menos tentativas e correções
+
+### Usar Telemetria como fonte de dados:
+
+File:
+
+- [Grafana MCP](./exemplo-09-grafana-mcp/)
+
+- OpenTelemetry
+- Observabilidade
