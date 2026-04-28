@@ -563,3 +563,55 @@ File:
 
 - OpenTelemetry
 - Observabilidade
+
+### Como montar seu próprio agente para executar localmente:
+
+- CPU(s)
+- Energia
+- Refrigeração
+- Manutenção
+- Observabilidade
+- Escalonamento
+- Engenharia de distribuição
+
+#### MODELOS FECHADOS (API):
+
+Por que ainda faz sentido, especialmente em escala:
+
+- Velocidade
+- Custo
+- Contexto
+- Segurança
+- Qualidade
+- Atualização
+- Treinamento
+- Disponibilidade
+
+### Ollama
+
+Ferramenta para executar modelos de IA localmente
+
+Site:
+[Ollama](https://ollama.com/)
+
+Exemplos de contextos de uso:
+
+- Provas de conceito
+- Automações locais
+- Scripts de produtividade
+- Protótipos de criação de agentes de IA
+- Estudos de modelos e quantização
+
+> Não recomendado para produção
+
+#### vLLM
+
+Ferramenta para operacionalizar a possibilidade de múltiplos clientes
+para concorrência, baixa latência e velocidade na resposta
+
+- Context Windows: Quantos tokens cabem na memória do modelo (Prompt + Histórico + Ferramentas + Resposta Esperada )
+- Prompt Tokens: Tokens consumidos pela entrada (input)
+- Completion Tokens: Tokens gerados na saída (output)
+
+- Mixture of Experts (MoE): Vários modelos trabalhando juntos
+- Quantização: Reduzir o tamanho do modelo trocando a forma como os pesos são representados. Reduzir a precisão numérica usada para armazenar (e às vezes calcular) os pesos
