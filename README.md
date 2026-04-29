@@ -615,3 +615,8 @@ para concorrência, baixa latência e velocidade na resposta
 
 - Mixture of Experts (MoE): Vários modelos trabalhando juntos
 - Quantização: Reduzir o tamanho do modelo trocando a forma como os pesos são representados. Reduzir a precisão numérica usada para armazenar (e às vezes calcular) os pesos
+
+#### Jan.ai
+
+Site:
+[Jan.ai](https://www.jan.ai/)
