@@ -620,3 +620,19 @@ para concorrência, baixa latência e velocidade na resposta
 
 Site:
 [Jan.ai](https://www.jan.ai/)
+
+### Como utilizar vários modelos (OpenRouter)
+
+- Hoje você integra com a OpenAI, amanhã a google lança um modelo melhor, dedepois a antrophic lança e você começa a colecionar API keys
+- Uma API key pra cada provedor
+- Um SDK diferente (ou variações do mesmo)
+- Limites, formatos e erros diferentes
+- Dashboards de custo espalhados
+
+COMO ORQUESTRAR TUDO ISSO COM UMA ÚNICA PORTA DE ENTRADA
+
+Site:
+[OpenRouter](https://openrouter.ai/)
+
+exemplo:
+[Requisição OpenRouter](./11-OpenRouter/request.sh)
