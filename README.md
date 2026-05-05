@@ -636,3 +636,79 @@ Site:
 
 exemplo:
 [Requisição OpenRouter](./11-OpenRouter/request.sh)
+
+### RAG (Retrieval Augmented Generation)
+
+É uma técnica que combina a capacidade de geração de texto de uma LLM com a busca em uma base de conhecimento externa. Em vez de depender apenas do que o modelo aprendeu durante o treinamento, o RAG **recupera documentos relevantes** em tempo real e os injeta no contexto do prompt antes de gerar a resposta.
+
+**Fluxo básico:**
+
+1. **Retrieve (Recuperar):** A pergunta do usuário é usada para buscar trechos relevantes em uma base vetorial (ex: embeddings de documentos);
+2. **Augment (Aumentar):** Os trechos encontrados são adicionados ao prompt como contexto;
+3. **Generate (Gerar):** A LLM gera a resposta com base no contexto fornecido.
+
+**Por que usar RAG?**
+
+- Permite que o modelo responda com informações atualizadas, sem precisar ser re-treinado;
+- Reduz alucinações ao fornecer fatos reais como contexto;
+- Ideal para sistemas de Q&A sobre documentos, bases de conhecimento internas e suporte técnico.
+
+Ele usa:
+
+- memória paramétrica (o que o modelo "sabe"nos parâmetros)
+- memória não-paramétrica (um índice externo pesquisável, tipicamente um índice vetorial)
+
+#### RAG vs MCP — Qual a diferença?
+
+Apesar de ambos expandirem as capacidades de uma LLM com informações externas, eles atuam em camadas diferentes:
+
+| Aspecto            | RAG                                                           | MCP                                                              |
+| ------------------ | ------------------------------------------------------------- | ---------------------------------------------------------------- |
+| **O que faz**      | Busca e injeta documentos no contexto                         | Conecta o modelo a ferramentas e sistemas externos               |
+| **Como funciona**  | Embedding + busca vetorial → contexto no prompt               | Protocolo de chamada de ferramentas (tool calls)                 |
+| **Tipo de dado**   | Texto/documentos estáticos ou semi-estáticos                  | Dados dinâmicos, ações, APIs, bancos em tempo real               |
+| **Executa ações?** | Não — apenas lê e injeta contexto                             | Sim — pode ler arquivos, escrever, consultar DBs, etc.           |
+| **Analogia**       | É como dar um livro ao modelo para ele ler antes de responder | É como dar ferramentas ao modelo para ele usar enquanto trabalha |
+
+**Em resumo:**
+
+- Use **RAG** quando quiser que o modelo responda com base em documentos, bases de conhecimento ou conteúdo textual indexado.
+- Use **MCP** quando quiser que o modelo **execute ações** — consultar uma API, ler arquivos do sistema, interagir com um banco de dados, rodar testes, etc.
+- Eles são **complementares**: um sistema pode usar RAG para contexto documental e MCP para ações dinâmicas ao mesmo tempo.
+
+### Embeddings e Vector Databases
+
+Busca de similaridade:
+
+- Transforma cada pedaço do texto em um vetor (embedding)
+- Textos com significado parecido viram vetores próximos
+- Aí você pergunta algo e o banco te devolve os top-K trechos mais próximos
+
+Neo4j:
+Banco de grafos
+
+- Você guarda seus chunks como nós
+- Armazena embeddings como propriedades
+- Cria um índice vetorial
+- Consulta por similaridade trazendo score e os top resultados
+
+Gerar embeddings localmente "transformer.js"
+
+- Roda em Node.js
+- Não precisa de chave
+- Não precisa de Docker
+- Não depende de cloud
+- Você consegue reproduzir tudo do zero
+
+Entender:
+
+- Por que embeddings não é "keyword"
+- Por que top-K existe
+- Como um banco vetorial pensa
+- E por que isso vira a fundação do RAG
+
+### Embeddings com Neo4j
+
+- [Embeddings com Neo4j](./12-Embeddings_Neo4j/)
+
+Projeto contempla um exemplo completo utilizando embeddings com transformers e armazenando no Neo4j para consulta de similaridade.
