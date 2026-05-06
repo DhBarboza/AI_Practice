@@ -1,0 +1,10 @@
+# Neo4j data
+neo4j/data/
+neo4j/logs/
+import/
+
+# Dependências
+node_modules/
+
+# Env
+.env

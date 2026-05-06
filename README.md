@@ -712,3 +712,5 @@ Entender:
 - [Embeddings com Neo4j](./12-Embeddings_Neo4j/)
 
 Projeto contempla um exemplo completo utilizando embeddings com transformers e armazenando no Neo4j para consulta de similaridade.
+
+### Primeiro RAG com JavaScript e Neo4j

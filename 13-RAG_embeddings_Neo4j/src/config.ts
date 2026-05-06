@@ -1,4 +1,11 @@
 import type { DataType, PretrainedModelOptions } from "@huggingface/transformers";
+import { readFileSync } from 'node:fs'
+
+const promptsFolder = './prompts';
+const promptsFiles = {
+    answerPrompt: `${promptsFolder}/answerPrompt.json`,
+    template: `${promptsFolder}/template.txt`,
+};
 
 export interface TextSplitterConfig {
     chunkSize: number;
@@ -6,6 +13,12 @@ export interface TextSplitterConfig {
 }
 
 export const CONFIG = Object.freeze({
+    promptConfig: JSON.parse(readFileSync(promptsFiles.answerPrompt, 'utf-8')),
+    templateText: readFileSync(promptsFiles.template, 'utf-8'),
+    output: {
+        answersFolder: './respostas',
+        fileName: 'resposta',
+    },
     neo4j: {
         url: process.env.NEO4J_URI!,
         username: process.env.NEO4J_USER!,
