@@ -714,3 +714,7 @@ Entender:
 Projeto contempla um exemplo completo utilizando embeddings com transformers e armazenando no Neo4j para consulta de similaridade.
 
 ### Primeiro RAG com JavaScript e Neo4j
+
+File:
+
+- [RAG com JavaScript e Neo4j](./13-RAG_embeddings_Neo4j/)
