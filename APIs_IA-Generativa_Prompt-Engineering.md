@@ -23,4 +23,22 @@ Os maiores desafios são a criação de um prompt matador que traga boas respost
 
 Se sua empresa depende do serviço de uma Big Tech, sua empresa pode quebrar de uma para outra devido as mudanças de preços, ou interrupção do serviço.
 
-estratégia é sempre otimizar o processo de
+estratégia é sempre otimizar o processo
+
+### Applied AI Engineer
+
+#### O estado atual do mercado, o que está chegando e quanto já pagam:
+
+Internacional: $196.000,00 a $250.000,00
+
+#### O que o mercado está exigindo de um programador nessa área:
+
+está sendo muito relevante, não basta apenas chamar API´s em modelo, o mercado mudou e exige que construa workflows, integrações e confiabilidade
+
+#### Por que network presencial em eventos de startups virou "atalho" pra encontrar gente com ideia sem implementação:
+
+Onde se encontra as melhores oportunidades de Founding Engineer
+
+#### O que é ser **Founding Engineer** e como funciona equity:
+
+Founding Engineer (ou engenheiro fundador) é o termo usado para o primeiro(s) engenheiro(s) a entrar em uma startup em estágio inicial. Diferente de contratar um desenvolvedor sênior para uma posição tradicional, o founding engineer se torna sócio da empresa e tem responsabilidades muito mais amplas.
