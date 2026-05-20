@@ -42,3 +42,7 @@ Onde se encontra as melhores oportunidades de Founding Engineer
 #### O que é ser **Founding Engineer** e como funciona equity:
 
 Founding Engineer (ou engenheiro fundador) é o termo usado para o primeiro(s) engenheiro(s) a entrar em uma startup em estágio inicial. Diferente de contratar um desenvolvedor sênior para uma posição tradicional, o founding engineer se torna sócio da empresa e tem responsabilidades muito mais amplas.
+
+### Pojeto 01 - API Fastify
+
+Criação de uma API utilizando Fastify
