@@ -46,3 +46,15 @@ Founding Engineer (ou engenheiro fundador) é o termo usado para o primeiro(s) e
 ### Pojeto 01 - API Fastify
 
 Criação de uma API utilizando Fastify
+
+### LangChain
+
+O **LangChain** é um framework de código aberto (open-source) projetado para facilitar a criação de aplicações que utilizam Modelos de Linguagem de Grande Porte (LLMs). Ele atua como uma camada de orquestração, permitindo que desenvolvedores conectem LLMs a fontes externas de dados, APIs e outros sistemas de computação.
+
+Os principais pilares e conceitos do LangChain incluem:
+
+1. **Chains (Cadeias):** Permitem sequenciar múltiplas chamadas ou componentes. Por exemplo, pegar a resposta de uma LLM e usá-la como entrada para outra tarefa, criando fluxos de trabalho complexos.
+2. **Model I/O (Entrada/Saída de Modelos):** Padroniza a interface para interagir com diferentes provedores de LLM (OpenAI, Google Gemini, Anthropic, Ollama, etc.), facilitando a alternância entre modelos.
+3. **Retrieval (RAG - Geração Aumentada de Recuperação):** Facilita a integração com carregadores de documentos, processadores de texto e bancos de dados vetoriais (_Vector Stores_), permitindo que a IA consulte informações privadas ou bases de dados externas antes de formular uma resposta.
+4. **Memory (Memória):** Permite persistir o contexto e o histórico de conversas passadas em aplicações de chat e assistentes virtuais.
+5. **Agents (Agentes):** Capacitam a LLM a tomar decisões dinâmicas sobre quais ações executar e quais ferramentas (como buscas na web, execução de código, ou consultas a bancos de dados) utilizar para resolver problemas complexos.
