@@ -58,3 +58,9 @@ Os principais pilares e conceitos do LangChain incluem:
 3. **Retrieval (RAG - Geração Aumentada de Recuperação):** Facilita a integração com carregadores de documentos, processadores de texto e bancos de dados vetoriais (_Vector Stores_), permitindo que a IA consulte informações privadas ou bases de dados externas antes de formular uma resposta.
 4. **Memory (Memória):** Permite persistir o contexto e o histórico de conversas passadas em aplicações de chat e assistentes virtuais.
 5. **Agents (Agentes):** Capacitam a LLM a tomar decisões dinâmicas sobre quais ações executar e quais ferramentas (como buscas na web, execução de código, ou consultas a bancos de dados) utilizar para resolver problemas complexos.
+
+### Projeto 02
+
+[LangChain example](./02-LangChain-Intro)
+
+Criação de uma aplicação API que utiliza LangChain, o exemplo conta com a criação de funções para a manipulação de textos e indentificação d aintenção do usuário
