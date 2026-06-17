@@ -64,3 +64,11 @@ Os principais pilares e conceitos do LangChain incluem:
 [LangChain example](./02-LangChain-Intro)
 
 Criação de uma aplicação API que utiliza LangChain, o exemplo conta com a criação de funções para a manipulação de textos e indentificação d aintenção do usuário
+
+### Projeto 03 - Medical Appointment
+
+[Medical Appointment](./03-Medical-Appointment)
+
+Projeto que utiliza o LangChain e tem uam estrutura para triagem e seleção de pacientes para especialidades médicas
+
+Os nós `AI_Practice/02-APIs_LLMs/03-Medical-Appointment/src/graph/nodes` servem par aidentifcar a intenção do usuário e partir dela executar as ações
