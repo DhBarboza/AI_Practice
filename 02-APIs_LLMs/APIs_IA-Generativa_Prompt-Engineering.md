@@ -71,4 +71,23 @@ Criação de uma aplicação API que utiliza LangChain, o exemplo conta com a cr
 
 Projeto que utiliza o LangChain e tem uam estrutura para triagem e seleção de pacientes para especialidades médicas
 
-Os nós `AI_Practice/02-APIs_LLMs/03-Medical-Appointment/src/graph/nodes` servem par aidentifcar a intenção do usuário e partir dela executar as ações
+Os nós `AI_Practice/02-APIs_LLMs/03-Medical-Appointment/src/graph/nodes` executam ações de acordo com a intenção
+
+O graph `AI_Practice/02-APIs_LLMs/03-Medical-Appointment/src/graph/graph.ts` é responsável por gerenciar o fluxo de execução dos nós
+
+O graph `AI_Practice/02-APIs_LLMs/03-Medical-Appointment/src/graph/factory.ts` é responsável por criar o graph
+
+O server `AI_Practice/02-APIs_LLMs/03-Medical-Appointment/src/server.ts` é responsável por criar o servidor
+
+#### Prompts
+
+`02-APIs_LLMs/03-Medical-Appointment/src/prompts` Pastas que aloca os Prompts que serão executados no projeto
+`02-APIs_LLMs/03-Medical-Appointment/src/prompts/v1/identifyIntent.ts`:
+
+- Possue o System Prompt, que é o que enviamos antes de receber o Prompt do cliente
+- Schema, monitora a saída (return), garantindo que a resposta venha em JSON, e que as chaves (keys) sejam exatamente aquelas definidas no Schema
+- Na estrutura do prompt: Setar as regras e exemplos, instruções adicionais e alguns exemplos
+
+`02-APIs_LLMs/03-Medical-Appointment/src/services`: Serviço responsável por executar as funções de regras de negócio, exemplo: CRUD, Cálculos, etc.
+
+`02-APIs_LLMs/03-Medical-Appointment/src/config.ts`: Configurações do projeto, onde eu determo o modelo (LLM), Chaves de API e etc
