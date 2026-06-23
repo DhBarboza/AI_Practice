@@ -26,3 +26,6 @@ E não importa para ela se você vai usar ferramenta X, Y ou Z (é claro que a e
 
 Então, quer melhorar seu trabalho e o resultado que gera/entrega, foque primeiro, antes de tudo entender sobre requisitos, e pensar como resolver o problema da pessoa. Esse é o passo mais importante, e nunca foi tão importante as Soft Skills e essa citada em específico.
 
+Comandos:
+- npm ci: Restaurar dependencias 
+- npm test: Executar testes
