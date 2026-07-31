@@ -91,3 +91,7 @@ O server `AI_Practice/02-APIs_LLMs/03-Medical-Appointment/src/server.ts` é resp
 `02-APIs_LLMs/03-Medical-Appointment/src/services`: Serviço responsável por executar as funções de regras de negócio, exemplo: CRUD, Cálculos, etc.
 
 `02-APIs_LLMs/03-Medical-Appointment/src/config.ts`: Configurações do projeto, onde eu determo o modelo (LLM), Chaves de API e etc
+
+### Projeto 04 - Song Highlights
+
+Recomendador de músicas baseado nas nossas preferências `02-APIs_LLMs/04-Song-Highlights`
