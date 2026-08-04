@@ -27,7 +27,7 @@ export const config: ModelConfig = {
   httpReferer: '',
   xTitle: 'IA Devs - Prompt Chaining Article Generator',
   models: [
-    'arcee-ai/trinity-large-preview:free',
+    'google/gemma-4-26b-a4b-it:free',
   ],
   provider: {
     sort: {

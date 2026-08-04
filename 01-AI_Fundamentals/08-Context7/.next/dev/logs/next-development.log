@@ -1,0 +1,14 @@
+{"timestamp":"00:00:01.964","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:03.149","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:00:03.512","source":"Server","level":"WARN","message":"2026-04-23T00:57:18.867Z WARN [Better Auth]: [better-auth] Base URL could not be determined. Please set a valid base URL using the baseURL config option or the BETTER_AUTH_URL environment variable. Without this, callbacks and redirects may not work correctly."}
+{"timestamp":"00:00:03.515","source":"Server","level":"WARN","message":"2026-04-23T00:57:18.870Z WARN [Better Auth]: Social provider github is missing clientId or clientSecret"}
+{"timestamp":"00:00:03.614","source":"Server","level":"ERROR","message":"⨯ TypeError: {imported module ./lib/auth.ts}.auth.createRouteHandler is not a function"}
+{"timestamp":"00:00:03.628","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:00:03.943","source":"Server","level":"ERROR","message":"⨯ TypeError: {imported module ./lib/auth.ts}.auth.createRouteHandler is not a function"}
+{"timestamp":"00:00:04.001","source":"Server","level":"ERROR","message":"⨯ TypeError: {imported module ./lib/auth.ts}.auth.createRouteHandler is not a function"}
+{"timestamp":"00:00:04.061","source":"Server","level":"ERROR","message":"⨯ TypeError: {imported module ./lib/auth.ts}.auth.createRouteHandler is not a function"}
+{"timestamp":"00:00:04.678","source":"Server","level":"ERROR","message":"⨯ TypeError: {imported module ./lib/auth.ts}.auth.createRouteHandler is not a function"}
+{"timestamp":"00:00:04.680","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:00:04.739","source":"Server","level":"ERROR","message":"⨯ TypeError: {imported module ./lib/auth.ts}.auth.createRouteHandler is not a function"}
+{"timestamp":"00:02:06.478","source":"Server","level":"WARN","message":"2026-04-23T00:59:21.834Z WARN [Better Auth]: [better-auth] Base URL could not be determined. Please set a valid base URL using the baseURL config option or the BETTER_AUTH_URL environment variable. Without this, callbacks and redirects may not work correctly."}
+{"timestamp":"00:02:06.480","source":"Server","level":"WARN","message":"2026-04-23T00:59:21.836Z WARN [Better Auth]: Social provider github is missing clientId or clientSecret"}

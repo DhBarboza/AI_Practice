@@ -9,3 +9,4 @@ outputs/
 
 # LangGraph API
 .langgraph_api
+13-RAG_embeddings_Neo4j/neo4j/data/

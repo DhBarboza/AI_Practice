@@ -42,4 +42,6 @@ coverage/
 *.model
 
 # Outros
-*.log
+*.log13-RAG_embeddings_Neo4j/neo4j/data/
+13-RAG_embeddings_Neo4j/import/
+09-Grafana_MCP/alumnus/infra/storage/postgres/

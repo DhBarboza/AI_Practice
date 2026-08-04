@@ -95,3 +95,11 @@ O server `AI_Practice/02-APIs_LLMs/03-Medical-Appointment/src/server.ts` é resp
 ### Projeto 04 - Song Highlights
 
 Recomendador de músicas baseado nas nossas preferências `02-APIs_LLMs/04-Song-Highlights`
+
+Para executar deve se rodar o npm run docker:up
+
+Conecta com o LangGraph Studio: npm run langgraph:serve
+
+`02-APIs_LLMs/04-Song-Highlights/src/graph/graph.ts` Esse arquivo define o grafo de conversação do seu chatbot usando LangGraph — basicamente o "fluxograma" que controla o que acontece a cada mensagem do usuário.
+
+`02-APIs_LLMs/04-Song-Highlights/src/graph/nodes/chatNode.ts` Esse arquivo define o nó de chat do grafo — a etapa que efetivamente monta o prompt, chama o LLM (via OpenRouterService.generateStructured) e devolve a resposta pra conversa, decidindo também se preferências devem ser salvas e se a conversa já acumulou mensagens suficientes pra precisar de um resumo.
