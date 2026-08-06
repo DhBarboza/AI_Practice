@@ -30,7 +30,7 @@ export function createChatNode(llmClient: OpenRouterService, preferencesService:
     )
 
     if (!result.success || !result.data) {
-      console.error('❌ Falha ao gerar resposta:', result.error);
+  console.error('❌ Falha ao gerar resposta:', JSON.stringify(result, null, 2));
       return {
         messages: [
           new AIMessage('Desculpe, encontrei um erro. Pode tentar novamente?')
