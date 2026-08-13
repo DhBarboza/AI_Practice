@@ -107,3 +107,9 @@ Conecta com o LangGraph Studio: npm run langgraph:serve
 `02-APIs_LLMs/04-Song-Highlights/src/services/memoryService.ts` Esse código define uma factory function (`createMemoryService`) que inicializa a camada de memória persistente de um agente LangGraph usando PostgreSQL: ele lê a URI do banco a partir da configuração da aplicação, cria uma instância de `PostgresStore` (para armazenamento de memória de longo prazo, tipo dados semânticos entre threads) e uma instância de `PostgresSaver` (para checkpointing, ou seja, salvar o estado/histórico de execução do grafo entre interações), executa o `setup()` de ambos para garantir que as tabelas necessárias existam no banco, loga uma mensagem de confirmação no console e retorna um objeto `MemoryService` contendo as duas instâncias prontas para uso pelo resto da aplicação.
 
 ### Projeto 05
+
+#### Prompt injection
+
+O **Prompt Injection** (Injeção de Prompt) é uma vulnerabilidade de segurança que ocorre quando um usuário insere instruções maliciosas ou manipuladoras nas entradas fornecidas a um modelo de linguagem (LLM). Isso faz com que a IA ignore suas diretrizes originais (System Prompts) e execute ações não autorizadas, como contornar restrições de segurança, revelar informações confidenciais ou gerar respostas indesejadas.
+
+[MCP - File System](https://www.npmjs.com/package/@modelcontextprotocol/server-filesystem)
