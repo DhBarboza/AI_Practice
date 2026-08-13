@@ -1,4 +1,4 @@
-## API´s, IA Generativa e Prompt Engineering
+- API´s, IA Generativa e Prompt Engineering
 
 ### Wrappers:
 
@@ -106,10 +106,45 @@ Conecta com o LangGraph Studio: npm run langgraph:serve
 
 `02-APIs_LLMs/04-Song-Highlights/src/services/memoryService.ts` Esse código define uma factory function (`createMemoryService`) que inicializa a camada de memória persistente de um agente LangGraph usando PostgreSQL: ele lê a URI do banco a partir da configuração da aplicação, cria uma instância de `PostgresStore` (para armazenamento de memória de longo prazo, tipo dados semânticos entre threads) e uma instância de `PostgresSaver` (para checkpointing, ou seja, salvar o estado/histórico de execução do grafo entre interações), executa o `setup()` de ambos para garantir que as tabelas necessárias existam no banco, loga uma mensagem de confirmação no console e retorna um objeto `MemoryService` contendo as duas instâncias prontas para uso pelo resto da aplicação.
 
-### Projeto 05
+### Projeto 05 - Safeguard Prompt Injection
 
 #### Prompt injection
 
 O **Prompt Injection** (Injeção de Prompt) é uma vulnerabilidade de segurança que ocorre quando um usuário insere instruções maliciosas ou manipuladoras nas entradas fornecidas a um modelo de linguagem (LLM). Isso faz com que a IA ignore suas diretrizes originais (System Prompts) e execute ações não autorizadas, como contornar restrições de segurança, revelar informações confidenciais ou gerar respostas indesejadas.
 
 [MCP - File System](https://www.npmjs.com/package/@modelcontextprotocol/server-filesystem)
+
+A pasta `02-APIs_LLMs/05-Safeguard-Prompt-Injection/src/graph/nodes/` reúne os **nodes do grafo LangGraph** desse projeto — cada arquivo representa uma etapa (ou uma decisão de roteamento) dentro do fluxo de processamento de uma mensagem do usuário.
+
+No caso desse projeto específico, a pasta implementa um **pipeline de proteção contra prompt injection**, dividido em responsabilidades bem separadas:
+
+- **`guardrailsCheckNode.ts`** — analisa a mensagem recebida antes de qualquer resposta, checando se ela é segura ou contém tentativa de injection.
+- **`edgeConditions.ts`** — não é um node de processamento em si, mas a lógica de **roteamento condicional** que decide, com base no resultado da checagem, se o fluxo segue para o chat normal ou para o bloqueio.
+- **`chatNode.ts`** — o node que efetivamente chama o LLM e gera a resposta, executado apenas quando a mensagem passa pela checagem.
+- **`blockedNode.ts`** — gera a resposta de recusa quando a mensagem é considerada insegura.
+
+Essa organização segue o padrão de projetos LangGraph: separar cada responsabilidade em seu próprio arquivo/função (nodes) e manter a lógica de decisão de fluxo (edges/conditions) isolada, o que facilita testar, reordenar e visualizar o grafo (inclusive no LangGraph Studio) sem misturar regra de negócio com lógica de roteamento.
+
+- `02-APIs_LLMs/05-Safeguard-Prompt-Injection/src/graph/nodes/blockedNode.ts`: Node responsável por gerar a mensagem de recusa exibida ao usuário quando o guardrail identifica uma requisição insegura. Lê o resultado da checagem armazenado em `state.guardrailCheck`, monta um bloco opcional de análise em markdown e formata as permissões do usuário, então utiliza um `PromptTemplate` para renderizar a mensagem final de bloqueio (motivo, análise, role e permissões) e a retorna como uma `AIMessage` adicionada ao histórico do grafo.
+
+- `02-APIs_LLMs/05-Safeguard-Prompt-Injection/src/graph/nodes/chatNode.ts`: Node principal de conversação, responsável por gerar a resposta do assistente através do `OpenRouterService`. Aplica um fallback de usuário default e desativa guardrails quando executado isoladamente via LangSmith Studio (sem `state.user` definido), monta o system prompt de forma segura usando `PromptTemplate.format()` — evitando concatenação/`replace()` direto, que seria vulnerável a prompt injection — envia a mensagem do usuário ao LLM e trata falhas retornando uma mensagem de erro genérica em vez de propagar exceções ao grafo.
+
+- `02-APIs_LLMs/05-Safeguard-Prompt-Injection/src/graph/nodes/edgeConditions.ts`: Define a lógica de roteamento condicional executada após o node de guardrails, decidindo se o fluxo segue para `chat` ou `blocked`. A rota é `chat` quando os guardrails estão desabilitados, quando não há resultado de checagem disponível, ou quando a checagem indica que a mensagem é segura (`safe: true`); caso contrário, a rota é `blocked`.
+
+- `02-APIs_LLMs/05-Safeguard-Prompt-Injection/src/graph/nodes/guardrailsCheckNode.ts`: Node responsável por analisar a mensagem do usuário em busca de tentativas de prompt injection antes que ela alcance o LLM principal. Monta o system prompt com `PromptTemplate.format()` (pelo mesmo motivo de segurança do `chatNode`), concatena-o com a mensagem do usuário e delega a análise ao `OpenRouterService.checkGuardRails()`, retornando o resultado no estado do grafo; em caso de falha na chamada, adota uma postura fail-safe, marcando a requisição como insegura (`safe: false`) para bloquear por padrão em vez de arriscar deixar passar uma injection.
+
+## Pra que serve a pasta `02-APIs_LLMs/05-Safeguard-Prompt-Injection/src/graph/`
+
+Essa pasta concentra a **definição e montagem do grafo LangGraph** do projeto, incluindo o schema de estado compartilhado entre os nodes, a construção/composição do grafo (ligando nodes e edges) e uma camada de factory para instanciá-lo. É o "coração" do fluxo — a subpasta `nodes/` contém as peças individuais, enquanto os arquivos aqui na raiz definem o formato do estado e como essas peças se conectam.
+
+## `02-APIs_LLMs/05-Safeguard-Prompt-Injection/src/graph/factory.ts`
+
+Módulo de fachada (factory) que expõe funções simples para obter uma instância do grafo compilado, encapsulando a chamada a `buildChatGraph()`. Oferece duas formas equivalentes de uso — `buildGraph()` (assíncrona) e `graph()` (síncrona) — provavelmente para atender diferentes formas de consumo, como integração com o LangGraph Studio/CLI, que costuma esperar uma função exportada retornando o grafo.
+
+## `02-APIs_LLMs/05-Safeguard-Prompt-Injection/src/graph/graph.ts`
+
+Arquivo central que monta e conecta o grafo de estados usando `StateGraph`, definindo a topologia completa do fluxo de proteção contra prompt injection. Instancia o `OpenRouterService` compartilhado pelos nodes, registra os três nodes (`guardrails_check`, `chat`, `blocked`), define `guardrails_check` como ponto de entrada (`START`), aplica a aresta condicional via `routeAfterGuardrails` para decidir entre `chat` e `blocked`, e finaliza o fluxo (`END`) em ambos os caminhos; ao final, compila o grafo (`workflow.compile()`) pronto para execução.
+
+## `02-APIs_LLMs/05-Safeguard-Prompt-Injection/src/graph/state.ts`
+
+Define o schema do estado compartilhado entre todos os nodes do grafo (`SafeguardStateAnnotation`), usando Zod integrado ao LangGraph via `withLangGraph`. O estado inclui: `messages` (histórico de mensagens, com metadados especiais do LangGraph para lidar com merge/append automático), `user` (dados do usuário autenticado), `guardrailCheck` (resultado da checagem de segurança, nulável e com default `null`) e `guardrailsEnabled` (flag booleana que liga/desliga a proteção); também exporta o tipo `GraphState` inferido a partir desse schema, usado como tipagem em todos os nodes.
