@@ -1,14 +1,14 @@
 {
-  "erickwendel": {
-    "username": "erickwendel",
+  "douglashenrique": {
+    "username": "douglashenrique",
     "role": "admin",
     "permissions": ["read_package", "execute_commands"],
-    "displayName": "Erick Wendel"
+    "displayName": "Douglas Henrique"
   },
-  "ananeri": {
-    "username": "ananeri",
+  "bruna": {
+    "username": "bruna",
     "role": "member",
     "permissions": [],
-    "displayName": "Ana Neri"
+    "displayName": "Bruna"
   }
 }
