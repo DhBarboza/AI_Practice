@@ -148,3 +148,9 @@ Arquivo central que monta e conecta o grafo de estados usando `StateGraph`, defi
 ## `02-APIs_LLMs/05-Safeguard-Prompt-Injection/src/graph/state.ts`
 
 Define o schema do estado compartilhado entre todos os nodes do grafo (`SafeguardStateAnnotation`), usando Zod integrado ao LangGraph via `withLangGraph`. O estado inclui: `messages` (histórico de mensagens, com metadados especiais do LangGraph para lidar com merge/append automático), `user` (dados do usuário autenticado), `guardrailCheck` (resultado da checagem de segurança, nulável e com default `null`) e `guardrailsEnabled` (flag booleana que liga/desliga a proteção); também exporta o tipo `GraphState` inferido a partir desse schema, usado como tipagem em todos os nodes.
+
+### Projeto 06 - Conhecendo o Template, Arquitetura e Definição do projeto
+
+## `02-APIs_LLMs/06-Rag-Neo4j-Students`
+
+Nesse projeto utilziamos a IA para gerar query para o nosso banco de dados para responder perguntas e cruzar informações
