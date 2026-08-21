@@ -10,7 +10,7 @@ export const createChatNode = (openRouterService: OpenRouterService) => {
 
             // only for LangSmith Studio - set defaults if not present
             if(!state.user) {
-                state.user = getUser('ananeri')!;
+                state.user = getUser('douglashenrique')!;
                 state.guardrailsEnabled = false;
             }
 
