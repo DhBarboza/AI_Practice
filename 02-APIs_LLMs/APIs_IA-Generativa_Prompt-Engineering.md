@@ -154,3 +154,113 @@ Define o schema do estado compartilhado entre todos os nodes do grafo (`Safeguar
 ## `02-APIs_LLMs/06-Rag-Neo4j-Students`
 
 Nesse projeto utilziamos a IA para gerar query para o nosso banco de dados para responder perguntas e cruzar informações
+
+## Documentação dos scripts configurados no `package.json`:
+
+#### `npm start`
+
+```
+node --env-file .env src/index.ts
+```
+
+Executa a aplicação em modo normal, carregando as variáveis de ambiente do arquivo `.env`. Uso típico: rodar a aplicação em produção ou em um teste manual simples, sem hot-reload.
+
+#### `npm run dev`
+
+```
+node --watch --inspect --env-file .env src/index.ts
+```
+
+Executa a aplicação em modo de desenvolvimento:
+
+- `--watch`: reinicia o processo automaticamente sempre que um arquivo for alterado.
+- `--inspect`: abre a porta de debug do Node (padrão `9229`), permitindo conectar um debugger (VS Code, Chrome DevTools etc.).
+- `--env-file .env`: carrega as variáveis de ambiente.
+
+#### `npm test`
+
+```
+node --env-file .env --test tests/**/*.test.ts
+```
+
+Roda a suíte de testes usando o test runner nativo do Node (`--test`), carregando as variáveis de ambiente. Executa todos os arquivos `*.test.ts` dentro de `tests/`.
+
+#### `npm run seed`
+
+```
+node --env-file .env --watch data/seed.ts
+```
+
+Executa o script de seed (popular o banco de dados com dados iniciais/mock), com `--watch` para re-executar automaticamente a cada alteração no arquivo `data/seed.ts`.
+
+#### `npm run test:dev`
+
+```
+node --inspect --env-file .env --test --watch tests/**/*.test.ts
+```
+
+Igual ao `npm test`, mas em modo desenvolvimento:
+
+- `--inspect`: permite debugar os testes.
+- `--watch`: reexecuta os testes automaticamente ao salvar qualquer arquivo.
+
+#### `npm run test:e2e:dev`
+
+```
+node --inspect --env-file .env --test --watch tests/**/*e2e.test.ts
+```
+
+Mesma ideia do `test:dev`, mas restrito aos testes end-to-end (arquivos `*e2e.test.ts`). Útil para desenvolver/depurar testes de integração completos com watch e debug ativos.
+
+#### `npm run test:e2e`
+
+```
+node --inspect --env-file .env --test tests/**/*e2e.test.ts
+```
+
+Executa apenas os testes end-to-end uma única vez (sem `--watch`), com debug habilitado.
+
+#### `npm run langgraph:serve`
+
+```
+npx @langchain/langgraph-cli dev
+```
+
+Sobe o servidor de desenvolvimento do LangGraph CLI, usado para servir/testar grafos (agentes) construídos com LangGraph localmente.
+
+#### `npm run docker:infra:up`
+
+```
+docker compose up -d --wait
+```
+
+Sobe a infraestrutura definida no `docker-compose.yml` (ex.: Neo4j) em background (`-d`), aguardando (`--wait`) até os containers ficarem saudáveis antes de retornar o comando.
+
+#### `npm run docker:infra:down`
+
+```
+docker compose down
+```
+
+Para e remove os containers da infraestrutura (mas mantém volumes/dados).
+
+#### `npm run docker:infra:cleanup`
+
+```
+docker compose down --volumes --remove-orphans && rm -rf storage
+```
+
+Faz uma limpeza completa:
+
+- Para os containers, remove volumes (**apaga os dados persistidos**, ex.: banco Neo4j) e containers órfãos.
+- Remove também a pasta local `storage`.
+
+⚠️ Use com cuidado — esse comando apaga dados.
+
+#### `npm run docker:infra:logs`
+
+```
+docker compose logs -f
+```
+
+Exibe os logs dos containers em tempo real (`-f` = follow), útil para acompanhar o Neo4j ou outros serviços subindo/rodando.
