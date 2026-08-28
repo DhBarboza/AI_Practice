@@ -264,3 +264,46 @@ docker compose logs -f
 ```
 
 Exibe os logs dos containers em tempo real (`-f` = follow), útil para acompanhar o Neo4j ou outros serviços subindo/rodando.
+
+## CYPHER GENERATOR: GERANDO QUERIES NEO4J COM JSON PROMPTS E STRUCTURED OUTPUTS
+
+### `src/prompts/v1/cypherGenerator.ts`
+
+Esse código monta os prompts (system + user) enviados a uma IA para transformar uma pergunta em linguagem natural numa query Cypher (Neo4j).
+
+- `CypherQuerySchema`: define o formato esperado da resposta da IA — um objeto com o campo `query`.
+- `getSystemPrompt`: gera as instruções para a IA — papel dela, schema do banco, regras de como escrever a query corretamente e exemplos prontos (pergunta → query).
+- `getUserPromptTemplate`: só repassa a pergunta do usuário como está.
+
+Não executa a query nem chama a IA — apenas prepara os prompts.
+
+### `src/graph/nodes/cypherGeneratorNode.ts`
+
+Esse código implementa um **node de um grafo (LangGraph-style)** responsável por gerar a query Cypher usando o LLM, dentro de um fluxo que pode ter múltiplas etapas (multi-step).
+
+- `getCurrentStepQuestion(state)`: verifica se o fluxo está em modo multi-step (várias sub-perguntas processadas em sequência). Se estiver, retorna a sub-pergunta atual e o número do passo; caso contrário, retorna `null`.
+
+- `createCypherGeneratorNode(llmClient, neo4jService)`: factory que recebe os serviços (LLM e Neo4j) e retorna a função do node, que:
+  1. Determina qual pergunta usar — a sub-pergunta da etapa atual (multi-step) ou a pergunta principal (`state.question`).
+  2. Busca o schema atual do banco via `neo4jService.getSchema()`.
+  3. Monta o system prompt e o user prompt usando as funções do módulo `cypherGenerator` (o código explicado antes), passando também o contexto fixo `SALES_CONTEXT`.
+  4. Chama o LLM (`llmClient.generateStructured`) pedindo uma resposta estruturada validada pelo `CypherQuerySchema`.
+  5. Se der erro, retorna um `error` no estado.
+  6. Se der certo, retorna a query gerada (`query`); se estiver em modo multi-step, também acumula a query na lista `subQueries`.
+  7. Qualquer exceção não tratada é capturada no `catch`, logada e retornada como `error` no estado.
+
+Em resumo: é o node que decide qual pergunta processar, monta os prompts, chama o LLM para gerar a query Cypher e atualiza o estado do grafo com o resultado ou com o erro.
+
+### `src/prompts/v1/salesContext.ts`
+
+Esse código define uma **constante de contexto de negócio** (`SALES_CONTEXT`), usada como parte do prompt enviado ao LLM (vista no `createCypherGeneratorNode`, passada para `getSystemPrompt`).
+
+É um texto fixo em markdown com regras de negócio do domínio "academia online de vendas", que ajudam o modelo a gerar queries Cypher corretas:
+
+- Progresso só existe para cursos efetivamente comprados (`status="paid"`)
+- Cada par aluno-curso tem no máximo uma compra e um registro de progresso
+- Queries de receita devem filtrar `status = "paid"`
+- Compras com `status="refunded"` devem ser excluídas dos cálculos de receita
+- Progresso é um percentual de 0 a 100
+
+Não contém lógica — é apenas dado estático (conhecimento de domínio) injetado no prompt para evitar que o LLM gere queries semanticamente erradas (ex.: contar receita de compras reembolsadas).
