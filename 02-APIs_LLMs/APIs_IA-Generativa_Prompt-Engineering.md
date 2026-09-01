@@ -322,4 +322,22 @@ Executa queries Cypher no Neo4j dentro de um grafo LangGraph, com validação, r
 
 Um node que roda a query, decide entre sucesso / correção / progressão multi-step / falha, e sempre devolve o estado atualizado do grafo.
 
-### ``
+## CYPHER CORRECTION E ANALYTICAL RESPONSE: CORRIGINDO QUERIES E GERANDO RESPOSTAS ANALÍTICAS
+
+### `src/prompts/v1/analyticalResponse.ts`
+
+Esse código define o nó `analyticalResponseNode`, responsável por gerar a resposta final em linguagem natural do fluxo, usando o LLM (`OpenRouterService`) com saída estruturada (`AnalyticalResponseSchema`).
+
+Ele decide entre três caminhos possíveis dependendo do estado do grafo: se houver um erro (`state.error`), chama `handleErrorResponse`, que pede ao LLM uma explicação amigável da falha; se não houver resultados (`dbResults` vazio), chama `handleNoResultsResponse`, que gera uma resposta de "nada encontrado"; e se houver resultados, chama `handleSuccessResponse`, que monta o prompt com os dados e pede ao LLM uma resposta analítica. Dentro desse último caso, se o fluxo for multi-step (várias subperguntas encadeadas com seus próprios resultados), ele usa um prompt de síntese que combina pergunta, query e resultado de cada etapa; caso contrário, usa o prompt padrão com a pergunta e os resultados únicos.
+
+Em todos os cenários, o resultado final populado no estado é o mesmo formato: `messages` (com uma `AIMessage`), `answer` e `followUpQuestions` — ou seja, a função só decide _qual prompt construir_ de acordo com a situação, mas sempre converge para a mesma chamada ao LLM e o mesmo formato de saída.
+
+### `src/graph/nodes/cypherCorrectionNode.ts`
+
+Esse código define o nó `cypherCorrectionNode`, responsável por **corrigir automaticamente uma query Cypher inválida** usando o LLM, quando o executor detecta um erro de validação/execução.
+
+Ele busca o schema atual do Neo4j (`neo4jService.getSchema`) para dar contexto ao modelo, monta o prompt de correção com a query original, o erro de validação (`state.validationError`) e a pergunta do usuário, e chama o LLM (`generateStructured`) pedindo uma saída estruturada conforme `CypherCorrectionSchema` (query corrigida + explicação).
+
+Se o LLM falhar em gerar a correção, retorna erro no estado. Se der certo, atualiza `query` com a versão corrigida, preserva a query original em `originalQuery` (só na primeira tentativa), incrementa `correctionAttempts`, limpa `validationError` e desliga a flag `needsCorrection` — permitindo que o fluxo volte para o executor tentar rodar a query corrigida.
+
+Em resumo: é o nó que fecha o ciclo "executar → falhar → corrigir → reexecutar", usando o LLM como "reparador" de queries Cypher com base no erro reportado e no schema real do banco.
