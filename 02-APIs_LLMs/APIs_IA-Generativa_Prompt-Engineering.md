@@ -307,3 +307,19 @@ Esse código define uma **constante de contexto de negócio** (`SALES_CONTEXT`),
 - Progresso é um percentual de 0 a 100
 
 Não contém lógica — é apenas dado estático (conhecimento de domínio) injetado no prompt para evitar que o LLM gere queries semanticamente erradas (ex.: contar receita de compras reembolsadas).
+
+## CYPHER EXECUTOR: VALIDANDO E EXECUTANDO QUERIES NO NEO4J
+
+### `src/graph/nodes/cypherExecutorNode.ts`
+
+Executa queries Cypher no Neo4j dentro de um grafo LangGraph, com validação, retry automático de correção e suporte a fluxos multi-etapa (múltiplas subperguntas encadeadas).
+
+1. **Valida e executa** a query (`executeQuery`): checa sintaxe via `validateQuery`, roda a query, e trata erros/ausência de resultados.
+2. **Se a query falhar:** tenta correção automática (até `config.maxCorrectionAttempts` vezes); esgotadas as tentativas, retorna erro final.
+3. **Se o fluxo for multi-step:** acumula o resultado da etapa atual em `subResults`, avança `currentStep` e verifica se ainda há próximas etapas (`hasMoreSteps`).
+4. **Se não houver resultados:** retorna `dbResults: []` com mensagem de erro.
+5. **Se tudo der certo:** atualiza `dbResults` no estado do grafo e limpa a flag `needsCorrection`.
+
+Um node que roda a query, decide entre sucesso / correção / progressão multi-step / falha, e sempre devolve o estado atualizado do grafo.
+
+### ``
