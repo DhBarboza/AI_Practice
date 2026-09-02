@@ -341,3 +341,17 @@ Ele busca o schema atual do Neo4j (`neo4jService.getSchema`) para dar contexto a
 Se o LLM falhar em gerar a correção, retorna erro no estado. Se der certo, atualiza `query` com a versão corrigida, preserva a query original em `originalQuery` (só na primeira tentativa), incrementa `correctionAttempts`, limpa `validationError` e desliga a flag `needsCorrection` — permitindo que o fluxo volte para o executor tentar rodar a query corrigida.
 
 Em resumo: é o nó que fecha o ciclo "executar → falhar → corrigir → reexecutar", usando o LLM como "reparador" de queries Cypher com base no erro reportado e no schema real do banco.
+
+### Projeto 07 MODELOS MULTIMODAIS (TEXTO, IMAGEM, ÁUDIO, VÍDEO)
+
+O Projeto retrata modelos de linguagem que trabalham com outras formas de input além dos textos
+
+#### `src/services/openrouterService.ts`
+
+Esse código define a classe `OpenRouterService`, responsável por encapsular a comunicação com LLMs via **OpenRouter**, usando o cliente `ChatOpenAI` do LangChain configurado com a baseURL da OpenRouter.
+
+No construtor, ele monta o cliente com a API key, o modelo principal (`config.models[0]`), temperatura, headers customizados (`HTTP-Referer`, `X-Title`) e, via `modelKwargs`, passa a lista completa de modelos e a configuração de `provider` — permitindo que a OpenRouter faça roteamento/fallback entre múltiplos modelos.
+
+O método `generateWithDocument` monta uma chamada **multimodal**: envia um `SystemMessage` com o prompt de sistema e um `HumanMessage` contendo tanto texto (`userPrompt`) quanto um documento em base64 (tratado como `image_url` com prefixo `data:application/pdf;base64,...`, formato que a API aceita para enviar PDFs). Invoca o LLM com essas mensagens e retorna o nome do modelo que respondeu (via `response_metadata`) junto com o conteúdo textual da resposta.
+
+Em uma frase: é um serviço que abstrai o LangChain + OpenRouter para permitir enviar um documento (PDF) junto com um prompt e receber uma resposta de texto do LLM, com suporte a múltiplos modelos/fallback configurados centralmente.
