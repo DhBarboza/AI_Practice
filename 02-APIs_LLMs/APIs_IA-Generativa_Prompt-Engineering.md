@@ -59,13 +59,13 @@ Os principais pilares e conceitos do LangChain incluem:
 4. **Memory (Memória):** Permite persistir o contexto e o histórico de conversas passadas em aplicações de chat e assistentes virtuais.
 5. **Agents (Agentes):** Capacitam a LLM a tomar decisões dinâmicas sobre quais ações executar e quais ferramentas (como buscas na web, execução de código, ou consultas a bancos de dados) utilizar para resolver problemas complexos.
 
-### Projeto 02
+## Projeto 02
 
 [LangChain example](./02-LangChain-Intro)
 
 Criação de uma aplicação API que utiliza LangChain, o exemplo conta com a criação de funções para a manipulação de textos e indentificação d aintenção do usuário
 
-### Projeto 03 - Medical Appointment
+## Projeto 03 - Medical Appointment
 
 [Medical Appointment](./03-Medical-Appointment)
 
@@ -92,7 +92,7 @@ O server `AI_Practice/02-APIs_LLMs/03-Medical-Appointment/src/server.ts` é resp
 
 `02-APIs_LLMs/03-Medical-Appointment/src/config.ts`: Configurações do projeto, onde eu determo o modelo (LLM), Chaves de API e etc
 
-### Projeto 04 - Song Highlights
+## Projeto 04 - Song Highlights
 
 Recomendador de músicas baseado nas nossas preferências `02-APIs_LLMs/04-Song-Highlights`
 
@@ -106,7 +106,7 @@ Conecta com o LangGraph Studio: npm run langgraph:serve
 
 `02-APIs_LLMs/04-Song-Highlights/src/services/memoryService.ts` Esse código define uma factory function (`createMemoryService`) que inicializa a camada de memória persistente de um agente LangGraph usando PostgreSQL: ele lê a URI do banco a partir da configuração da aplicação, cria uma instância de `PostgresStore` (para armazenamento de memória de longo prazo, tipo dados semânticos entre threads) e uma instância de `PostgresSaver` (para checkpointing, ou seja, salvar o estado/histórico de execução do grafo entre interações), executa o `setup()` de ambos para garantir que as tabelas necessárias existam no banco, loga uma mensagem de confirmação no console e retorna um objeto `MemoryService` contendo as duas instâncias prontas para uso pelo resto da aplicação.
 
-### Projeto 05 - Safeguard Prompt Injection
+## Projeto 05 - Safeguard Prompt Injection
 
 #### Prompt injection
 
@@ -149,7 +149,7 @@ Arquivo central que monta e conecta o grafo de estados usando `StateGraph`, defi
 
 Define o schema do estado compartilhado entre todos os nodes do grafo (`SafeguardStateAnnotation`), usando Zod integrado ao LangGraph via `withLangGraph`. O estado inclui: `messages` (histórico de mensagens, com metadados especiais do LangGraph para lidar com merge/append automático), `user` (dados do usuário autenticado), `guardrailCheck` (resultado da checagem de segurança, nulável e com default `null`) e `guardrailsEnabled` (flag booleana que liga/desliga a proteção); também exporta o tipo `GraphState` inferido a partir desse schema, usado como tipagem em todos os nodes.
 
-### Projeto 06 - Conhecendo o Template, Arquitetura e Definição do projeto
+## Projeto 06 - Conhecendo o Template, Arquitetura e Definição do projeto
 
 ## `02-APIs_LLMs/06-Rag-Neo4j-Students`
 
@@ -342,7 +342,7 @@ Se o LLM falhar em gerar a correção, retorna erro no estado. Se der certo, atu
 
 Em resumo: é o nó que fecha o ciclo "executar → falhar → corrigir → reexecutar", usando o LLM como "reparador" de queries Cypher com base no erro reportado e no schema real do banco.
 
-### Projeto 07 MODELOS MULTIMODAIS (TEXTO, IMAGEM, ÁUDIO, VÍDEO)
+## Projeto 07 MODELOS MULTIMODAIS (TEXTO, IMAGEM, ÁUDIO, VÍDEO)
 
 O Projeto retrata modelos de linguagem que trabalham com outras formas de input além dos textos
 
@@ -355,3 +355,17 @@ No construtor, ele monta o cliente com a API key, o modelo principal (`config.mo
 O método `generateWithDocument` monta uma chamada **multimodal**: envia um `SystemMessage` com o prompt de sistema e um `HumanMessage` contendo tanto texto (`userPrompt`) quanto um documento em base64 (tratado como `image_url` com prefixo `data:application/pdf;base64,...`, formato que a API aceita para enviar PDFs). Invoca o LLM com essas mensagens e retorna o nome do modelo que respondeu (via `response_metadata`) junto com o conteúdo textual da resposta.
 
 Em uma frase: é um serviço que abstrai o LangChain + OpenRouter para permitir enviar um documento (PDF) junto com um prompt e receber uma resposta de texto do LLM, com suporte a múltiplos modelos/fallback configurados centralmente.
+
+### Langfuse
+
+O **Langfuse** é uma plataforma _open-source_ de **LLMOps e Observabilidade** projetada para monitorar, analisar e aprimorar aplicações com LLMs em produção e desenvolvimento.
+
+Suas principais capacidades incluem:
+
+- **Tracing & Observabilidade:** Rastreia o fluxo completo de pipelines (chains, agentes, buscas RAG e chamadas de API), capturando inputs, outputs, latência, contagem de tokens e erros em cada etapa.
+- **Métricas de Custos e Latência:** Mapeia automaticamente o custo por modelo/provedor, permitindo acompanhar gastos financeiros por usuário, sessão ou endpoint, além de identificar gargalos de tempo de resposta.
+- **Prompt Management:** Permite criar, versionar, testar e publicar prompts diretamente pela interface gráfica, desacoplando a alteração de prompts do ciclo de deploy do código.
+- **Evals & Feedback:** Coleta feedback de usuários (scores, 👍/👎) e realiza avaliações automatizadas (métricas de relevância, detecção de alucinações e _LLM-as-a-judge_).
+- **Datasets e Testes:** Converte traces reais de produção em conjuntos de dados de teste para rodar benchmarks e evitar regressões antes de lançar novos prompts ou modelos.
+
+Em resumo: atua como o painel de telemetria e controle da sua aplicação de IA (um "Datadog para LLMs"), integrando observabilidade, controle de custos, versionamento de prompts e garantia de qualidade.
