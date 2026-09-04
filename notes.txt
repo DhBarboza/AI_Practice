@@ -29,3 +29,6 @@ Então, quer melhorar seu trabalho e o resultado que gera/entrega, foque primeir
 Comandos:
 - npm ci: Restaurar dependencias 
 - npm test: Executar testes
+
+ sudo rm -rf /home/atom/projects/AI_Practice/09-Grafana_MCP
+ sudo rm -rf /home/atom/projects/AI_Practice/13-RAG_embeddings_Neo4j/
