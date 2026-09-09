@@ -268,3 +268,54 @@ Essa separação clara de responsabilidades garante que qualquer sistema legado 
 ## 7. Conclusão
 
 O **Model Context Protocol (MCP)** representa a transição da Inteligência Artificial de um modelo conversacional isolado (_chatbot_) para um ecossistema de **agentes inteligentes conectados e integrados ao mundo real**, com padrões abertos de engenharia, interoperabilidade e segurança.
+
+# Projeto 01 - Multiplas ferramentas de MCP
+
+`03-Model-Context-Protocol/01-Multiple-MCP-Tools`
+
+## `03-Model-Context-Protocol/01-Multiple-MCP-Tools/src/index.ts`:
+
+Esse código define o entrypoint do módulo `01-Multiple-MCP-Tools`, responsável por subir um servidor Fastify (via `createServer()`) na porta 3000 e, em seguida, disparar um teste automático contra o próprio endpoint `/chat`.
+
+Primeiro ele lê um CSV de vendas do disco (`sales-complete.csv`) com `readFileSync` e monta um `question` em linguagem natural, interpolando o conteúdo bruto do CSV diretamente dentro do texto — pedindo ao LLM para calcular a receita total a partir dos dados.
+
+Em seguida, usa `app.inject()`, recurso nativo do Fastify para simular uma requisição HTTP sem round-trip de rede real, enviando um `POST /chat` com `{ question }` no payload. Ao receber a resposta, loga o status code e o corpo, e encerra o processo com `process.exit`.
+
+Em uma frase: é um script que sobe o servidor de chat e, na mesma execução, já valida o endpoint `/chat` enviando um CSV de vendas embutido num prompt de linguagem natural, testando se o LLM consegue calcular a receita total a partir do dado bruto.
+
+## System Prompts:
+
+### `03-Model-Context-Protocol/01-Multiple-MCP-Tools/src/prompts/v1/identifyIntent.ts`:
+
+Esse arquivo define a lógica de extração de intenção da primeira versão (`v1`) de um assistente que usa múltiplas MCP tools. Ele tem duas partes principais:
+
+**1. `IntentSchema` (schema Zod)**
+
+Define a estrutura de saída que um modelo de linguagem deve produzir ao analisar a mensagem do usuário. Tem 4 campos:
+
+- **`intent`** (string): descrição limpa, em linguagem natural, do que o usuário quer fazer — sem misturar dados CSV/JSON aqui.
+- **`fileContent`** (string ou null): o bloco bruto de dados (CSV ou JSON) que veio embutido na mensagem, copiado exatamente como está. Se não houver dado nenhum, fica `null`.
+- **`fileName`** (string ou null): um nome de arquivo inferido (ex: "sales", "report"), deduzido a partir do contexto da pergunta.
+- **`fileType`** (enum: `'csv' | 'json' | 'unknown'`): tipo de arquivo inferido com base no conteúdo ou nome.
+
+O `IntentData` logo abaixo é só o tipo TypeScript derivado automaticamente desse schema Zod (`z.infer`), pra usar com segurança de tipos no resto do código.
+
+**2. `getSystemPrompt()`**
+
+Uma função simples que retorna uma string fixa — o system prompt que será enviado ao modelo. Ele instrui o modelo a:
+
+- Atuar como um "assistente de extração de intenção"
+- Separar a instrução em linguagem natural do bloco de dados bruto (CSV/JSON) que porventura esteja misturado na mesma mensagem
+- Preencher `fileContent` e `fileName` como `null` quando não há dado nenhum
+
+**Por que isso existe:** provavelmente esse schema é usado com uma chamada estruturada (tool call / structured output) de um LLM para, a partir de uma mensagem de usuário que mistura pedido + dados colados, separar automaticamente "o que fazer" de "com quais dados fazer" — provavelmente para depois rotear isso a diferentes MCP tools (uma pra CSV, outra pra JSON, etc.), daí o nome da pasta `01-Multiple-MCP-Tools`.
+
+### `03-Model-Context-Protocol/01-Multiple-MCP-Tools/src/prompts/v1/agentNode.ts`:
+
+Esse arquivo define dois geradores de prompt, `getUserPrompt` e `getSystemPrompt`, usados para instruir um agente de IA que processa arquivos e os persiste em um banco MongoDB.
+
+`getUserPrompt` recebe `intent`, `fileName` e `fileContent` e monta a mensagem do usuário em texto formatado, expondo os três dados de forma estruturada para o modelo — com `fileName` caindo para `'N/A'` caso não seja informado.
+
+`getSystemPrompt` define o comportamento do agente: declara as ferramentas disponíveis (`csv_to_json`, ferramentas de filesystem como `read_file`/`write_file`, e ferramentas de MongoDB) e impõe uma sequência obrigatória de seis passos (Step 0 a Step 5) — apagar as coleções do usuário, converter CSV em JSON se aplicável, opcionalmente salvar esse JSON em disco, inserir os registros no MongoDB, consultar o banco para responder à pergunta do `intent`, e por fim salvar a resposta como `.txt` em `./reports/`. O prompt reforça explicitamente que o agente não deve parar após a primeira chamada de tool e deve completar todas as etapas aplicáveis.
+
+Em uma frase: são os prompts (system + user) que orquestram um agente para transformar um arquivo em JSON, persistir no MongoDB, responder uma pergunta analítica sobre os dados e salvar o resultado em um relatório de texto.
