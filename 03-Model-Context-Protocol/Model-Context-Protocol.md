@@ -393,3 +393,22 @@ Esse arquivo é um script de teste ou inicialização que sobe um servidor Fasti
 > SerpApi: `https://serpapi.com/`
 
 Este projeto consiste em um agente autônomo desenvolvido com **LangGraph**, **LangChain** e **Fastify**, projetado para atuar como um copiloto estratégico para criadores de conteúdo (como canais do YouTube). A aplicação implementa o padrão de _Service as a Tool_, integrando a API do **Google Trends** via **SerpApi** para consultar dados reais de volume de busca, tópicos em alta (_rising topics_) e interesse temporal de termos específicos. Sua arquitetura organiza o fluxo em um grafo de estados composto por nós especializados: o nó _researcher_ extrai e valida as palavras-chave relevantes da pergunta do usuário para consultar as tendências de mercado, enquanto o nó _responder_ sintetiza esses dados analíticos com modelos de linguagem via **OpenRouter**, entregando sugestões contextualizadas, ideias de títulos de alto engajamento e justificativas baseadas em dados de busca reais através de um endpoint HTTP `/chat`.
+
+# Projeto 3 - Development Instructions Agents
+
+Este projeto explora a padronização e especialização de agentes autônomos de IA através de arquivos declarativos de instruções (_agent instructions_ ou `.agent.md`), integrando o **Model Context Protocol (MCP)** diretamente ao fluxo de desenvolvimento e garantia de qualidade de software. Em vez de depender de um único assistente genérico, a arquitetura divide as responsabilidades em personas especializadas com regras, modelos e ferramentas sob medida: um desenvolvedor focado em TypeScript/Node.js, TDD, SOLID e injeção de dependências (`developer`), um planejador de testes E2E para explorar interfaces e mapear fluxos (`playwright-test-planner`), um gerador de testes automatizados baseado em planos de execução (`playwright-test-generator`) e um agente de autocorreção especializado em diagnosticar e reparar testes com falha (`playwright-test-healer`). Ao acoplar servidores MCP dedicados (como o `playwright-test`) diretamente na definição de cada agente, o projeto demonstra como estruturar ecossistemas multiagente colaborativos e confiáveis, onde cada modelo opera com limites claros, ferramentas nativas de browser/código e fluxos determinísticos de validação.
+
+## ENTENDENDO AGENTS E INSTRUCTIONS
+
+Explicar a estrutura do seu projeto para a IA, antes de executá-la:
+
+> https://10xrules.ai/
+
+Padrão para coloca na raiz do seu site e dizer o que tem no projeto (links, perguntas, etc):
+
+> https://llmstxt.org/
+
+Playwrigth - VS Code:
+
+> https://playwright.dev/docs/test-agents
+> npx playwright init-agents --loop=vscode
