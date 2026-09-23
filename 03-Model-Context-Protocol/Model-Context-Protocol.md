@@ -40,9 +40,9 @@ Imagine que você pede para sua IA:
 
 - **Sem MCP:** A IA diria: _"Eu não tenho acesso aos seus arquivos locais, não sei consultar seu banco de dados e não posso enviar mensagens no Slack por aqui. Por favor, copie e cole tudo manualmente."_
 - **Com MCP:** A IA usa:
-  1. O **MCP de Sistema de Arquivos** para ler o PDF no seu computador.
-  2. O **MCP do Banco de Dados** para consultar os dados consolidados de vendas.
-  3. O **MCP do Slack** para formatar e postar a mensagem no canal desejado.
+    1. O **MCP de Sistema de Arquivos** para ler o PDF no seu computador.
+    2. O **MCP do Banco de Dados** para consultar os dados consolidados de vendas.
+    3. O **MCP do Slack** para formatar e postar a mensagem no canal desejado.
 
 Tudo acontece de forma transparente, controlada e segura para o usuário.
 
@@ -86,14 +86,14 @@ Para desenvolvedores e arquitetos de software, o MCP é um protocolo cliente-ser
 O MCP suporta dois métodos principais de comunicação:
 
 1. **`stdio` (Standard Input / Output):**
-   - Utilizado para servidores executados localmente na mesma máquina.
-   - O Host inicia o servidor como um subprocesso e troca mensagens JSON-RPC através de `stdin` e `stdout`.
-   - **Vantagens:** Extremamente rápido, seguro por padrão (isolado na máquina local) e sem necessidade de expor portas de rede.
+    - Utilizado para servidores executados localmente na mesma máquina.
+    - O Host inicia o servidor como um subprocesso e troca mensagens JSON-RPC através de `stdin` e `stdout`.
+    - **Vantagens:** Extremamente rápido, seguro por padrão (isolado na máquina local) e sem necessidade de expor portas de rede.
 
 2. **`SSE` (Server-Sent Events via HTTP / WebSockets):**
-   - Utilizado para servidores MCP remotos ou distribuídos na nuvem.
-   - O cliente recebe streams de eventos do servidor e envia mensagens de volta via requisições HTTP POST.
-   - **Vantagens:** Ideal para arquiteturas corporativas centralizadas, microsserviços e integrações SaaS.
+    - Utilizado para servidores MCP remotos ou distribuídos na nuvem.
+    - O cliente recebe streams de eventos do servidor e envia mensagens de volta via requisições HTTP POST.
+    - **Vantagens:** Ideal para arquiteturas corporativas centralizadas, microsserviços e integrações SaaS.
 
 ---
 
@@ -168,12 +168,12 @@ A resposta curta e direta é: **Não, o MCP não substitui as APIs. Ele é um ad
 #### 🍽️ Analogia 1: O Restaurante Estrangeiro (A Cozinha vs. O Garçom Poliglota)
 
 - **A API é a Cozinha do Restaurante:**
-  - Toda cozinha profissional (API do Jira, GitHub, Slack, SAP) é incrível, mas tem regras internas complexas: onde fica cada ingrediente, como ligar o fogão industrial, ordem dos pedidos e senhas de acesso.
-  - Para que um cliente comum coma na cozinha, um desenvolvedor humano precisa estudar o manual daquela cozinha, vestir o avental e cozinhar manualmente o prato (escrevendo código, tratando headers HTTP e montando payloads).
+    - Toda cozinha profissional (API do Jira, GitHub, Slack, SAP) é incrível, mas tem regras internas complexas: onde fica cada ingrediente, como ligar o fogão industrial, ordem dos pedidos e senhas de acesso.
+    - Para que um cliente comum coma na cozinha, um desenvolvedor humano precisa estudar o manual daquela cozinha, vestir o avental e cozinhar manualmente o prato (escrevendo código, tratando headers HTTP e montando payloads).
 - **O MCP é o Garçom Poliglota com o Cardápio Padronizado:**
-  - O servidor MCP é o garçom. Ele conhece a cozinha por dentro (a API) e entrega para a IA um cardápio universal e padronizado na língua que a IA entende (_JSON Schema_ com nomes e descrições claras das funções).
-  - A IA diz: _"Quero criar um chamado para corrigir o bug X no Jira"_.
-  - O garçom (MCP) anota o pedido, vai até a cozinha (API), prepara toda a requisição técnica com os cabeçalhos certos, executa e traz de volta apenas o prato pronto para a IA.
+    - O servidor MCP é o garçom. Ele conhece a cozinha por dentro (a API) e entrega para a IA um cardápio universal e padronizado na língua que a IA entende (_JSON Schema_ com nomes e descrições claras das funções).
+    - A IA diz: _"Quero criar um chamado para corrigir o bug X no Jira"_.
+    - O garçom (MCP) anota o pedido, vai até a cozinha (API), prepara toda a requisição técnica com os cabeçalhos certos, executa e traz de volta apenas o prato pronto para a IA.
 
 ---
 
@@ -412,3 +412,98 @@ Playwrigth - VS Code:
 
 > https://playwright.dev/docs/test-agents
 > npx playwright init-agents --loop=vscode
+
+# Projeto 4 - Skills
+
+## ENTENDENDO SKILLS
+
+Skills são módulos de conhecimento e instruções que especializam um agente de IA para executar tarefas de um determinado domínio. Em vez de depender apenas do conhecimento geral do modelo, uma skill fornece contexto, padrões de trabalho, comandos, restrições e exemplos que orientam o agente durante a execução de uma atividade. Dessa forma, o agente pode carregar a orientação adequada somente quando a tarefa exigir aquela especialização.
+
+Este projeto demonstra como descobrir, instalar e utilizar skills no ambiente de desenvolvimento. As skills são obtidas por meio do ecossistema [skills.sh](https://www.skills.sh/) e instaladas com o comando `npx skills add`. Depois da instalação, elas podem ser utilizadas pelo agente para interpretar solicitações relacionadas ao seu domínio, consultar referências e sugerir ou executar comandos padronizados.
+
+### Estrutura do projeto
+
+O diretório `03-Model-Context-Protocol/04-Skills` contém os seguintes elementos:
+
+- `.agents/skills/`: skills instaladas localmente para uso pelo agente.
+- `skills-lock.json`: registro das skills instaladas, suas origens, caminhos e hashes de integridade.
+- `refs.txt`: links e referências para pesquisa sobre skills, agentes e boas práticas.
+- `video.mp4`: vídeo de exemplo utilizado para demonstrar análise e processamento de mídia.
+- `video_bw.mp4`: outra variação de vídeo para testes de transformação ou comparação.
+
+### Skills instaladas
+
+O projeto utiliza três skills principais:
+
+- **find-skills**: pesquisa o catálogo do skills.sh para localizar skills por tema e apresenta seus comandos de instalação.
+- **neo4j-cypher-guide**: fornece orientação para escrever consultas Cypher, incluindo padrões para subconsultas, sintaxe atual e recursos do Neo4j.
+- **ffmpeg**: orienta o processamento de vídeo e áudio com FFmpeg, incluindo conversão de formatos, redimensionamento, compressão, extração de áudio, cortes e preparação de assets para projetos Remotion.
+
+O arquivo `skills-lock.json` funciona como um inventário reproduzível. Ele registra, por exemplo, que a skill `ffmpeg` vem do repositório `digitalsamba/claude-code-video-toolkit`, enquanto `find-skills` vem de `vercel-labs/skills` e `neo4j-cypher-guide` vem de `tomasonjo/blogs`.
+
+### Exemplo de instalação
+
+Uma skill pode ser instalada informando o repositório e o nome da skill:
+
+```bash
+npx skills add https://github.com/digitalsamba/claude-code-video-toolkit --skill ffmpeg
+```
+
+Para instalar globalmente e disponibilizá-la em diferentes projetos, pode-se utilizar:
+
+```bash
+npx skills add digitalsamba/claude-code-video-toolkit@ffmpeg -g -y
+```
+
+Após a instalação, o agente consulta o arquivo `SKILL.md` da skill quando recebe uma solicitação compatível. A skill não substitui o programa executável: no caso do FFmpeg, o pacote `ffmpeg` também precisa estar instalado no sistema para que comandos como `ffmpeg` e `ffprobe` possam ser executados.
+
+### Demonstração com FFmpeg
+
+A skill de FFmpeg é utilizada neste projeto para analisar e preparar os vídeos de exemplo. O fluxo básico é:
+
+1. Identificar o arquivo de entrada e o objetivo da transformação.
+2. Consultar os metadados com `ffprobe`, verificando duração, resolução, codec, taxa de quadros e faixas de áudio.
+3. Escolher o comando FFmpeg apropriado para converter, redimensionar, comprimir ou cortar o vídeo.
+4. Validar o arquivo de saída com `ffprobe` e, quando necessário, extrair frames para uma inspeção visual.
+
+Por exemplo, os metadados de `video.mp4` podem ser consultados com:
+
+```bash
+ffprobe -v quiet -print_format json -show_format -show_streams video.mp4
+```
+
+Esse vídeo possui 10 segundos de duração, resolução Full HD de 1920x1080, proporção 16:9, 60 quadros por segundo e codificação H.264. Ele não possui faixa de áudio. A extração de frames permite observar que o conteúdo apresenta uma cena 3D estilizada de uma árvore sobre uma colina, com vegetação, pedras e uma abertura escura na base da árvore. A câmera realiza uma aproximação suave durante a cena.
+
+Para gerar uma versão menor para a web, por exemplo, a skill recomenda combinar o codec H.264, um fator de qualidade CRF e `faststart`:
+
+```bash
+ffmpeg -i video.mp4 \
+    -c:v libx264 -crf 23 -preset medium \
+    -pix_fmt yuv420p -movflags +faststart \
+    video-web.mp4
+```
+
+O projeto, portanto, funciona como um laboratório para compreender o ciclo completo de uma skill: descobrir uma capacidade, instalar suas instruções, registrar a dependência no lockfile, disponibilizar as ferramentas do sistema necessárias e aplicar a orientação a um arquivo real.
+
+Site da versel que disponibiliza diversas Skills prontas para serem utilizadas:
+
+> https://www.skills.sh/
+
+Exemplo, ensina a IA a navegar pelo Browse:
+
+> https://www.skills.sh/vercel-labs/agent-browser/agent-browser
+> https://github.com/vercel-labs/agent-browser
+
+Exemplo, procura por skills que podemos utilizar em nossos projetos:
+
+> https://www.skills.sh/vercel-labs/skills/find-skills
+
+```js
+npx skills add https://github.com/vercel-labs/skills --skill find-skills
+```
+
+Neo4J:
+
+```js
+npx skills add https://github.com/tomasonjo/blogs --skill neo4j-cypher-guide
+```
