@@ -32,3 +32,6 @@ Comandos:
 
  sudo rm -rf /home/atom/projects/AI_Practice/09-Grafana_MCP
  sudo rm -rf /home/atom/projects/AI_Practice/13-RAG_embeddings_Neo4j/
+
+ Prompt:
+ "03-Model-Context-Protocol/05-Creating-Your-Own-MCP" olhe o projeto que está nessa pasta, gere uma descrição e explicação para ele, explique também cada arquivo e cada pasta, quais são suas resposnsabilidade e o que fazem. gere o resultado no arquivo "03-Model-Context-Protocol/Model-Context-Protocol.md" a partir da linha 516
