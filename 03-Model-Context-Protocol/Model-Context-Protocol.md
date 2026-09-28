@@ -544,4 +544,6 @@ Os testes em `tests/` verificam se as tools, o resource e os prompts estão func
 
 Em resumo, o projeto é um laboratório completo para aprender a definir, executar, testar e integrar um servidor MCP. O exemplo usa criptografia, mas a mesma estrutura pode ser adaptada para bancos de dados, APIs, arquivos e automações.
 
-# Projeto 6 -
+# Projeto 6 - Expor API´s públicas tranformando em MCP´s:
+
+## TEMPLATE INICIAL E ARQUITETURA + BOAS PRÁTICAS DE ORGANIZAÇÃO DE CÓDIGO E ESTRUTURA DE PROJETO
