@@ -544,6 +544,66 @@ Os testes em `tests/` verificam se as tools, o resource e os prompts estão func
 
 Em resumo, o projeto é um laboratório completo para aprender a definir, executar, testar e integrar um servidor MCP. O exemplo usa criptografia, mas a mesma estrutura pode ser adaptada para bancos de dados, APIs, arquivos e automações.
 
-# Projeto 6 - Expor API´s públicas tranformando em MCP´s:
+# Projeto 6 - Expor uma API legada como MCP
 
-## TEMPLATE INICIAL E ARQUITETURA + BOAS PRÁTICAS DE ORGANIZAÇÃO DE CÓDIGO E ESTRUTURA DE PROJETO
+Este projeto mostra como disponibilizar uma API REST de clientes para agentes de IA sem reescrevê-la. O servidor `customers-mcp` traduz chamadas MCP em requisições HTTP para a API Fastify, que executa o CRUD no MongoDB.
+
+### Fluxo
+
+1. O VS Code inicia `customers-mcp/src/index.ts` via `stdio`.
+2. `src/mcp/server.ts` registra as tools, o resource e o prompt.
+3. As tools passam por `CustomerService` e `CustomerHttpClient`.
+4. O cliente HTTP chama `http://localhost:9999/v1`.
+5. A API Fastify acessa o MongoDB e devolve o resultado ao agente.
+
+### Estrutura resumida
+
+#### `customers-mcp/`
+
+Servidor MCP em TypeScript.
+
+- `src/index.ts`: inicia o servidor MCP.
+- `src/mcp/server.ts`: registra todas as capacidades MCP.
+- `src/domain/customer.ts`: define modelos e validações Zod.
+- `src/application/customerService.ts`: concentra a lógica de busca e operações.
+- `src/infrastructure/customerHttpClient.ts`: chama a API REST.
+- `src/mcp/tools/`: expõe `list_customers`, `get_customer`, `create_customer`, `update_customer` e `delete_customer`.
+- `src/mcp/resources/apiInfo.ts`: publica `customers://api-info` com a documentação da API.
+- `src/mcp/prompts/findCustomer.ts`: fornece um prompt pronto para busca de clientes.
+- `tests/`: testa tools e resource usando um cliente MCP real.
+- `package.json`, `package-lock.json` e `tsconfig.json`: dependências, scripts e configuração TypeScript.
+- `.vscode/mcp.json`: configuração para o VS Code iniciar o servidor.
+
+#### `nodejs-fastify-mongodb-crud/`
+
+API REST legada e banco de dados.
+
+- `src/index.js`: define health check e endpoints CRUD em `/v1/customers`.
+- `src/config.js`: configura a conexão com o MongoDB por variáveis de ambiente.
+- `src/db.js`: cria o cliente MongoDB e fornece a coleção `customers`.
+- `config/seed.js` e `config/users.js`: carregam dados iniciais para os testes.
+- `test/api.test.js`: testa os endpoints da API.
+- `docker-compose.yml`: sobe a API na porta `9999` e o MongoDB na porta `27017`.
+- `Dockerfile`, `package.json` e `README.md`: empacotamento, scripts e documentação.
+
+### Operações disponíveis
+
+`GET /v1/customers`, `GET /v1/customers/:id`, `POST /v1/customers`, `PUT /v1/customers/:id` e `DELETE /v1/customers/:id`.
+
+### Execução
+
+```bash
+cd 03-Model-Context-Protocol/06-Your-Legacy-API-As-MCP/nodejs-fastify-mongodb-crud
+npm install
+npm run docker:infra:up
+```
+
+Em outro terminal:
+
+```bash
+cd 03-Model-Context-Protocol/06-Your-Legacy-API-As-MCP/customers-mcp
+npm install
+npm start
+```
+
+Em resumo, a API continua cuidando do banco e o MCP fornece uma interface padronizada para que agentes de IA usem suas operações.
