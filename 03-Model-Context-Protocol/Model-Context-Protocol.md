@@ -607,3 +607,22 @@ npm start
 ```
 
 Em resumo, a API continua cuidando do banco e o MCP fornece uma interface padronizada para que agentes de IA usem suas operações.
+
+## CRIANDO TOOLS DE LISTAGEM E CRIAÇÃO DE CLIENTES
+
+### `06-Your-Legacy-API-As-MCP/customers-mcp/src/mcp/tools`:
+
+Eu construo uma suíte de testes (`Customer MCP Suite`) que sobe um **cliente MCP real** via `stdio`, conecta-se ao servidor `customers-mcp` (`src/index.ts`) e valida o contrato das tools de CRUD de clientes. Não é um mock isolado: `createTestClient()` lança o processo Node, estabelece o transporte e, ao final, fecha o cliente.
+
+O arquivo representa o **recurso de verificação ponta a ponta** das tools registradas em `src/mcp/server.ts`. Cada `it(...)` chama `client.callTool({ name, arguments })` e inspeciona `structuredContent`, o mesmo formato que um agente de IA receberia.
+
+#### Tools exercitadas
+
+| Tool              | O que a tool faz no servidor                                                                                 | O que o teste prova                                                                                                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `list_customers`  | Lista todos os clientes pela API (`GET /v1/customers`). Sem argumentos. Devolve `{ customers: Customer[] }`. | O retorno é um **array**. Exemplo: `callTool({ name: 'list_customers', arguments: {} })` e `assert.ok(Array.isArray(result.structuredContent.customers))`.                          |
+| `create_customer` | Cria um cliente (`POST /v1/customers`) com `name` e `phone`. Devolve `{ id, message }`.                      | Há um `id` e a mensagem de confirmação. Exemplo: cria `{ name: 'Ana', phone: '999-000-111' }` e espera `user Ana created!`.                                                         |
+| `update_customer` | Atualiza nome e/ou telefone pelo `_id` (`PUT /v1/customers/:id`). Devolve `{ id, message }`.                 | Primeiro **cria** o registro, depois atualiza `_id`, `name` e `phone`. Exemplo: cria `Xuxa da Silva`, atualiza o nome para `Jozé da silva` e confirma que o `id` permanece o mesmo. |
+| `delete_customer` | Remove o cliente pelo `_id` (`DELETE /v1/customers/:id`). Devolve `{ id, message }`.                         | Primeiro **cria** `Mariazina`, depois chama `delete_customer` com `{ _id: id }` e espera `User ${id} deleted!` com o mesmo `id`.                                                    |
+
+Os tipos `CustomersResult`, `CustomerResult` e `CustomerMutationResult` espelham o domínio em `src/domain/customer.ts`: cliente (`name`, `phone`, `_id` opcional) e mutação (`id`, `message`). Assim o teste documenta, na prática, como um agente deve invocar listar, criar, atualizar e excluir clientes pelo MCP.
