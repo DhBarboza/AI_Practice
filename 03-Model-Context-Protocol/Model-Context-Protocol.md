@@ -629,6 +629,10 @@ Os tipos `CustomersResult`, `CustomerResult` e `CustomerMutationResult` espelham
 
 # Projeto 7 - Autenticação, Autorização e Service Tokens em Servidores MCP´s
 
+## Steps:
+
+- IMPLEMENTANDO AUTENTICAÇÃO COM RBAC E AUTENTICAÇÃO COM JWT EM WEB API
+
 Este projeto demonstra como disponibilizar uma API REST protegida para agentes de IA por meio de um servidor MCP. A API continua responsável pelos dados e pelas regras de segurança; o MCP traduz as chamadas padronizadas do agente em requisições HTTP.
 
 ### Componentes
