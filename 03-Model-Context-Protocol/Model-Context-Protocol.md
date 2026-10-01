@@ -652,11 +652,4 @@ O login de usuários em `/v1/auth/login` retorna um JWT. Para integração de se
 
 A API requer Node.js 20 ou superior e MongoDB; o MCP requer Node.js `v24.14.0`. O Compose do projeto da API pode iniciar o MongoDB e a API, e o MCP é executado separadamente após configurar `SERVICE_TOKEN`. Os testes da API cobrem login, permissões, limite de requisições e CRUD; os testes do MCP exercitam as ferramentas e o recurso por meio de um cliente MCP real. Os testes de integração dependem da API e do banco estarem disponíveis.
 
-### Pontos de atenção
-
-- As contas usadas nos testes e nos READMEs não coincidem com as contas atualmente definidas em `src/auth.js`; os fluxos que usam as contas documentadas podem falhar.
-- O rate limit efetivo é 90 por minuto e está registrado globalmente, embora o README da API mencione 3 por minuto para emissão de tokens.
-- O arquivo `.vscode/mcp.json` do MCP contém uma vírgula final inválida em JSON estrito e um token literal. Segredos de demonstração também estão no código e não devem ser reutilizados em produção.
-- O README de `customers-mcp` descreve um servidor de criptografia, não o servidor de clientes atual.
-
 Para a explicação completa, consulte [`07-API-Security-Auth-Rate-Limiting/doc/Documentation.md`](07-API-Security-Auth-Rate-Limiting/doc/Documentation.md).
