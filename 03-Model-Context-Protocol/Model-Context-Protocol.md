@@ -626,3 +626,5 @@ O arquivo representa o **recurso de verificação ponta a ponta** das tools regi
 | `delete_customer` | Remove o cliente pelo `_id` (`DELETE /v1/customers/:id`). Devolve `{ id, message }`.                         | Primeiro **cria** `Mariazina`, depois chama `delete_customer` com `{ _id: id }` e espera `User ${id} deleted!` com o mesmo `id`.                                                    |
 
 Os tipos `CustomersResult`, `CustomerResult` e `CustomerMutationResult` espelham o domínio em `src/domain/customer.ts`: cliente (`name`, `phone`, `_id` opcional) e mutação (`id`, `message`). Assim o teste documenta, na prática, como um agente deve invocar listar, criar, atualizar e excluir clientes pelo MCP.
+
+# Projeto 7 - Autenticação, Autorização e Service Tokens em Servidores MCP´s
