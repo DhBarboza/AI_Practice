@@ -628,3 +628,35 @@ O arquivo representa o **recurso de verificação ponta a ponta** das tools regi
 Os tipos `CustomersResult`, `CustomerResult` e `CustomerMutationResult` espelham o domínio em `src/domain/customer.ts`: cliente (`name`, `phone`, `_id` opcional) e mutação (`id`, `message`). Assim o teste documenta, na prática, como um agente deve invocar listar, criar, atualizar e excluir clientes pelo MCP.
 
 # Projeto 7 - Autenticação, Autorização e Service Tokens em Servidores MCP´s
+
+Este projeto demonstra como disponibilizar uma API REST protegida para agentes de IA por meio de um servidor MCP. A API continua responsável pelos dados e pelas regras de segurança; o MCP traduz as chamadas padronizadas do agente em requisições HTTP.
+
+### Componentes
+
+- `07-API-Security-Auth-Rate-Limiting/nodejs-fastify-mongodb-crud-z/`: API Node.js com Fastify e MongoDB. Implementa autenticação, autorização por papéis (RBAC), operações CRUD e limitação de requisições.
+- `07-API-Security-Auth-Rate-Limiting/customers-mcp/`: servidor MCP em TypeScript, conectado à API por HTTP e executado por transporte `stdio`.
+- `07-API-Security-Auth-Rate-Limiting/doc/Documentation.md`: documentação detalhada da arquitetura e das responsabilidades de cada arquivo e diretório.
+
+### Fluxo de integração
+
+1. O cliente MCP inicia o servidor `customers-mcp` usando `stdio`.
+2. O servidor registra cinco ferramentas de clientes: `list_customers`, `get_customer`, `create_customer`, `update_customer` e `delete_customer`. Também publica o recurso `customers://api-info` e o prompt `find_customer_prompt`.
+3. As ferramentas passam por `CustomerService` e `CustomerHttpClient`, que envia requisições à API em `http://localhost:9999/v1` com um Bearer token.
+4. A API valida a autenticação e as permissões, aplica o rate limit e lê ou altera a coleção `customers` no MongoDB.
+
+### Autenticação e autorização
+
+O login de usuários em `/v1/auth/login` retorna um JWT. Para integração de serviço, `/v1/auth/service-token` emite um UUID após validar as credenciais e o segredo administrativo; o MCP recebe esse token pela variável `SERVICE_TOKEN`. `admin` pode ler e alterar clientes, enquanto `member` tem acesso somente de leitura. O código configura o rate limit em 90 requisições por minuto, usando o token Bearer como chave quando disponível.
+
+### Execução e testes
+
+A API requer Node.js 20 ou superior e MongoDB; o MCP requer Node.js `v24.14.0`. O Compose do projeto da API pode iniciar o MongoDB e a API, e o MCP é executado separadamente após configurar `SERVICE_TOKEN`. Os testes da API cobrem login, permissões, limite de requisições e CRUD; os testes do MCP exercitam as ferramentas e o recurso por meio de um cliente MCP real. Os testes de integração dependem da API e do banco estarem disponíveis.
+
+### Pontos de atenção
+
+- As contas usadas nos testes e nos READMEs não coincidem com as contas atualmente definidas em `src/auth.js`; os fluxos que usam as contas documentadas podem falhar.
+- O rate limit efetivo é 90 por minuto e está registrado globalmente, embora o README da API mencione 3 por minuto para emissão de tokens.
+- O arquivo `.vscode/mcp.json` do MCP contém uma vírgula final inválida em JSON estrito e um token literal. Segredos de demonstração também estão no código e não devem ser reutilizados em produção.
+- O README de `customers-mcp` descreve um servidor de criptografia, não o servidor de clientes atual.
+
+Para a explicação completa, consulte [`07-API-Security-Auth-Rate-Limiting/doc/Documentation.md`](07-API-Security-Auth-Rate-Limiting/doc/Documentation.md).

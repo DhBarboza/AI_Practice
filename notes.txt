@@ -35,3 +35,7 @@ Comandos:
 
  Prompt geração de documentação:
  "03-Model-Context-Protocol/05-Creating-Your-Own-MCP" olhe o projeto que está nessa pasta, gere uma descrição e explicação para ele, explique também cada arquivo e cada pasta, quais são suas resposnsabilidade e o que fazem. gere o resultado no arquivo "03-Model-Context-Protocol/Model-Context-Protocol.md" a partir da linha 516
+
+"03-Model-Context-Protocol/07-API-Security-Auth-Rate-Limiting" olhe o projeto que está nessa pasta, gere uma descrição e explicação para ele, explique também cada arquivo e cada pasta, quais são suas resposnsabilidade e o que fazem. gere o resultado no arquivo "03-Model-Context-Protocol/07-API-Security-Auth-Rate-Limiting/doc/Documentation.md"
+
+Gere um resumo dessa documentação em "03-Model-Context-Protocol/Model-Context-Protocol.md"
