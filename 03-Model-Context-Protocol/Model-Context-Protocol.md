@@ -657,3 +657,38 @@ O login de usuários em `/v1/auth/login` retorna um JWT. Para integração de se
 A API requer Node.js 20 ou superior e MongoDB; o MCP requer Node.js `v24.14.0`. O Compose do projeto da API pode iniciar o MongoDB e a API, e o MCP é executado separadamente após configurar `SERVICE_TOKEN`. Os testes da API cobrem login, permissões, limite de requisições e CRUD; os testes do MCP exercitam as ferramentas e o recurso por meio de um cliente MCP real. Os testes de integração dependem da API e do banco estarem disponíveis.
 
 Para a explicação completa, consulte [`07-API-Security-Auth-Rate-Limiting/doc/Documentation.md`](07-API-Security-Auth-Rate-Limiting/doc/Documentation.md).
+
+## AUTENTICAÇÃO E AUTORIZAÇÃO COM SERVICE TOKENS EM WEB APIS
+
+Neste projeto, o servidor MCP chama a API REST por HTTP, sem acessar diretamente o MongoDB. Para obter acesso, envia usuário, senha e segredo administrativo a `POST /v1/auth/service-token`; a API valida as credenciais, gera um UUID de serviço associado à conta e ao papel (`admin` ou `member`) e o cliente MCP o envia nas chamadas seguintes pelo cabeçalho Bearer, usando a variável de ambiente `SERVICE_TOKEN`. Em cada requisição protegida, a API reconhece o UUID guardado em memória ou tenta validar o token como JWT; falha na autenticação resulta em `401 Unauthorized`. Usuários autenticados podem consultar clientes, mas somente `admin` pode criá-los, atualizá-los ou excluí-los; falta de permissão resulta em `403 Forbidden`.
+
+Diferentemente do JWT emitido por `/v1/auth/login`, o service token é um UUID opaco, mantido em memória, sem expiração ou revogação implementadas, e deixa de funcionar quando a API reinicia. A API limita chamadas a 90 por minuto, contabilizadas pelo cabeçalho de autorização ou, na ausência dele, pelo IP, respondendo `429 Too Many Requests` ao exceder o limite. O segredo administrativo não transforma uma conta `member` em `admin`; credenciais e segredos definidos no código são apenas demonstrativos e devem ser protegidos adequadamente em produção. Para detalhes, consulte [`auth.js`](07-API-Security-Auth-Rate-Limiting/nodejs-fastify-mongodb-crud-z/src/auth.js), [`index.js`](07-API-Security-Auth-Rate-Limiting/nodejs-fastify-mongodb-crud-z/src/index.js), [`customer-http-client.ts`](07-API-Security-Auth-Rate-Limiting/customers-mcp/src/infrastructure/customer-http-client.ts) e a [documentação do módulo](07-API-Security-Auth-Rate-Limiting/doc/Documentation.md).
+
+## CONTROLANDO ACESSO POR TOKENS COM RATE LIMITING
+
+A API protege as rotas de clientes verificando o token enviado no cabeçalho `Authorization`: service tokens válidos são associados ao usuário e ao papel guardados pela API; caso contrário, o middleware tenta validar o valor como JWT. Chamadas sem credenciais válidas recebem `401 Unauthorized`, e as operações de escrita continuam restritas a usuários com papel `admin`, retornando `403 Forbidden` quando o papel não permite a ação. As rotas de saúde e autenticação são públicas.
+
+Além da autenticação, o plugin global de rate limiting permite até 90 requisições por minuto. A chave do limite é o token extraído do cabeçalho `Authorization`; se não houver esse cabeçalho, a API usa o IP do cliente. Assim, clientes com tokens diferentes têm contagens separadas, enquanto chamadas sem token compartilham o limite associado ao IP. Ao ultrapassar a cota, a API responde `429 Too Many Requests`; os testes confirmam que as primeiras 90 chamadas com o mesmo token passam e a seguinte é limitada.
+
+O controle é dividido entre estes arquivos:
+
+- `auth.js`: define a chave do limite (token `Authorization` ou IP) e autentica as requisições.
+- `config.js`: configura o limite de 90 requisições por minuto.
+- `index.js`: registra o plugin de rate limiting; também define as rotas e restringe operações de escrita a `admin`.
+- `api.test.js`: testa o acesso com service token e verifica que a requisição seguinte ao limite recebe `429`.
+
+## USANDO SERVICE TOKENS EM NOSSO SERVIDOR MCP + RATE LIMITING
+
+O servidor MCP recebe o service token pela variável de ambiente `SERVICE_TOKEN` e usa esse valor para construir o `CustomerService`. O `CustomerHttpClient` inclui o token no cabeçalho `Authorization` em cada chamada à API; assim, todas as ferramentas MCP — como listar, consultar, criar, atualizar e excluir clientes — passam pela autenticação, autorização e limite de requisições aplicados pela API. O servidor interrompe a inicialização se `SERVICE_TOKEN` não estiver configurado.
+
+O rate limiting é aplicado pela API, não pelo protocolo MCP: chamadas com o mesmo token compartilham o limite de 90 requisições por minuto configurado no serviço. Se a API responder `401`, `403` ou `429`, o cliente HTTP converte a resposta em erros de domínio específicos e as ferramentas MCP retornam o erro ao agente, em vez de tratarem a chamada como sucesso.
+O uso de service tokens e o rate limiting envolve estes arquivos:
+
+- `customers-mcp/src/index.ts`: exige `SERVICE_TOKEN` ao iniciar o servidor MCP.
+- `customers-mcp/src/mcpserver.ts`: fornece o token ao `CustomerService` e registra as ferramentas MCP.
+- `customers-mcp/src/infrastructure/customer-http-client.ts`: envia o token no cabeçalho `Authorization` e trata respostas HTTP `401`, `403` e `429`.
+- `customers-mcp/src/domain/errors.ts`: define erros específicos para autenticação, autorização e limite excedido.
+- `nodejs-fastify-mongodb-crud-z/src/auth.js`: autentica os service tokens e define a chave usada pelo rate limiter.
+- `nodejs-fastify-mongodb-crud-z/src/config.js`: configura o limite de 90 requisições por minuto.
+- `nodejs-fastify-mongodb-crud-z/src/index.js`: registra o plugin de rate limiting e define as permissões das rotas da API.
+- `nodejs-fastify-mongodb-crud-z/src/api.test.js`: verifica o acesso com service token e que a chamada após o limite recebe `429`.
