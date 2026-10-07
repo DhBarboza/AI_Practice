@@ -692,3 +692,92 @@ O uso de service tokens e o rate limiting envolve estes arquivos:
 - `nodejs-fastify-mongodb-crud-z/src/config.js`: configura o limite de 90 requisições por minuto.
 - `nodejs-fastify-mongodb-crud-z/src/index.js`: registra o plugin de rate limiting e define as permissões das rotas da API.
 - `nodejs-fastify-mongodb-crud-z/src/api.test.js`: verifica o acesso com service token e que a chamada após o limite recebe `429`.
+
+# Projeto 8 - Públicando MCP´s
+
+## PUBLICANDO SERVIDORES MCP EM NPM REGISTRY (PUBLICO) E VERDACCIO (PRIVADO)
+
+### VERDACCIO
+
+O Verdaccio é um registro privado de pacotes npm, usado para hospedar e gerenciar bibliotecas internas ou compartilhadas dentro de uma equipe ou organização, funcionando como um repositório local de pacotes com controle de acesso, autenticação e versionamento, além de permitir cache e maior autonomia em relação ao registro público do npm.
+
+É o fluxo típico de “publicar um pacote privado no Verdaccio”:
+
+Execução:
+
+- `08-Publishing-MCPs-Private-NPM/customers-mcp-z`: docker compose up -d
+- Create User: npm adduser --registry http://localhost:4873/
+- npm login --registry http://localhost:4873
+- npm version patch && npm publish --registry http://localhost:4873
+
+Essa sequência inicia um registro npm privado local, autentica um usuário nele e publica um pacote privado com uma nova versão, permitindo que a biblioteca seja compartilhada internamente por outros projetos usando o registry local em http://localhost:4873.
+
+Para usar o MCP públicado:
+
+Adicionar nas suas configurações MCP `mcp.json`
+
+```json
+{
+    "servers": {
+        "customers-mcp": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "--registry",
+                "http://localhost:4873",
+                "@erickwendel/ew-customers-mcp@latest"
+            ],
+            "env": {
+                "SERVICE_TOKEN": "7befa3be-ed41-4ccb-a473-33a9db6db5a5"
+            }
+        }
+    }
+}
+```
+
+Esse trecho configura um servidor MCP chamado `customers-mcp`:
+
+- **`servers`**: lista de servidores MCP disponíveis para o cliente.
+- **`customers-mcp`**: nome usado para identificar essa conexão.
+- **`command: "npx"`**: comando que inicia o processo; `npx` executa um pacote npm sem exigir uma instalação global prévia.
+- **`args`**: argumentos passados ao `npx`. `-y` aceita automaticamente a instalação quando necessário; `@erickwendel/customers-mcp@latest` indica o pacote e solicita a versão mais recente. A linha comentada mostra uma alternativa para buscar o pacote no registry privado em `http://localhost:4873`; como está comentada, **não é usada**.
+- **`env`**: variáveis de ambiente entregues ao processo. `SERVICE_TOKEN` parece ser uma credencial usada pelo servidor para acessar o serviço de clientes.
+
+Atenção: o token exibido é apenas um exemplo
+
+### Para gerar token:
+
+Na pasta `08-Publishing-MCPs-Private-NPM/customers-mcp-z`, execute:
+
+```bash
+sh getServiceToken.sh
+```
+
+### NPM
+
+Execução:
+
+- Acessar **npmjs.com** criar conta
+- `08-Publishing-MCPs-Private-NPM/customers-mcp-z`: npm login --registry https://registry.npmjs.org/
+- Logar com sua conta
+- npm version patch && npm publish --access public --registry https://registry.npmjs.org/
+
+Realizado o upload do pacote para NPM
+
+Para usar o MCP públicado:
+
+Adicionar nas suas configurações MCP `mcp.json`
+
+```json
+{
+    "servers": {
+        "customers-mcp": {
+            "command": "npx",
+            "args": ["-y", "@erickwendel/customers-mcp@latest"],
+            "env": {
+                "SERVICE_TOKEN": "7befa3be-ed41-4ccb-a473-33a9db6db5a5"
+            }
+        }
+    }
+}
+```
