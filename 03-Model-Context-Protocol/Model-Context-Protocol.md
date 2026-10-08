@@ -781,3 +781,59 @@ Adicionar nas suas configurações MCP `mcp.json`
     }
 }
 ```
+
+## INDO ALÉM EM SERVICORES MCP: DIFERENTES TRANSPORTS E IDEIAS PARA SEU PRÓXIMO SERVIDOR
+
+- Existem outras formas de transportar o MCP
+- Nos exemplos usamos stdio, um apcote NPM executado no terminal, do ambiente do cliente final
+- Outras opções:
+    - Streamable
+    - Server-Sent_events (SSE) Deprecated
+    - Hospedagem no Docker
+
+Listagem de MCP´s disponiveis: awesome-mcp-servers
+
+# Projeto 9 - Usando MCP com LangChain:
+
+## Resumo da documentação
+
+O diretório `09-Using-MCP-With-Langchain` reúne dois projetos Node.js independentes que demonstram a integração de ferramentas MCP com serviços de clientes:
+
+- **`01-multiple-mcp-tools-z/`** implementa um agente em TypeScript com LangChain e LangGraph. Um servidor HTTP Fastify recebe perguntas em `POST /chat`; o grafo encaminha a solicitação ao agente, que usa um modelo disponibilizado pelo OpenRouter e pode invocar ferramentas MCP de clientes ou de sistema de arquivos.
+- **`nodejs-fastify-mongodb-crud-z/`** implementa uma API REST de clientes em JavaScript com Fastify e MongoDB. Demonstra operações CRUD, autenticação JWT e por service token, autorização RBAC e limitação de requisições.
+
+### Como os componentes se relacionam
+
+No agente, `src/index.ts` inicia o servidor e envia uma pergunta de demonstração; `src/server.ts` valida e encaminha a pergunta; os módulos em `src/graph/` definem o estado, o nó do agente e o fluxo LangGraph. `src/services/openRouterService.ts` integra o modelo e carrega as ferramentas, enquanto `src/services/mcpService.ts` descobre as ferramentas MCP configuradas em `src/tools/`. `customersTool.ts` conecta-se ao pacote MCP externo de clientes por `stdio` e requer `SERVICE_TOKEN`; `fsTool.ts` expõe a pasta local `data/` ao servidor MCP de arquivos. O prompt fica em `src/prompts/v1/agentNode.ts` e os parâmetros do modelo em `src/config.ts`.
+
+Na API CRUD, `src/index.js` registra os endpoints e conecta as rotas à coleção MongoDB. `src/auth.js` trata login, validação de JWT/service tokens e papéis; `src/config.js` define conexão, banco, coleção e limite de requisições; `src/db.js` cria o cliente MongoDB. Os dados de demonstração são definidos em `config/users.js` e carregados por `config/seed.js`. `test/api.test.js` cobre autenticação, autorização, rate limiting e operações CRUD.
+
+O adaptador MCP de clientes é um pacote externo (`@erickwendel/ew-customers-mcp`), não implementado nesta pasta. A API CRUD fornece a emissão do token e os endpoints de clientes usados pelo cenário; os dois projetos são executados separadamente.
+
+### Arquivos de suporte e execução
+
+- `package.json` e `package-lock.json` de cada projeto definem dependências e scripts; `tsconfig.json` configura a verificação TypeScript do agente.
+- `.env.example` documenta as variáveis do agente, como `OPENROUTER_API_KEY` e `SERVICE_TOKEN`; segredos reais devem ficar apenas em `.env`, não versionados.
+- `langgraph.json` aponta para o grafo servido pelo CLI LangGraph; `getServiceToken.sh` solicita um service token à API e o grava em `.env`.
+- `Dockerfile` e `docker-compose.yml` da API CRUD permitem executar a aplicação e o MongoDB em ambiente local. O workflow `.github/workflows/run_tests.yaml` automatiza os testes; `.vscode/` contém configurações de depuração/editor.
+- `README.md` explica instalação, rotas e autenticação da API; `LICENSE` contém sua licença; `data/users.json` é um arquivo auxiliar e não a fonte do seed, que é `config/users.js`.
+
+Para executar o agente, instale suas dependências e configure `OPENROUTER_API_KEY` e `SERVICE_TOKEN`; o servidor Fastify usa a porta 3000. Para a API CRUD, inicie o MongoDB e a aplicação (porta 9999 por padrão); os testes também precisam de MongoDB acessível. O agente declara Node.js `>=24.10.0`, embora `langgraph.json` especifique a versão 20. Os usuários, senhas e segredos embutidos na API são apenas de demonstração; service tokens ficam em memória e são perdidos quando o processo reinicia.
+
+Gerar service token:
+
+- Executar: `sh getServiceToken.sh`
+
+Subir API:
+
+- docker-compose down --volumes
+- docker rm -f $(docker ps -aq)
+- docker-compose up -d --build --wait
+
+Na pasta do MCP:
+
+- node --watch --inspect --env-file .env src/index.ts
+
+Interface para visualizar as ações do MCP:
+
+- npx @langchain/langgraph-cli dev
