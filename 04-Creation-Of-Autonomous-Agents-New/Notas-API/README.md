@@ -1,52 +1,62 @@
 # notas-api
 
-Esqueleto de uma API para gerenciamento de notas, desenvolvido em Node.js e TypeScript. A estrutura inicial inclui validação de dados com Zod e comandos para desenvolvimento, CLI, testes e verificação de tipos.
+API para gerenciamento de tarefas em Node.js + TypeScript, com HTTP e CLI para criar, listar, concluir e remover tarefas.
 
-> **Estado atual:** este repositório ainda é apenas uma base inicial. Não há servidor HTTP, endpoints ou funcionalidades de notas implementados.
+## Funcionalidades
+
+- Criar tarefa com título
+- Listar tarefas com filtro `all`, `open` ou `done`
+- Concluir tarefa por ID
+- Remover tarefa por ID
+- Validação de entradas com Zod
+- Persistência em memória por processo
 
 ## Tecnologias
 
 - Node.js com módulos ES (`"type": "module"`)
-- TypeScript, configurado em modo estrito e com saída prevista em `dist/`
-- [Zod](https://zod.dev/) para validação de dados
-- [tsx](https://tsx.is/) para executar arquivos TypeScript durante o desenvolvimento
-
-## Pré-requisitos
-
-- Node.js e npm instalados
+- TypeScript em modo estrito
+- [Zod](https://zod.dev/) para validação da API e CLI
+- [node:http](https://nodejs.org/api/http.html) para o servidor HTTP
+- [tsx](https://tsx.is/) para execução em desenvolvimento
 
 ## Instalação
 
-Na raiz do projeto, instale as dependências a partir do arquivo de lock:
-
 ```bash
-npm ci
+npm install
 ```
 
-## Executar em desenvolvimento
+## Executar a API
 
 ```bash
 npm run dev
 ```
 
-Esse comando executa `src/index.ts`. No estado atual, o arquivo é apenas um módulo vazio; portanto, o comando termina sem iniciar um servidor ou exibir saída.
+A API fica em `http://localhost:3000`.
 
-## Outros comandos
+## Endpoints HTTP
 
-| Comando | Descrição | Estado atual |
-| --- | --- | --- |
-| `npm run typecheck` | Verifica os tipos sem gerar arquivos (`tsc --noEmit`). | Disponível |
-| `npm test` | Executa os testes com o runner nativo do Node.js e `tsx`. | Ainda não há testes em `src/`. |
-| `npm run cli` | Executa `src/cli.tsx` com `tsx`. | Ainda não está pronto: `src/cli.tsx` não foi criado. |
+- `GET /health` - saúde da aplicação
+- `POST /tasks` - cria uma tarefa
+  - body: `{ "title": "Estudar TypeScript" }`
+- `GET /tasks?status=all|open|done` - lista tarefas
+- `GET /tasks/:id` - busca uma tarefa por ID
+- `PATCH /tasks/:id/complete` - conclui a tarefa
+- `DELETE /tasks/:id` - remove a tarefa
 
-## Estrutura
+## CLI
 
-```text
-.
-├── src/
-│   └── index.ts
-├── .gitignore
-├── package.json
-├── package-lock.json
-└── tsconfig.json
+```bash
+npm run cli -- create "Estudar TypeScript"
+npm run cli -- list all
+npm run cli -- list open
+npm run cli -- list done
+npm run cli -- complete <task-id>
+npm run cli -- remove <task-id>
+```
+
+## Testes
+
+```bash
+npm test
+npm run typecheck
 ```
