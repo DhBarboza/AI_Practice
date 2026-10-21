@@ -234,3 +234,19 @@ uma tarefa por vez:
 
 Nunca desative testes/tipos para "passar". Se a spec estiver errada, pare e avise.
 ```
+
+### Criação (SDD)
+
+Podemos criar do zero nossos frameworks de Spec assim como fizemos acima.
+Mas também podemos usar, alguns prontos de mercado:
+
+- [GitHub Spec Kit](https://github.com/github/spec-kit)
+- [OpenSpec](https://openspec.dev/)
+
+### Guardrails, permissões e revisão
+
+- **Guardrails (limites de segurança):** regras que definem o que o agente pode ou não fazer, reduzindo ações inesperadas ou arriscadas.
+- **Permissões:** conceda somente o acesso necessário para a tarefa (_least privilege_). Uma _deny list_ pode bloquear ações como acessar segredos ou apagar arquivos.
+- **Revisão:** alterações importantes devem ser verificadas por uma pessoa antes de serem integradas ou publicadas; testes automatizados ajudam nessa validação.
+
+**Exemplo:** um agente de documentação pode editar arquivos Markdown e executar verificações, mas não pode acessar credenciais nem publicar mudanças. Ele prepara a alteração, roda os testes disponíveis e solicita revisão humana antes do merge.
