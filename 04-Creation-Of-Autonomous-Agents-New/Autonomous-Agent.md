@@ -250,3 +250,37 @@ Mas também podemos usar, alguns prontos de mercado:
 - **Revisão:** alterações importantes devem ser verificadas por uma pessoa antes de serem integradas ou publicadas; testes automatizados ajudam nessa validação.
 
 **Exemplo:** um agente de documentação pode editar arquivos Markdown e executar verificações, mas não pode acessar credenciais nem publicar mudanças. Ele prepara a alteração, roda os testes disponíveis e solicita revisão humana antes do merge.
+
+## RACIOCÍNIO E TOMADA DE DECISÃO EM AGENTES - OS TRÊS PADRÕES DE RACIOCÍNIO
+
+- Re-Act (Reason + act):
+    - Intercala chain of Thought (cadeia de pensamentos) -> Ação -> Observação -> Pensamento -> ...
+    - Rastro de pensamento (Reasoning traces) -> Se transformam em registros de auditoria
+    - Trace: Quando o agent erra, ele mostra em qual passo o agent errou
+    - Cada decisão usa a informação mais recente disponível
+    - Faz um passo por vez
+    - Obrigatório ter um teto de interações.
+    - Três fraquezas: decide um passo por vez . cada passo carrega o historico inteiro . risco de loop infinito.
+- Plan and Execute:
+    - Planner -> Passo 1 -> Passo 2 -> Passo 3 -> Replanner
+    - Visão global · custo controlado · passos independentes podem paralelizar (U6)
+    - A fraqueza: o plano envelhece - por isso o replanner é parte do padrão
+- Reflection:
+    - Gerador -> Critíco (Feedback -> Gerador) -> Aprovado? -> Fim [máximo 2 reflexões]
+    - O crítico avalia contra critérios explícitos
+    - A segunda tentativa é informada pelo diagnóstico
+    - Sem critério de parada não converge - teto e aprovação explícita, sempre
+
+### Os três padrões, lado a lado
+
+| Padrão           | Força                                     | Fraqueza                                     | Quando usar                             |
+| :--------------- | :---------------------------------------- | :------------------------------------------- | :-------------------------------------- |
+| ReAct            | adapta a cada observação                  | um passo por vez; custo cresce com histórico | caminho desconhecido, ambiente dinâmico |
+| Plan-and-Execute | visão global; executor barato; paraleliza | plano envelhece (exige replanner)            | muitos passos conhecidos; ordem importa |
+| Reflection       | qualidade auditada                        | 2x+ custo; exige parada                      | resposta crítica, custo aceitável       |
+
+I
+
+TRACE: O registro do passo-a-passo do que o agente fez, guardado de forma estruturada.
+ARENA: Um comando no terminal que vai rodar a mesma pergunta em duas estrategias e mostra os dois raciocínios lado a lado, com o custo de cada um.
+BENCH: Uma bateria fixa de testes que mede acerto, números de chamadas e latência, para a comparação virar um número ao invés de uma opinião.
