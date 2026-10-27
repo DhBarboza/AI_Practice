@@ -284,3 +284,68 @@ I
 TRACE: O registro do passo-a-passo do que o agente fez, guardado de forma estruturada.
 ARENA: Um comando no terminal que vai rodar a mesma pergunta em duas estrategias e mostra os dois raciocínios lado a lado, com o custo de cada um.
 BENCH: Uma bateria fixa de testes que mede acerto, números de chamadas e latência, para a comparação virar um número ao invés de uma opinião.
+
+# Projeto 2
+
+## CONFIGURANDO O SPEC KIT
+
+Ferramenta de Spec, GitHub Spec Kit
+
+### Prompt - 1:
+
+```md
+Crie o esqueleto de um projeto Node.js chamado ops-pilot:
+
+- git inicializado; package.json com "type": "module"
+- dependências: zod, @langchain/core, @langchain/openai,
+  @langchain/langgraph, express, sequelize, mysql2 (não instale o dotenv,
+  use a opção nativa do Node: --env-file)
+- dev: typescript, tsx, @types/node, @types/express, @types/sequelize (caso
+  exista)
+- scripts: dev = "tsx src/index.ts"; arena = "tsx src/arena.ts";
+  bench = "tsx src/bench.ts"; test = "node --import tsx --test \"src/\*_/_.test.ts\"";
+  typecheck = "tsc --noEmit"
+- .gitignore: node_modules, .env, .env.\*, dist
+- .env.example com OPENROUTER_API_KEY= e OPENROUTER_MODEL=
+- Não crie arquivos em src/ ainda (apenas um arquivo vazio para o typecheck) Execute npm run typecheck ao final
+```
+
+### Prompt - 2
+
+```md
+OpsPilot é um copiloto de plantão que gerencia alertas e incidentes de produção; a API é um agente LangChain/LangGraph sobre OpenRouter.
+
+Stack:
+
+- Node.js 24 LTS.
+- TypeScript ESM com `strict: true`.
+- `zod` na fronteira (HTTP/CLI) para validar entrada e saída.
+- Testes com `node:test` via `tsx`.
+- Express com MySQL como banco.
+
+Comandos: pegue do @package.json
+
+## Convenções
+
+- Camadas padrão: MVC (Model, Service, Controller).
+- Toda entrada externa é validada com zod.
+- Erros de domínio são classes traduzidas na borda.
+- Lógica nova nasce com teste.
+- `npm run typecheck` e `npm test` sempre verdes.
+- Nunca commitar secrets e nunca ler `.env`.
+- Sempre utilizar funções puras.
+
+## Fluxo
+
+Seguir o fluxo do Spec Kit (GitHub Copilot). Specs devem ser versionadas.
+
+Depois, criar o `.vscode/settings.json` com a seguinte allow/deny list (para o agente):
+
+- allow: `npm run`, `npm run test`, `npx tsc`, `node`, `git status`, `git diff`, `git add`, `git commit`
+- deny: `rm -rf`, `sudo`, `git push --force` e leitura de `.env` no terminal
+- `git push` fica fora da allow list: aprovação manual.
+```
+
+```bash
+specify init .
+```
