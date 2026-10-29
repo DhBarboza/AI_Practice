@@ -349,3 +349,97 @@ Depois, criar o `.vscode/settings.json` com a seguinte allow/deny list (para o a
 ```bash
 specify init .
 ```
+
+## CRIANDO A ESTRUTURA INICIAL DO PROJETO COM SPEC KIT
+
+Vamos utilizar o OpenRouter como base para o projeto. O OpenRouter é gateway de LLMs que permite a integração com diferentes modelos de linguagem, como GPT-4, Claude e outros. Ele fornece uma interface unificada para enviar solicitações e receber respostas de vários LLMs.
+
+[Site](https://openrouter.ai/)
+
+### Definir o Spec
+
+Como ele vai especificar o que vai fazer para atuar
+
+#### 1 - Prompt
+
+```md
+Projeto em `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot`
+
+/speckit.specify Núcleo de raciocínio do OpsPilot:
+
+- Interface comum ReasoningStrategy: name + run(input) -> (answer, trace,
+  metrics). trace = eventos tipados (thought | action | observation | plan |
+  critique | answer; action carrega (tool, args)). metrics = (llmCalls,
+  latencyMs).
+- Fábrica única em src/agents/model.ts lendo OPENROUTER_API_KEY e
+  OPENROUTER_MODEL (baseURL do OpenRouter), temperature 0.
+- Ferramentas mock em src/agents/tools.ts sobre um store in-memory pré-
+  populado (o seed primário: 5 serviços, 6 alertas variados - 3 firing, 3
+  resolved (crie um script para rodar o seed e execute-o ao final desse
+  prompt)): list_alerts(status), open_incident(title, service, severity),
+  resolve_incident(id). Schemas zod, banco MySQL, utilizando Sequelize.
+- Estratégia ReAct em src/agents/react.ts usando o agente ReAct pré-
+  construído do LangGraph com essas tools, capturando o trace completo.
+- Estratégia Plan-and-Execute em src/agents/plan-and-execute.ts como
+  grafo: planner (saída estruturada: lista de passos), executor (um passo por
+  vez com as tools), replanner (revisa o restante após cada passo; encerra
+  quando não resta nada). Máximo de 8 passos.
+- Toda estratégia respeita o limite de iterações e conta chamadas de LLM.
+- Arena mínima em src/arena.ts: roda 1+ estratégias sobre o mesmo input e
+  imprime traces e métricas (flags --strategies e --max-iterations).
+- Testes: store e formatação de trace (determinísticos, sem rede).
+```
+
+#### Resultado esperado:
+
+Criação das pastas:
+
+- `specs/`
+- `001-reasoning-core`
+- `checklists`
+
+Criação dos arquivos:
+
+- `/specs/001-reasoning-core/checklists/requirements.md`
+- `/specs/001-reasoning-core/spec.md`
+
+### 2 - Prompt:
+
+> Executar no Agent:
+
+```md
+/speckit.plan
+```
+
+#### Resultado esperado após executar `/speckit.plan`:
+
+Criação das pastas:
+
+- `specs/`
+- `specs/001-reasoning-core/contracts/`
+
+Criação dos arquivos:
+
+- `specs/001-reasoning-core/checklists/requirements.md`
+- `specs/001-reasoning-core/contracts/arena-cli.md`
+- `specs/001-reasoning-core/contracts/reasoning-strategy.md`
+- `specs/001-reasoning-core/contracts/tools.md`
+- `specs/001-reasoning-core/data-model.md`
+- `specs/001-reasoning-core/plan.md`
+- `specs/001-reasoning-core/quickstart.md`
+- `specs/001-reasoning-core/research.md`
+- `specs/001-reasoning-core/spec.md`
+
+### 3 - Prompt:
+
+> Executar no Agent:
+
+```md
+/speckit.tasks
+```
+
+#### Resultado esperado após executar `/speckit.tasks`:
+
+Criação do arquivo:
+
+- `specs/001-reasoning-core/tasks.md`
