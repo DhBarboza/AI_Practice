@@ -1,17 +1,43 @@
 import { ChatOpenAI } from "@langchain/openai";
+import { z } from "zod";
 
-const openRouterBaseUrl = "https://openrouter.ai/api/v1";
+export const openRouterBaseUrl = "https://openrouter.ai/api/v1";
+
+export interface OpenRouterModelConfig {
+  apiKey: string;
+  model: string;
+  temperature: 0;
+  configuration: { baseURL: string };
+}
+
+export interface OpenRouterEnvironment {
+  OPENROUTER_API_KEY?: string;
+  OPENROUTER_MODEL?: string;
+}
+
+const OpenRouterEnvironmentSchema = z
+  .object({
+    OPENROUTER_API_KEY: z.string().trim().min(1),
+    OPENROUTER_MODEL: z.string().trim().min(1),
+  });
+
+export function getOpenRouterModelConfig(
+  env: OpenRouterEnvironment,
+): OpenRouterModelConfig {
+  const parsed = OpenRouterEnvironmentSchema.safeParse(env);
+  if (!parsed.success) {
+    const field = parsed.error.issues[0]?.path[0];
+    throw new Error(`${String(field ?? "OpenRouter configuration")} is required.`);
+  }
+
+  return {
+    apiKey: parsed.data.OPENROUTER_API_KEY,
+    model: parsed.data.OPENROUTER_MODEL,
+    temperature: 0 as const,
+    configuration: { baseURL: openRouterBaseUrl },
+  };
+}
 
 export function createModel(): ChatOpenAI {
-  const apiKey = process.env.OPENROUTER_API_KEY?.trim();
-  const model = process.env.OPENROUTER_MODEL?.trim();
-  if (!apiKey) throw new Error("OPENROUTER_API_KEY is required.");
-  if (!model) throw new Error("OPENROUTER_MODEL is required.");
-
-  return new ChatOpenAI({
-    apiKey,
-    model,
-    temperature: 0,
-    configuration: { baseURL: openRouterBaseUrl },
-  });
+  return new ChatOpenAI(getOpenRouterModelConfig(process.env));
 }

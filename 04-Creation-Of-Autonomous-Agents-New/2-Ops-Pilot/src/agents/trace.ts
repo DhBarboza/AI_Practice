@@ -1,7 +1,7 @@
 import type { TraceEvent } from "./types.js";
 
 function formatValue(value: unknown): string {
-  return JSON.stringify(value);
+  return JSON.stringify(value) ?? String(value);
 }
 
 export function formatTrace(trace: readonly TraceEvent[]): string {

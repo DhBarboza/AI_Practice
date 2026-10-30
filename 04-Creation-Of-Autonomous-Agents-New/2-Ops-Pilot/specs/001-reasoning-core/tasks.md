@@ -16,7 +16,7 @@ description: "Task list for OpsPilot Reasoning Core"
 
 **Purpose**: Confirm the existing project commands and dependency surface used by the feature.
 
-- [ ] T001 Verify the existing `arena`, `seed`, `test`, and `typecheck` scripts and LangChain, LangGraph, Zod, Sequelize, and mysql2 dependencies in `package.json`; make only feature-required corrections.
+- [X] T001 Verify the existing `arena`, `seed`, `test`, and `typecheck` scripts and LangChain, LangGraph, Zod, Sequelize, and mysql2 dependencies in `package.json`; make only feature-required corrections.
 
 ---
 
@@ -24,14 +24,14 @@ description: "Task list for OpsPilot Reasoning Core"
 
 **Purpose**: Establish shared domain contracts and deterministic tool/trace behavior required by all user stories.
 
-- [ ] T002 Define Zod-validated service, alert, incident, reasoning input/result, metrics, and discriminated trace-event types, including concise thought rationale and action tool/args, in `src/agents/types.ts`.
-- [ ] T003 [P] Write offline store tests in `src/agents/store.test.ts` for five services, six alerts with exactly three firing and three resolved, status filtering, incident creation/resolution, unknown references, and no partial mutation; include field constraints verbatim: Service `id` is "Required, stable primary identifier", `name` is "Required, unique, non-empty", `team` and `environment` are "Required, non-empty"; Alert `id` is "Required, stable primary identifier", `serviceId` is "Required, references a known service", `title` is "Required, non-empty", `severity` is `critical`, `warning`, or `info`, and `status` is `firing` or `resolved`; Incident `id` is "Required, unique primary identifier", `title` is "Required, non-empty", `serviceId` is "Required, references a known service", `severity` is `critical`, `high`, `medium`, or `low`, and `status` is `open` or `resolved`.
-- [ ] T004 [P] Write deterministic trace-formatting tests in `src/agents/trace.test.ts` covering all six event types, event order, stable numbering, and action tool/argument formatting.
-- [ ] T005 Create the stable, synthetic seed fixtures in `src/agents/seed-data.ts` with exactly five services and six varied alerts, split into three `firing` and three `resolved` records.
-- [ ] T006 Implement the deterministic in-memory service, alert, and incident store in `src/agents/store.ts`; validate referenced services and incident IDs, return isolated records, and raise explicit errors without mutation on invalid operations.
-- [ ] T007 Implement stable formatting for every typed trace event in `src/agents/trace.ts`, preserving event order and action arguments.
-- [ ] T008 [P] Define Sequelize MySQL models and service associations in `src/agents/database.ts`; enforce Service `id` "Required, stable primary identifier", `name` "Required, unique, non-empty", `team` and `environment` "Required, non-empty"; Alert `id` "Required, stable primary identifier", `serviceId` "Required, references a known service", `title` "Required, non-empty", `severity` in `critical`, `warning`, or `info`, and `status` in `firing` or `resolved`; Incident `id` "Required, unique primary identifier", `title` "Required, non-empty", `serviceId` "Required, references a known service", `severity` in `critical`, `high`, `medium`, or `low`, and `status` in `open` or `resolved`.
-- [ ] T009 Implement the Zod-validated `list_alerts`, `open_incident`, and `resolve_incident` tools over the in-memory store in `src/agents/tools.ts`; surface schema and domain errors explicitly.
+- [X] T002 Define Zod-validated service, alert, incident, reasoning input/result, metrics, and discriminated trace-event types, including concise thought rationale and action tool/args, in `src/agents/types.ts`.
+- [X] T003 [P] Write offline store tests in `src/agents/store.test.ts` for five services, six alerts with exactly three firing and three resolved, status filtering, incident creation/resolution, unknown references, and no partial mutation; include field constraints verbatim: Service `id` is "Required, stable primary identifier", `name` is "Required, unique, non-empty", `team` and `environment` are "Required, non-empty"; Alert `id` is "Required, stable primary identifier", `serviceId` is "Required, references a known service", `title` is "Required, non-empty", `severity` is `critical`, `warning`, or `info`, and `status` is `firing` or `resolved`; Incident `id` is "Required, unique primary identifier", `title` is "Required, non-empty", `serviceId` is "Required, references a known service", `severity` is `critical`, `high`, `medium`, or `low`, and `status` is `open` or `resolved`.
+- [X] T004 [P] Write deterministic trace-formatting tests in `src/agents/trace.test.ts` covering all six event types, event order, stable numbering, and action tool/argument formatting.
+- [X] T005 Create the stable, synthetic seed fixtures in `src/agents/seed-data.ts` with exactly five services and six varied alerts, split into three `firing` and three `resolved` records.
+- [X] T006 Implement the deterministic in-memory service, alert, and incident store in `src/agents/store.ts`; validate referenced services and incident IDs, return isolated records, and raise explicit errors without mutation on invalid operations.
+- [X] T007 Implement stable formatting for every typed trace event in `src/agents/trace.ts`, preserving event order and action arguments.
+- [X] T008 [P] Define Sequelize MySQL models and service associations in `src/agents/database.ts`; enforce Service `id` "Required, stable primary identifier", `name` "Required, unique, non-empty", `team` and `environment` "Required, non-empty"; Alert `id` "Required, stable primary identifier", `serviceId` "Required, references a known service", `title` "Required, non-empty", `severity` in `critical`, `warning`, or `info`, and `status` in `firing` or `resolved`; Incident `id` "Required, unique primary identifier", `title` "Required, non-empty", `serviceId` "Required, references a known service", `severity` in `critical`, `high`, `medium`, or `low`, and `status` in `open` or `resolved`.
+- [X] T009 Implement the Zod-validated `list_alerts`, `open_incident`, and `resolve_incident` tools over the in-memory store in `src/agents/tools.ts`; surface schema and domain errors explicitly.
 
 **Checkpoint**: Shared contracts, seeded store, tool schemas, persistence models, and deterministic store/trace tests are ready for strategy and CLI work.
 
@@ -45,14 +45,14 @@ description: "Task list for OpsPilot Reasoning Core"
 
 ### Tests for User Story 1
 
-- [ ] T010 [P] [US1] Add offline tests in `src/agents/strategies.test.ts` using fake model/tool boundaries to verify strategy result shape, actual model-call counts, iteration ceilings, one-step execution/replanning, empty-plan termination, and explicit failures.
-- [ ] T011 [P] [US1] Add model-factory configuration tests in `src/agents/model.test.ts` verifying required OpenRouter settings, the configured model, OpenRouter base URL, temperature zero, and secret-free error messages without network access.
+- [X] T010 [P] [US1] Add offline tests in `src/agents/strategies.test.ts` using fake model/tool boundaries to verify strategy result shape, actual model-call counts, iteration ceilings, one-step execution/replanning, empty-plan termination, and explicit failures.
+- [X] T011 [P] [US1] Add model-factory configuration tests in `src/agents/model.test.ts` verifying required OpenRouter settings, the configured model, OpenRouter base URL, temperature zero, and secret-free error messages without network access.
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] Implement the single OpenRouter `ChatOpenAI` factory in `src/agents/model.ts`, reading and validating `OPENROUTER_API_KEY` and `OPENROUTER_MODEL`, setting the OpenRouter base URL and temperature zero, and never logging the API key.
-- [ ] T013 [P] [US1] Implement the shared strategy contract with the prebuilt LangGraph ReAct agent in `src/agents/react.ts`; capture structured thought/action/observation/answer events, count model invocations, prevent more than `maxIterations` tool actions, and provide injectable model/tool factories for offline tests without changing `ReasoningStrategy.run(input)`.
-- [ ] T014 [P] [US1] Implement the Plan-and-Execute LangGraph in `src/agents/plan-and-execute.ts` with Zod-structured planning, one tool action per executor step, replanning after each observation, termination on no remaining work, a maximum of eight actions or `maxIterations` (whichever is lower), complete call/latency metrics, and injectable model/tool factories for offline tests without changing `ReasoningStrategy.run(input)`.
+- [X] T012 [US1] Implement the single OpenRouter `ChatOpenAI` factory in `src/agents/model.ts`, reading and validating `OPENROUTER_API_KEY` and `OPENROUTER_MODEL`, setting the OpenRouter base URL and temperature zero, and never logging the API key.
+- [X] T013 [P] [US1] Implement the shared strategy contract with the prebuilt LangGraph ReAct agent in `src/agents/react.ts`; capture structured thought/action/observation/answer events, count model invocations, prevent more than `maxIterations` tool actions, and provide an injectable agent runner for offline tests without changing `ReasoningStrategy.run(input)`.
+- [X] T014 [P] [US1] Implement the Plan-and-Execute LangGraph in `src/agents/plan-and-execute.ts` with Zod-structured planning, one tool action per executor step, replanning after each observation, termination on no remaining work, a maximum of eight actions or `maxIterations` (whichever is lower), complete call/latency metrics, and an injectable plan engine for offline tests without changing `ReasoningStrategy.run(input)`.
 
 **Checkpoint**: Either strategy can be independently exercised against the seeded tools and emits the common answer, trace, and metrics shape.
 
@@ -66,11 +66,11 @@ description: "Task list for OpsPilot Reasoning Core"
 
 ### Tests for User Story 2
 
-- [ ] T015 [P] [US2] Add arena CLI tests in `src/arena.test.ts` for strategy selection, shared input/iteration settings, output sections, unknown strategies, unknown flags, empty input, and invalid `--max-iterations`, using injected test strategies instead of live models.
+- [X] T015 [P] [US2] Add arena CLI tests in `src/arena.test.ts` for strategy selection, shared input/iteration settings, output sections, unknown strategies, unknown flags, empty input, and invalid `--max-iterations`, using injected test strategies instead of live models.
 
 ### Implementation for User Story 2
 
-- [ ] T016 [US2] Implement and validate positional/`--input`, `--strategies`, and `--max-iterations` argument handling in `src/arena.ts`; expose parser/runner seams with an injectable strategy registry for offline tests, run every selected strategy with the same input and limit, and print each answer, typed trace, and metrics without exposing secrets.
+- [X] T016 [US2] Implement and validate positional/`--input`, `--strategies`, and `--max-iterations` argument handling in `src/arena.ts`; expose parser/runner seams with an injectable strategy registry for offline tests, run every selected strategy with the same input and limit, and print each answer, typed trace, and metrics without exposing secrets.
 
 **Checkpoint**: Operators can invoke the CLI to compare one or more strategy runs and receive actionable errors for invalid options.
 
@@ -84,12 +84,12 @@ description: "Task list for OpsPilot Reasoning Core"
 
 ### Tests for User Story 3
 
-- [ ] T017 [P] [US3] Add seed lifecycle tests in `src/agents/seed.test.ts` verifying repeatability and the exact seed counts without requiring MySQL, credentials, or model calls.
+- [X] T017 [P] [US3] Add seed lifecycle tests in `src/agents/seed.test.ts` verifying repeatability and the exact seed counts without requiring MySQL, credentials, or model calls.
 
 ### Implementation for User Story 3
 
-- [ ] T018 [US3] Implement the seed entry point in `src/agents/seed.ts` to report the in-memory baseline and optionally persist the idempotent service/alert seed to MySQL in a transaction, always closing the connection and surfacing failures.
-- [ ] T019 [US3] Wire the `seed` npm script in `package.json` to execute `src/agents/seed.ts` with the repository's existing Node/tsx conventions.
+- [X] T018 [US3] Implement the seed entry point in `src/agents/seed.ts` to report the in-memory baseline and optionally persist the idempotent service/alert seed to MySQL in a transaction, always closing the connection and surfacing failures.
+- [X] T019 [US3] Wire the `seed` npm script in `package.json` to execute `src/agents/seed.ts` with the repository's existing Node/tsx conventions.
 
 **Checkpoint**: A developer can reproduce the primary dataset and run its deterministic verification independently of OpenRouter.
 
@@ -99,9 +99,9 @@ description: "Task list for OpsPilot Reasoning Core"
 
 **Purpose**: Verify the integrated feature and keep the repository's documented commands and feature documentation consistent.
 
-- [ ] T020 Update `specs/001-reasoning-core/quickstart.md` to match the implemented flags, seed behavior, prerequisites, and expected output.
-- [ ] T021 Run `npm test` and `npm run typecheck` from the scripts in `package.json`; fix only regressions introduced by this feature and record successful results.
-- [ ] T022 Run `npm run seed` from `package.json` as the final seed verification; confirm output reports exactly five services and six alerts (three firing, three resolved), and report a clear error if configured MySQL persistence fails.
+- [X] T020 Update `specs/001-reasoning-core/quickstart.md` to match the implemented flags, seed behavior, prerequisites, and expected output.
+- [X] T021 Run `npm test` and `npm run typecheck` from the scripts in `package.json`; fix only regressions introduced by this feature and record successful results.
+- [X] T022 Run `npm run seed` from `package.json` as the final seed verification; confirm output reports exactly five services and six alerts (three firing, three resolved), and report a clear error if configured MySQL persistence fails.
 
 ---
 

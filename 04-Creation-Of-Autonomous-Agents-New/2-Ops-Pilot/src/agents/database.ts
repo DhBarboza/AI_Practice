@@ -1,4 +1,5 @@
 import { DataTypes, Model, Sequelize } from "sequelize";
+import { z } from "zod";
 
 interface ServiceAttributes {
   id: string;
@@ -9,29 +10,41 @@ interface ServiceAttributes {
 
 interface AlertAttributes {
   id: string;
-  service: string;
+  serviceId: string;
   title: string;
   severity: "critical" | "warning" | "info";
   status: "firing" | "resolved";
 }
 
+interface IncidentAttributes {
+  id: string;
+  title: string;
+  serviceId: string;
+  severity: "critical" | "high" | "medium" | "low";
+  status: "open" | "resolved";
+}
+
 export function createDatabaseFromEnv(): Sequelize {
-  const database = process.env.MYSQL_DATABASE?.trim();
-  const username = process.env.MYSQL_USER?.trim();
-  if (!database) throw new Error("MYSQL_DATABASE is required to seed MySQL.");
-  if (!username) throw new Error("MYSQL_USER is required to seed MySQL.");
+  const env = z
+    .object({
+      MYSQL_DATABASE: z.string().trim().min(1),
+      MYSQL_USER: z.string().trim().min(1),
+      MYSQL_PASSWORD: z.string().optional().default(""),
+      MYSQL_HOST: z.string().trim().optional().default("127.0.0.1"),
+      MYSQL_PORT: z
+        .string()
+        .regex(/^\d+$/)
+        .optional()
+        .default("3306")
+        .transform(Number)
+        .pipe(z.number().int().min(1).max(65535)),
+    })
+    .parse(process.env);
 
-  const port = process.env.MYSQL_PORT
-    ? Number.parseInt(process.env.MYSQL_PORT, 10)
-    : 3306;
-  if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    throw new Error("MYSQL_PORT must be a valid TCP port.");
-  }
-
-  return new Sequelize(database, username, process.env.MYSQL_PASSWORD ?? "", {
+  return new Sequelize(env.MYSQL_DATABASE, env.MYSQL_USER, env.MYSQL_PASSWORD, {
     dialect: "mysql",
-    host: process.env.MYSQL_HOST?.trim() || "127.0.0.1",
-    port,
+    host: env.MYSQL_HOST || "127.0.0.1",
+    port: env.MYSQL_PORT,
     logging: false,
   });
 }
@@ -43,10 +56,28 @@ export function defineOpsModels(sequelize: Sequelize) {
   >(
     "Service",
     {
-      id: { type: DataTypes.STRING(64), primaryKey: true },
-      name: { type: DataTypes.STRING(128), allowNull: false },
-      team: { type: DataTypes.STRING(128), allowNull: false },
-      environment: { type: DataTypes.STRING(64), allowNull: false },
+      id: {
+        type: DataTypes.STRING(64),
+        primaryKey: true,
+        allowNull: false,
+        validate: { notEmpty: true },
+      },
+      name: {
+        type: DataTypes.STRING(128),
+        allowNull: false,
+        unique: true,
+        validate: { notEmpty: true },
+      },
+      team: {
+        type: DataTypes.STRING(128),
+        allowNull: false,
+        validate: { notEmpty: true },
+      },
+      environment: {
+        type: DataTypes.STRING(64),
+        allowNull: false,
+        validate: { notEmpty: true },
+      },
     },
     { tableName: "services", timestamps: false },
   );
@@ -57,9 +88,22 @@ export function defineOpsModels(sequelize: Sequelize) {
   >(
     "Alert",
     {
-      id: { type: DataTypes.STRING(64), primaryKey: true },
-      service: { type: DataTypes.STRING(128), allowNull: false },
-      title: { type: DataTypes.STRING(255), allowNull: false },
+      id: {
+        type: DataTypes.STRING(64),
+        primaryKey: true,
+        allowNull: false,
+        validate: { notEmpty: true },
+      },
+      serviceId: {
+        type: DataTypes.STRING(64),
+        allowNull: false,
+        references: { model: "services", key: "id" },
+      },
+      title: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+        validate: { notEmpty: true },
+      },
       severity: {
         type: DataTypes.ENUM("critical", "warning", "info"),
         allowNull: false,
@@ -72,12 +116,28 @@ export function defineOpsModels(sequelize: Sequelize) {
     { tableName: "alerts", timestamps: false },
   );
 
-  sequelize.define(
+  const Incident = sequelize.define<
+    Model<IncidentAttributes, IncidentAttributes>,
+    IncidentAttributes
+  >(
     "Incident",
     {
-      id: { type: DataTypes.STRING(64), primaryKey: true },
-      title: { type: DataTypes.STRING(255), allowNull: false },
-      service: { type: DataTypes.STRING(128), allowNull: false },
+      id: {
+        type: DataTypes.STRING(64),
+        primaryKey: true,
+        allowNull: false,
+        validate: { notEmpty: true },
+      },
+      title: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+        validate: { notEmpty: true },
+      },
+      serviceId: {
+        type: DataTypes.STRING(64),
+        allowNull: false,
+        references: { model: "services", key: "id" },
+      },
       severity: {
         type: DataTypes.ENUM("critical", "high", "medium", "low"),
         allowNull: false,
@@ -90,5 +150,10 @@ export function defineOpsModels(sequelize: Sequelize) {
     { tableName: "incidents", timestamps: false },
   );
 
-  return { Service, Alert };
+  Service.hasMany(Alert, { foreignKey: "serviceId", as: "alerts" });
+  Alert.belongsTo(Service, { foreignKey: "serviceId", as: "service" });
+  Service.hasMany(Incident, { foreignKey: "serviceId", as: "incidents" });
+  Incident.belongsTo(Service, { foreignKey: "serviceId", as: "service" });
+
+  return { Service, Alert, Incident };
 }

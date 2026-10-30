@@ -443,3 +443,127 @@ Criação dos arquivos:
 Criação do arquivo:
 
 - `specs/001-reasoning-core/tasks.md`
+
+## DEFININDO O PADRÃO REACT PARA O AGENTE
+
+Para evitar que o Agent alucine e siga padrões de código mais consistentes
+
+### 4 - Prompt:
+
+````md
+/speckit.implement
+
+Utilize os seguintes exemplos para os códigos de seus respectivos arquivos:
+
+```ts
+// referência para a factory src/agents/model.ts
+import { ChatOpenAI } from "@langchain/openai";
+
+export function createModel() {
+    return new ChatOpenAI({
+        model: process.env.OPENROUTER_MODEL ?? "",
+        apiKey: process.env.OPENROUTER_API_KEY ?? "",
+        configuration: { baseURL: "https://openrouter.ai/api/v1" },
+        temperature: 0,
+    });
+}
+
+// src/agents/tools.ts
+import { tool } from "@langchain/core/tools";
+import { z } from "zod";
+import { store } from "./ops-store.ts";
+
+export const listAlerts = tool(
+    async ({ status }) => JSON.stringify(store.listAlerts(status)),
+    {
+        name: "list_alerts",
+        description:
+            "Lista os alertas de monitoramento. Use quando o plantonista perguntar o que está disparando, o estado dos serviços ou 'como está o plantão'. status: firing | resolved | all",
+        schema: z.object({
+            status: z.enum(["firing", "resolved", "all"]).optional(),
+        }),
+    },
+);
+
+// src/agents/react.ts
+import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { createModel } from "./model.ts";
+import { opsTools } from "./tools.ts";
+import { lastText, toTrace, countAiMessages } from "./helpers.ts";
+import type { ReasoningStrategy } from "./types.ts";
+
+export const reactStrategy: ReasoningStrategy = {
+    name: "react",
+    async run(input) {
+        const started = Date.now();
+
+        const agent = createReactAgent({
+            llm: createModel(),
+            tools: opsTools,
+        });
+
+        const result = await agent.invoke(
+            { messages: [{ role: "user", content: input }] },
+            { recursionLimit: 12 }, // guardrail: nada de loop infinito
+        );
+
+        return {
+            answer: lastText(result.messages),
+            trace: toTrace(result.messages),
+            metrics: {
+                llmCalls: countAiMessages(result.messages),
+                latencyMs: Date.now() - started,
+            },
+        };
+    },
+};
+```
+
+```
+
+```
+````
+
+> resultado obtido:
+
+Vou verificar o estado atual do repositório e listar os arquivos alterados para montar o resultado no mesmo formato do exemplo.
+
+Ran terminal command: git status --short
+
+Ran terminal command: git diff --name-status
+
+Ran terminal command: git diff --cached --name-status
+
+#### Resultado esperado após executar `/speckit.implement`
+
+Lista corrigida, removendo os arquivos indicados. Dos itens listados anteriormente, isso exclui `2-Ops-Pilot/specs/001-reasoning-core/contracts/tools.md`.
+
+**Arquivos novos:**
+
+- `2-Ops-Pilot/example.ts`
+- `2-Ops-Pilot/src/agents/database.test.ts`
+- `2-Ops-Pilot/src/agents/helpers.ts`
+- `2-Ops-Pilot/src/agents/model.test.ts`
+- `2-Ops-Pilot/src/agents/seed.test.ts`
+- `2-Ops-Pilot/src/agents/strategies.test.ts`
+- `2-Ops-Pilot/src/agents/tools.test.ts`
+- `2-Ops-Pilot/src/arena.test.ts`
+
+**Arquivos modificados:**
+
+- `2-Ops-Pilot/.gitignore`
+- `2-Ops-Pilot/package.json`
+- `2-Ops-Pilot/specs/001-reasoning-core/data-model.md`
+- `2-Ops-Pilot/specs/001-reasoning-core/quickstart.md`
+- `2-Ops-Pilot/specs/001-reasoning-core/tasks.md`
+- `2-Ops-Pilot/src/agents/database.ts`
+- `2-Ops-Pilot/src/agents/model.ts`
+- `2-Ops-Pilot/src/agents/plan-and-execute.ts`
+- `2-Ops-Pilot/src/agents/react.ts`
+- `2-Ops-Pilot/src/agents/seed.ts`
+- `2-Ops-Pilot/src/agents/store.test.ts`
+- `2-Ops-Pilot/src/agents/store.ts`
+- `2-Ops-Pilot/src/agents/trace.test.ts`
+- `2-Ops-Pilot/src/agents/trace.ts`
+- `2-Ops-Pilot/src/agents/types.ts`
+- `2-Ops-Pilot/src/arena.ts`

@@ -72,7 +72,7 @@ Supported tool names and argument shapes are specified in [tools.md](./contracts
 
 One validated tool action in Plan-and-Execute:
 
-- `list_alerts`: optional `status` (`firing` or `resolved`).
+- `list_alerts`: optional `status` (`firing`, `resolved`, or `all`).
 - `open_incident`: required `title`, known `service`, and incident `severity`.
 - `resolve_incident`: required existing incident `id`.
 

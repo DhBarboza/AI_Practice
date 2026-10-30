@@ -9,7 +9,7 @@
     "bench": "tsx src/bench.ts",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
-    "seed": "node --env-file-if-exists=.env --import tsx src/agents/seed.ts"
+    "seed": "node --import tsx src/agents/seed.ts"
   },
   "dependencies": {
     "@langchain/core": "^1.0.0",
