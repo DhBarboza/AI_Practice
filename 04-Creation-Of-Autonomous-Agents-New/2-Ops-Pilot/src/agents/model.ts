@@ -7,6 +7,7 @@ export interface OpenRouterModelConfig {
   apiKey: string;
   model: string;
   temperature: 0;
+  modelKwargs: { provider: { sort: "latency" } };
   configuration: { baseURL: string };
 }
 
@@ -34,6 +35,7 @@ export function getOpenRouterModelConfig(
     apiKey: parsed.data.OPENROUTER_API_KEY,
     model: parsed.data.OPENROUTER_MODEL,
     temperature: 0 as const,
+    modelKwargs: { provider: { sort: "latency" } },
     configuration: { baseURL: openRouterBaseUrl },
   };
 }

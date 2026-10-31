@@ -524,19 +524,7 @@ export const reactStrategy: ReasoningStrategy = {
 ```
 ````
 
-> resultado obtido:
-
-Vou verificar o estado atual do repositório e listar os arquivos alterados para montar o resultado no mesmo formato do exemplo.
-
-Ran terminal command: git status --short
-
-Ran terminal command: git diff --name-status
-
-Ran terminal command: git diff --cached --name-status
-
 #### Resultado esperado após executar `/speckit.implement`
-
-Lista corrigida, removendo os arquivos indicados. Dos itens listados anteriormente, isso exclui `2-Ops-Pilot/specs/001-reasoning-core/contracts/tools.md`.
 
 **Arquivos novos:**
 
@@ -567,3 +555,80 @@ Lista corrigida, removendo os arquivos indicados. Dos itens listados anteriormen
 - `2-Ops-Pilot/src/agents/trace.ts`
 - `2-Ops-Pilot/src/agents/types.ts`
 - `2-Ops-Pilot/src/arena.ts`
+
+## DEFININDO O PADRÃO PLAN-AND-EXECUTE PARA O AGENTE
+
+### Prompt:
+
+````md
+/speckit.implement
+
+Implementar o plan-execute para o nosso modelo do OpenRouter,
+de acordo com os exemplos abaixo: o executor resolve com as tools e empurra o resultado para done;
+o replanner decide se deve ajustar, seguir ou encerrar; teto total de 8 passos.
+
+```ts
+// implementar o plan-execute.ts seguindo o exemplo abaixo
+
+// o estado de referencia
+const PEState = Annotation.Root({
+    input: Annotation<string>(),
+    plan: Annotation<string>(),
+    done: Annotation<[string, string][]>({
+        reducer: (a, b) => a.concat(b),
+        default: () => [],
+    }),
+    answer: Annotation<string>(),
+});
+
+// o planner - referencia
+const planSchema = z.object({
+    steps: z
+        .array(z.string())
+        .describe(
+            "passos curtos, ordenados, executáveis com as ferramentas disponíveis",
+        ),
+});
+
+async function planner(state: typeof PEState.State) {
+    const plan = await createModel()
+        .withStructuredOutput(planSchema)
+        .invoke([
+            ["system", PLANNER_PROMPT],
+            ["user", state.input],
+        ]);
+    return { plan: plan.steps };
+}
+```
+
+Execute o script de seed. Por enquanto, vamos usar apenas o arquivo .json com as seeds como base de dados, para que o modelo leia o que já existe ou adicione novos itens. Faça essa modificação para ajustar a execução em memória para os nossos testes.
+````
+
+#### Resultado:
+
+**Arquivos novos:**
+
+- `2-Ops-Pilot/src/agents/seed-data.json`
+
+**Arquivos modificados:**
+
+- `2-Ops-Pilot/specs/001-reasoning-core/contracts/arena-cli.md`
+- `2-Ops-Pilot/specs/001-reasoning-core/data-model.md`
+- `2-Ops-Pilot/specs/001-reasoning-core/plan.md`
+- `2-Ops-Pilot/specs/001-reasoning-core/quickstart.md`
+- `2-Ops-Pilot/specs/001-reasoning-core/research.md`
+- `2-Ops-Pilot/specs/001-reasoning-core/spec.md`
+- `2-Ops-Pilot/specs/001-reasoning-core/tasks.md`
+- `2-Ops-Pilot/src/agents/plan-and-execute.ts`
+- `2-Ops-Pilot/src/agents/seed-data.ts`
+- `2-Ops-Pilot/src/agents/seed.test.ts`
+- `2-Ops-Pilot/src/agents/seed.ts`
+- `2-Ops-Pilot/src/agents/strategies.test.ts`
+
+### Executar Script de Arena no terminal que averiguar se está tudo certo:
+
+```bash
+npm run arena - "quantos alertas criticos estao disparando" -- strategies react
+```
+
+npm run arena -- "abra três incidentes sev2 para os alertas do checkout, payments e catalog, nessa ordem, e resolva o primeiro" -strategies plan-execute

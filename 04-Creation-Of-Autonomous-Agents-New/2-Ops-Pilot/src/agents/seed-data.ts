@@ -1,54 +1,20 @@
+import { readFileSync } from "node:fs";
+import { z } from "zod";
+import { AlertSchema, ServiceSchema } from "./types.js";
 import type { Alert, Service } from "./types.js";
 
-export const seedServices: Service[] = [
-  { id: "svc-api", name: "Ops API", team: "platform", environment: "production" },
-  { id: "svc-checkout", name: "Checkout", team: "commerce", environment: "production" },
-  { id: "svc-payments", name: "Payments", team: "commerce", environment: "production" },
-  { id: "svc-notifications", name: "Notifications", team: "platform", environment: "production" },
-  { id: "svc-worker", name: "Background Worker", team: "platform", environment: "staging" },
-];
+const SeedDataSchema = z
+  .object({
+    services: z.array(ServiceSchema),
+    alerts: z.array(AlertSchema),
+  })
+  .strict();
 
-export const seedAlerts: Alert[] = [
-  {
-    id: "alert-001",
-    service: "Checkout",
-    title: "Elevated checkout error rate",
-    severity: "critical",
-    status: "firing",
-  },
-  {
-    id: "alert-002",
-    service: "Payments",
-    title: "Payment provider latency above threshold",
-    severity: "warning",
-    status: "firing",
-  },
-  {
-    id: "alert-003",
-    service: "Ops API",
-    title: "API pod memory pressure",
-    severity: "warning",
-    status: "firing",
-  },
-  {
-    id: "alert-004",
-    service: "Notifications",
-    title: "Email delivery backlog",
-    severity: "info",
-    status: "resolved",
-  },
-  {
-    id: "alert-005",
-    service: "Background Worker",
-    title: "Worker heartbeat missed",
-    severity: "warning",
-    status: "resolved",
-  },
-  {
-    id: "alert-006",
-    service: "Payments",
-    title: "Payment authorization failures",
-    severity: "critical",
-    status: "resolved",
-  },
-];
+const seedData = SeedDataSchema.parse(
+  JSON.parse(
+    readFileSync(new URL("./seed-data.json", import.meta.url), "utf8"),
+  ),
+);
+
+export const seedServices: Service[] = seedData.services;
+export const seedAlerts: Alert[] = seedData.alerts;

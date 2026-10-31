@@ -6,7 +6,7 @@
 
 ## Summary
 
-Provide a common typed reasoning result and deterministic operational tools, then run ReAct and Plan-and-Execute strategies through an OpenRouter-backed model factory. Keep the arena as a CLI entry point, use an in-memory seeded store for repeatable agent runs, and define Sequelize models for MySQL persistence. Verify behavior using offline store/trace tests, the project test and type-check commands, the arena, and the seed script.
+Provide a common typed reasoning result and deterministic operational tools, then run ReAct and Plan-and-Execute strategies through an OpenRouter-backed model factory. Keep the arena as a CLI entry point and use `src/agents/seed-data.json` as the baseline for each independent in-memory agent run. Plan-and-Execute uses tool calls for one step at a time, records results in `done`, and replans after each action, with a maximum of eight actions per run. Sequelize models remain available for future persistence, but the current seed and tool execution path is JSON-backed and in memory. Verify behavior using offline store/trace tests, the project test and type-check commands, the arena, and the seed script.
 
 ## Technical Context
 
@@ -14,7 +14,7 @@ Provide a common typed reasoning result and deterministic operational tools, the
 
 **Primary Dependencies**: LangChain JS, LangGraph JS, `@langchain/openai`, Zod, Sequelize 6, `mysql2`, `tsx`
 
-**Storage**: Seeded in-memory store for mock tool execution; MySQL schema/models through Sequelize for persisted service, alert, and incident records
+**Storage**: JSON seed fixture loaded into an isolated in-memory store for mock tool execution; Sequelize models are retained but are not used by the current seed/runtime path
 
 **Testing**: `node:test` through `tsx`; `npm test` and `npm run typecheck`
 
@@ -67,6 +67,7 @@ src/
 │   ├── plan-and-execute.ts
 │   ├── react.ts
 │   ├── seed-data.ts
+│   ├── seed-data.json
 │   ├── seed.ts
 │   ├── store.ts
 │   ├── tools.ts

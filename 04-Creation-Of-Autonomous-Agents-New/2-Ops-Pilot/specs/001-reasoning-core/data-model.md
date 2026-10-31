@@ -70,7 +70,7 @@ Supported tool names and argument shapes are specified in [tools.md](./contracts
 
 ## Plan Step
 
-One validated tool action in Plan-and-Execute:
+One concise instruction in the planner's ordered list. The executor resolves each instruction into exactly one validated tool action:
 
 - `list_alerts`: optional `status` (`firing`, `resolved`, or `all`).
 - `open_incident`: required `title`, known `service`, and incident `severity`.

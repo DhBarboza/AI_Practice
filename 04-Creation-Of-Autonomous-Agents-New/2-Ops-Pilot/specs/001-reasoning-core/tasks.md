@@ -27,7 +27,7 @@ description: "Task list for OpsPilot Reasoning Core"
 - [X] T002 Define Zod-validated service, alert, incident, reasoning input/result, metrics, and discriminated trace-event types, including concise thought rationale and action tool/args, in `src/agents/types.ts`.
 - [X] T003 [P] Write offline store tests in `src/agents/store.test.ts` for five services, six alerts with exactly three firing and three resolved, status filtering, incident creation/resolution, unknown references, and no partial mutation; include field constraints verbatim: Service `id` is "Required, stable primary identifier", `name` is "Required, unique, non-empty", `team` and `environment` are "Required, non-empty"; Alert `id` is "Required, stable primary identifier", `serviceId` is "Required, references a known service", `title` is "Required, non-empty", `severity` is `critical`, `warning`, or `info`, and `status` is `firing` or `resolved`; Incident `id` is "Required, unique primary identifier", `title` is "Required, non-empty", `serviceId` is "Required, references a known service", `severity` is `critical`, `high`, `medium`, or `low`, and `status` is `open` or `resolved`.
 - [X] T004 [P] Write deterministic trace-formatting tests in `src/agents/trace.test.ts` covering all six event types, event order, stable numbering, and action tool/argument formatting.
-- [X] T005 Create the stable, synthetic seed fixtures in `src/agents/seed-data.ts` with exactly five services and six varied alerts, split into three `firing` and three `resolved` records.
+- [X] T005 Create the stable, synthetic seed fixtures in `src/agents/seed-data.json` with exactly five services and six varied alerts, split into three `firing` and three `resolved` records; validate and load them through `src/agents/seed-data.ts`.
 - [X] T006 Implement the deterministic in-memory service, alert, and incident store in `src/agents/store.ts`; validate referenced services and incident IDs, return isolated records, and raise explicit errors without mutation on invalid operations.
 - [X] T007 Implement stable formatting for every typed trace event in `src/agents/trace.ts`, preserving event order and action arguments.
 - [X] T008 [P] Define Sequelize MySQL models and service associations in `src/agents/database.ts`; enforce Service `id` "Required, stable primary identifier", `name` "Required, unique, non-empty", `team` and `environment` "Required, non-empty"; Alert `id` "Required, stable primary identifier", `serviceId` "Required, references a known service", `title` "Required, non-empty", `severity` in `critical`, `warning`, or `info`, and `status` in `firing` or `resolved`; Incident `id` "Required, unique primary identifier", `title` "Required, non-empty", `serviceId` "Required, references a known service", `severity` in `critical`, `high`, `medium`, or `low`, and `status` in `open` or `resolved`.
@@ -88,7 +88,7 @@ description: "Task list for OpsPilot Reasoning Core"
 
 ### Implementation for User Story 3
 
-- [X] T018 [US3] Implement the seed entry point in `src/agents/seed.ts` to report the in-memory baseline and optionally persist the idempotent service/alert seed to MySQL in a transaction, always closing the connection and surfacing failures.
+- [X] T018 [US3] Implement the seed entry point in `src/agents/seed.ts` to load and report the JSON-backed in-memory baseline without requiring MySQL, credentials, or model calls.
 - [X] T019 [US3] Wire the `seed` npm script in `package.json` to execute `src/agents/seed.ts` with the repository's existing Node/tsx conventions.
 
 **Checkpoint**: A developer can reproduce the primary dataset and run its deterministic verification independently of OpenRouter.
@@ -101,7 +101,7 @@ description: "Task list for OpsPilot Reasoning Core"
 
 - [X] T020 Update `specs/001-reasoning-core/quickstart.md` to match the implemented flags, seed behavior, prerequisites, and expected output.
 - [X] T021 Run `npm test` and `npm run typecheck` from the scripts in `package.json`; fix only regressions introduced by this feature and record successful results.
-- [X] T022 Run `npm run seed` from `package.json` as the final seed verification; confirm output reports exactly five services and six alerts (three firing, three resolved), and report a clear error if configured MySQL persistence fails.
+- [X] T022 Run `npm run seed` from `package.json` as the final seed verification; confirm output reports exactly five services and six alerts (three firing, three resolved).
 
 ---
 
@@ -157,7 +157,7 @@ Task: Implement planner/executor/replanner graph in src/agents/plan-and-execute.
 ```text
 After Phase 2 is complete:
 Task: Add repeatable seed lifecycle tests in src/agents/seed.test.ts (T017)
-Task: Implement the seed entry point and MySQL persistence lifecycle in src/agents/seed.ts (T018)
+Task: Implement the JSON-backed in-memory seed entry point in src/agents/seed.ts (T018)
 ```
 
 ## Implementation Strategy
@@ -167,7 +167,7 @@ Task: Implement the seed entry point and MySQL persistence lifecycle in src/agen
 1. Complete Setup and Foundational tasks.
 2. Complete US1 tests, model factory, ReAct, and Plan-and-Execute.
 3. Validate US1 independently with fake boundaries and a configured end-to-end run when credentials are available.
-4. Stop for MVP review before arena comparison and optional MySQL persistence validation.
+4. Stop for MVP review before arena comparison and seed verification.
 
 ### Incremental Delivery
 
@@ -182,4 +182,4 @@ Task: Implement the seed entry point and MySQL persistence lifecycle in src/agen
 - Every task uses the required `- [ ] T### [P?] [Story?]` checklist format and names the exact source, test, or documentation path.
 - `[P]` marks work in different files with no unfinished-task dependency.
 - `[US1]`, `[US2]`, and `[US3]` map to the matching priority stories in spec.md.
-- MySQL-dependent seed validation is optional when no database configuration is provided; in-memory seed validation remains mandatory.
+- Seed validation always uses the JSON fixture and in-memory store; no database configuration is required.

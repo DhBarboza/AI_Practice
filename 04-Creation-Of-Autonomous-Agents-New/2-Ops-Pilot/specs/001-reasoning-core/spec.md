@@ -78,9 +78,9 @@ A developer runs a deterministic seed and tests the alert/incident store and tra
 - **FR-003**: The system MUST provide one model factory for strategy model creation. It MUST read `OPENROUTER_API_KEY` and `OPENROUTER_MODEL`, use OpenRouter as the provider endpoint, and set temperature to zero. Missing or invalid configuration MUST produce a clear error without revealing secret values.
 - **FR-004**: The system MUST provide validated mock tools to list alerts by status, open an incident with a title, service, and severity, and resolve an incident by identifier.
 - **FR-005**: The mock store MUST support five services and six varied alerts, with exactly three firing and three resolved alerts in its primary seed dataset.
-- **FR-006**: The system MUST provide a deterministic, repeatable seed script that initializes the mock store with the primary dataset and can be run as the final seed-verification step.
+- **FR-006**: The system MUST provide a deterministic, repeatable seed script that loads the checked-in JSON fixture into an in-memory store and can be run as the final seed-verification step.
 - **FR-007**: Tool inputs and outputs at external or domain boundaries MUST be validated with Zod schemas. Invalid operations MUST produce an explicit validation or domain error and MUST NOT silently succeed.
-- **FR-008**: The data model MUST represent services, alerts, and incidents and support MySQL persistence through Sequelize, while mock tool runs use the deterministic in-memory store.
+- **FR-008**: The data model MUST represent services, alerts, and incidents. The current seed and tool-execution path MUST use the JSON fixture and in-memory store; Sequelize models may remain available for future persistence.
 - **FR-009**: The ReAct strategy MUST use the prebuilt LangGraph ReAct agent with the mock tools and capture the complete available structured run trace.
 - **FR-010**: The Plan-and-Execute strategy MUST plan a structured list of steps, execute one step at a time using the available tools, and replan the remaining work after each executed step. It MUST terminate when no work remains.
 - **FR-011**: Plan-and-Execute MUST execute no more than eight steps in one run. Every strategy MUST also honor the run's configured maximum iteration limit.
@@ -112,7 +112,7 @@ A developer runs a deterministic seed and tests the alert/incident store and tra
 
 ## Assumptions
 
-- The mock tools and arena use an in-memory store for deterministic runs; Sequelize/MySQL provides the required persistence model without making mock operations depend on a live database.
+- The mock tools and arena load a JSON seed fixture into an in-memory store for deterministic runs; the fixture is the sole seed source and is not modified by strategy runs.
 - The primary seed uses synthetic service and alert data; only the required counts and status distribution are fixed.
 - `maxIterations` is a positive integer supplied to the strategy run; the arena provides a documented default when the flag is omitted. For Plan-and-Execute, the effective executed-step ceiling is the smaller of this limit and eight.
 - A model provider may not expose private reasoning. The `thought` trace event therefore records concise rationale available to the application, not hidden chain-of-thought.

@@ -24,4 +24,4 @@ Seed verification:
 npm run seed
 ```
 
-Without MySQL settings, this command verifies/initializes the in-memory seed and reports its service/alert counts. With `MYSQL_DATABASE` and `MYSQL_USER` configured, it also upserts the seed into MySQL and closes the database connection on completion.
+The command loads `src/agents/seed-data.json` into a fresh in-memory store and reports its service/alert counts. It does not require or connect to MySQL.

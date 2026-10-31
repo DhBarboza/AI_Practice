@@ -15,6 +15,7 @@ test("OpenRouter model configuration uses the selected model and zero temperatur
       apiKey: "test-key",
       model: "test-model",
       temperature: 0,
+      modelKwargs: { provider: { sort: "latency" } },
       configuration: { baseURL: openRouterBaseUrl },
     },
   );

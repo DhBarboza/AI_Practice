@@ -1,3 +1,4 @@
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { z } from "zod";
 import { createModel } from "./model.js";
@@ -15,47 +16,91 @@ const PlanStepSchema = z.discriminatedUnion("tool", [
   z.object({
     tool: z.literal("list_alerts"),
     args: z.object({ status: z.enum(["firing", "resolved", "all"]).optional() }),
-  }),
+  }).strict(),
   z.object({
     tool: z.literal("open_incident"),
     args: z.object({
       title: z.string().trim().min(1),
       service: z.string().trim().min(1),
       severity: z.enum(["critical", "high", "medium", "low"]),
-    }),
-  }),
+    }).strict(),
+  }).strict(),
   z.object({
     tool: z.literal("resolve_incident"),
     args: z.object({ id: z.string().trim().min(1) }),
-  }),
+  }).strict(),
 ]);
 
-const PlanSchema = z.object({
-  steps: z.array(PlanStepSchema).max(8),
-  answer: z.string().optional(),
-});
-const ReplanSchema = z.object({
-  steps: z.array(PlanStepSchema).max(8),
-  answer: z.string().optional(),
-  critique: z.string().optional(),
-});
+const PlanSchema = z
+  .object({
+    steps: z.array(z.string().trim().min(1)).max(8),
+    answer: z.string().optional(),
+  })
+  .strict();
+
+const ReplanSchema = z
+  .object({
+    decision: z.enum(["continue", "adjust", "finish"]),
+    steps: z.array(z.string().trim().min(1)).max(8).optional(),
+    answer: z.string().optional(),
+    critique: z.string().optional(),
+  })
+  .strict();
+
+const PLANNER_PROMPT =
+  "Create a short, ordered plan with one action per step, using only these tools: " +
+  "list_alerts(status?: firing|resolved|all) reads the seeded alerts; " +
+  "open_incident(title, service, severity) creates an incident for a known service; " +
+  "resolve_incident(id) resolves an existing incident. " +
+  "Return no more than 8 steps. If no tool is needed, return an empty steps array and a concise answer.";
+
+const EXECUTOR_PROMPT =
+  "Execute exactly one requested plan step using exactly one available operational tool. " +
+  "Use the request and previous results as context. Do not invent tool results or call more than one tool.";
+
+const REPLANNER_PROMPT =
+  "Review the completed steps and their results. Decide whether to continue the remaining plan, " +
+  "adjust it with a replacement plan, or finish with a truthful answer. Never repeat completed actions. " +
+  "If an action failed, do not claim it succeeded.";
 
 type PlanStep = z.infer<typeof PlanStepSchema>;
 type Plan = z.infer<typeof PlanSchema>;
 type Replan = z.infer<typeof ReplanSchema>;
 
+interface ToolExecution {
+  tool: PlanStep["tool"];
+  args: PlanStep["args"];
+  output: unknown;
+}
+
+interface ExecutionContext {
+  input: string;
+  done: readonly [string, string][];
+}
+
 export interface PlanEngine {
   plan(prompt: string): Promise<Plan>;
   replan(prompt: string): Promise<Replan>;
-  execute(step: PlanStep): Promise<unknown>;
+  execute(step: string, context: ExecutionContext): Promise<ToolExecution>;
 }
 
 interface PlanDependencies {
   createEngine(store: MemoryOpsStore): PlanEngine;
 }
 
-function stepLabel(step: PlanStep): string {
-  return `${step.tool}(${JSON.stringify(step.args)})`;
+class ToolExecutionError extends Error {
+  constructor(
+    readonly tool: PlanStep["tool"],
+    readonly args: PlanStep["args"],
+    message: string,
+  ) {
+    super(message);
+    this.name = "ToolExecutionError";
+  }
+}
+
+function stepLabel(step: string): string {
+  return step.trim();
 }
 
 function errorText(error: unknown): string {
@@ -73,22 +118,77 @@ function createDefaultPlanEngine(store: MemoryOpsStore): PlanEngine {
   const replanner = model.withStructuredOutput(ReplanSchema);
   const [listAlertsTool, openIncidentTool, resolveIncidentTool] =
     createOpsTools(store);
+  const executor = model.bindTools([
+    listAlertsTool,
+    openIncidentTool,
+    resolveIncidentTool,
+  ]);
 
   return {
     async plan(prompt) {
-      return PlanSchema.parse(await planner.invoke(prompt));
+      return PlanSchema.parse(
+        await planner.invoke([
+          new SystemMessage(PLANNER_PROMPT),
+          new HumanMessage(prompt),
+        ]),
+      );
     },
     async replan(prompt) {
-      return ReplanSchema.parse(await replanner.invoke(prompt));
+      return ReplanSchema.parse(
+        await replanner.invoke([
+          new SystemMessage(REPLANNER_PROMPT),
+          new HumanMessage(prompt),
+        ]),
+      );
     },
-    async execute(step) {
-      switch (step.tool) {
-        case "list_alerts":
-          return listAlertsTool.invoke(step.args);
-        case "open_incident":
-          return openIncidentTool.invoke(step.args);
-        case "resolve_incident":
-          return resolveIncidentTool.invoke(step.args);
+    async execute(step, context) {
+      const response = await executor.invoke([
+        new SystemMessage(EXECUTOR_PROMPT),
+        new HumanMessage(
+          `Request: ${context.input}\n` +
+            `Plan step: ${step}\n` +
+            `Completed steps and results: ${JSON.stringify(context.done)}`,
+        ),
+      ]);
+      const toolCalls = response.tool_calls ?? [];
+      if (toolCalls.length !== 1) {
+        throw new Error(
+          `Executor must request exactly one operational tool; received ${toolCalls.length}.`,
+        );
+      }
+
+      const selectedStep = PlanStepSchema.parse({
+        tool: toolCalls[0]?.name,
+        args: toolCalls[0]?.args,
+      });
+
+      try {
+        switch (selectedStep.tool) {
+          case "list_alerts":
+            return {
+              tool: selectedStep.tool,
+              args: selectedStep.args,
+              output: await listAlertsTool.invoke(selectedStep.args),
+            };
+          case "open_incident":
+            return {
+              tool: selectedStep.tool,
+              args: selectedStep.args,
+              output: await openIncidentTool.invoke(selectedStep.args),
+            };
+          case "resolve_incident":
+            return {
+              tool: selectedStep.tool,
+              args: selectedStep.args,
+              output: await resolveIncidentTool.invoke(selectedStep.args),
+            };
+        }
+      } catch (error) {
+        throw new ToolExecutionError(
+          selectedStep.tool,
+          selectedStep.args,
+          errorText(error),
+        );
       }
     },
   };
@@ -107,7 +207,11 @@ export function createPlanAndExecuteStrategy(
       const engine = dependencies.createEngine(store);
       const PlanState = Annotation.Root({
         input: Annotation<string>(),
-        remaining: Annotation<PlanStep[]>(),
+        plan: Annotation<string[]>(),
+        done: Annotation<[string, string][]>({
+          reducer: (existing, next) => existing.concat(next),
+          default: () => [],
+        }),
         trace: Annotation<TraceEvent[]>(),
         llmCalls: Annotation<number>(),
         iterations: Annotation<number>(),
@@ -118,10 +222,7 @@ export function createPlanAndExecuteStrategy(
 
       const graph = new StateGraph(PlanState)
         .addNode("planner", async (state) => {
-          const proposed = await engine.plan(
-            `Create a safe, concise tool plan for the request. Return no more than 8 steps and include a final answer if no steps are needed.\n` +
-              `Request: ${state.input}`,
-          );
+          const proposed = await engine.plan(state.input);
           const steps = proposed.steps.slice(0, state.maxIterations);
           const trace: TraceEvent[] = [...state.trace];
           let answer = "";
@@ -141,46 +242,51 @@ export function createPlanAndExecuteStrategy(
           }
 
           return {
-            remaining: steps,
+            plan: steps,
             trace,
             answer,
             llmCalls: state.llmCalls + 1,
           };
         })
         .addNode("executor", async (state) => {
-          const step = state.remaining[0];
-          if (!step) throw new Error("Executor received an empty plan.");
+          const step = state.plan[0];
+          if (step === undefined) throw new Error("Executor received an empty plan.");
 
-          const action: TraceEvent = {
-            type: "action",
-            tool: step.tool,
-            args: step.args,
-          };
-          let observation: TraceEvent;
+          let tool = "plan_executor";
+          let args: Record<string, unknown> = { step };
+          let observation: string;
           let failures = state.failures;
 
           try {
-            const output = await engine.execute(step);
-            observation = {
-              type: "observation",
-              tool: step.tool,
-              content: observationText(output),
-            };
+            const execution = await engine.execute(step, {
+              input: state.input,
+              done: state.done,
+            });
+            tool = execution.tool;
+            args = execution.args;
+            observation = observationText(execution.output);
           } catch (error) {
             const message = errorText(error);
-            failures = [...failures, `${step.tool}: ${message}`];
-            observation = {
-              type: "observation",
-              tool: step.tool,
-              content: `Tool error: ${message}`,
-            };
+            if (error instanceof ToolExecutionError) {
+              tool = error.tool;
+              args = error.args;
+            }
+            observation = `Tool error: ${message}`;
+            failures = [...failures, `${tool}: ${message}`];
           }
 
+          const trace: TraceEvent[] = [
+            ...state.trace,
+            { type: "action", tool, args },
+            { type: "observation", tool, content: observation },
+          ];
           return {
-            remaining: state.remaining.slice(1),
-            trace: [...state.trace, action, observation],
+            plan: state.plan.slice(1),
+            done: [[step, observation] as [string, string]],
+            trace,
             iterations: state.iterations + 1,
             failures,
+            llmCalls: state.llmCalls + 1,
           };
         })
         .addNode("replanner", async (state) => {
@@ -189,19 +295,26 @@ export function createPlanAndExecuteStrategy(
             state.maxIterations - state.iterations,
           );
           const reviewed = await engine.replan(
-            `Review completed tool actions and update the remaining plan. Do not repeat completed actions. ` +
-              `Return at most ${remainingCapacity} next steps. If no steps remain, include a final answer. ` +
-              `If any observation contains a tool error, do not claim that action succeeded.\n` +
-              `Original request: ${state.input}\n` +
-              `Completed trace: ${JSON.stringify(state.trace)}\n` +
-              `Previously remaining steps: ${state.remaining.map(stepLabel).join("; ") || "none"}`,
+            `Original request: ${state.input}\n` +
+              `Completed steps and results: ${JSON.stringify(state.done)}\n` +
+              `Remaining plan: ${state.plan.join("; ") || "none"}\n` +
+              `Remaining action capacity: ${remainingCapacity}\n` +
+              `Return decision=continue to keep the remaining plan, decision=adjust to replace it, ` +
+              `or decision=finish to stop. If finishing, include a final answer.`,
           );
-          const steps = reviewed.steps.slice(0, remainingCapacity);
-          const trace = [...state.trace];
+          const proposedSteps =
+            reviewed.decision === "continue"
+              ? state.plan
+              : reviewed.decision === "adjust"
+                ? (reviewed.steps ?? [])
+                : [];
+          const steps = proposedSteps.slice(0, remainingCapacity);
+          const trace: TraceEvent[] = [...state.trace];
+
           if (reviewed.critique?.trim()) {
             trace.push({ type: "critique", content: reviewed.critique });
           }
-          if (steps.length) {
+          if (reviewed.decision === "adjust" && steps.length) {
             trace.push({
               type: "plan",
               content: steps
@@ -218,14 +331,15 @@ export function createPlanAndExecuteStrategy(
               : answer;
             trace.push({ type: "answer", content: truthfulAnswer });
             return {
-              remaining: steps,
+              plan: steps,
               answer: truthfulAnswer,
               trace,
               llmCalls: state.llmCalls + 1,
             };
           }
+
           return {
-            remaining: steps,
+            plan: steps,
             trace,
             llmCalls: state.llmCalls + 1,
           };
@@ -233,13 +347,13 @@ export function createPlanAndExecuteStrategy(
         .addEdge(START, "planner")
         .addConditionalEdges(
           "planner",
-          (state) => (state.remaining.length ? "executor" : END),
+          (state) => (state.plan.length ? "executor" : END),
           { executor: "executor", [END]: END },
         )
         .addEdge("executor", "replanner")
         .addConditionalEdges(
           "replanner",
-          (state) => (state.remaining.length ? "executor" : END),
+          (state) => (state.plan.length ? "executor" : END),
           { executor: "executor", [END]: END },
         )
         .compile();
@@ -247,7 +361,8 @@ export function createPlanAndExecuteStrategy(
       const result = await graph.invoke(
         {
           input: input.input,
-          remaining: [],
+          plan: [],
+          done: [],
           trace: [],
           llmCalls: 0,
           iterations: 0,

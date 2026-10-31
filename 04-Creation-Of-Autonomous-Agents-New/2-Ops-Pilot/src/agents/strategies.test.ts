@@ -73,30 +73,29 @@ test("ReAct strategy refuses tool actions beyond maxIterations", async () => {
 
 test("Plan-and-Execute replans after each tool action and respects the action budget", async () => {
   const calls = { planned: 0, replanned: 0, executed: 0 };
+  let replanPrompt = "";
   const engine: PlanEngine = {
     async plan() {
       calls.planned += 1;
       return {
-        steps: [
-          { tool: "list_alerts", args: { status: "firing" } },
-          {
-            tool: "open_incident",
-            args: {
-              title: "Checkout errors",
-              service: "Checkout",
-              severity: "critical",
-            },
-          },
-        ],
+        steps: ["List the firing alerts", "Open an incident for Checkout"],
       };
     },
     async execute() {
       calls.executed += 1;
-      return '[{"id":"alert-001"}]';
+      return {
+        tool: "list_alerts",
+        args: { status: "firing" },
+        output: '[{"id":"alert-001"}]',
+      };
     },
-    async replan() {
+    async replan(prompt) {
       calls.replanned += 1;
-      return { steps: [], answer: "There are firing alerts." };
+      replanPrompt = prompt;
+      return {
+        decision: "finish",
+        answer: "There are firing alerts.",
+      };
     },
   };
   const strategy = createPlanAndExecuteStrategy({
@@ -107,8 +106,10 @@ test("Plan-and-Execute replans after each tool action and respects the action bu
   assert.equal(calls.planned, 1);
   assert.equal(calls.replanned, 1);
   assert.equal(calls.executed, 1);
-  assert.equal(result.metrics.llmCalls, 2);
+  assert.equal(result.metrics.llmCalls, 3);
   assert.equal(result.trace.filter((event) => event.type === "action").length, 1);
+  assert.match(replanPrompt, /List the firing alerts/);
+  assert.match(replanPrompt, /alert-001/);
   assert.equal(result.answer, "There are firing alerts.");
 });
 
@@ -118,23 +119,21 @@ test("Plan-and-Execute never executes more than eight steps", async () => {
   const engine: PlanEngine = {
     async plan() {
       return {
-        steps: Array.from({ length: 10 }, () => ({
-          tool: "list_alerts" as const,
-          args: { status: "all" as const },
-        })),
+        steps: Array.from({ length: 10 }, (_, index) => `Step ${index + 1}`),
       };
     },
     async execute() {
       executed += 1;
-      return "[]";
+      return {
+        tool: "list_alerts",
+        args: { status: "all" },
+        output: "[]",
+      };
     },
     async replan() {
       replanned += 1;
       return {
-        steps:
-          replanned < 8
-            ? [{ tool: "list_alerts" as const, args: { status: "all" as const } }]
-            : [],
+        decision: replanned < 8 ? "continue" : "finish",
         answer: "Stopped at the action limit.",
       };
     },
@@ -145,7 +144,7 @@ test("Plan-and-Execute never executes more than eight steps", async () => {
 
   assert.equal(executed, 8);
   assert.equal(result.trace.filter((event) => event.type === "action").length, 8);
-  assert.equal(result.metrics.llmCalls, 9);
+  assert.equal(result.metrics.llmCalls, 17);
   assert.equal(result.answer, "Stopped at the action limit.");
 });
 
@@ -158,11 +157,15 @@ test("Plan-and-Execute returns directly when the planner has no steps", async ()
     },
     async execute() {
       executed = true;
-      return "";
+      return {
+        tool: "list_alerts",
+        args: {},
+        output: "",
+      };
     },
     async replan() {
       replanned = true;
-      return { steps: [], answer: "" };
+      return { decision: "finish", answer: "" };
     },
   };
   const strategy = createPlanAndExecuteStrategy({
@@ -176,18 +179,52 @@ test("Plan-and-Execute returns directly when the planner has no steps", async ()
   assert.equal(executed, false);
 });
 
+test("Plan-and-Execute replaces the remaining plan when replanning requests an adjustment", async () => {
+  const executedSteps: string[] = [];
+  let replanned = false;
+  const engine: PlanEngine = {
+    async plan() {
+      return { steps: ["Initial step", "Step that should be replaced"] };
+    },
+    async execute(step) {
+      executedSteps.push(step);
+      return {
+        tool: "list_alerts",
+        args: { status: "all" },
+        output: "Observed alerts.",
+      };
+    },
+    async replan() {
+      if (!replanned) {
+        replanned = true;
+        return {
+          decision: "adjust",
+          steps: ["Replacement step"],
+          critique: "The original follow-up is not needed.",
+        };
+      }
+      return { decision: "finish", answer: "Done." };
+    },
+  };
+  const result = await createPlanAndExecuteStrategy({
+    createEngine: () => engine,
+  }).run({ input: "Review alerts", maxIterations: 4 });
+
+  assert.deepEqual(executedSteps, ["Initial step", "Replacement step"]);
+  assert.equal(result.answer, "Done.");
+  assert.equal(result.metrics.llmCalls, 5);
+});
+
 test("Plan-and-Execute includes tool failures in observations and final answer", async () => {
   const engine: PlanEngine = {
     async plan() {
-      return {
-        steps: [{ tool: "resolve_incident", args: { id: "missing" } }],
-      };
+      return { steps: ["Resolve the missing incident"] };
     },
     async execute() {
       throw new Error("Unknown incident: missing");
     },
     async replan() {
-      return { steps: [], answer: "I could not resolve the incident." };
+      return { decision: "finish", answer: "I could not resolve the incident." };
     },
   };
   const result = await createPlanAndExecuteStrategy({

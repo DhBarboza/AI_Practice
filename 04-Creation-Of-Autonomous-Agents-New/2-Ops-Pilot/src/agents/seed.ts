@@ -1,7 +1,5 @@
 import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
-import { createDatabaseFromEnv, defineOpsModels } from "./database.js";
-import { seedAlerts, seedServices } from "./seed-data.js";
 import { MemoryOpsStore } from "./store.js";
 
 export interface SeedSummary {
@@ -26,57 +24,13 @@ export function getSeedSummary(
 export async function runSeed(
   write: (message: string) => void = console.log,
 ): Promise<SeedSummary> {
-  const summary = getSeedSummary();
+  const summary = getSeedSummary(new MemoryOpsStore());
   write(
-    `Initialized in-memory store with ${summary.services} services and ` +
+    `Loaded src/agents/seed-data.json into the in-memory store with ${summary.services} services and ` +
       `${summary.alerts} alerts (${summary.firingAlerts} firing, ` +
       `${summary.resolvedAlerts} resolved).`,
   );
-
-  const hasDatabase = Boolean(process.env.MYSQL_DATABASE?.trim());
-  const hasUser = Boolean(process.env.MYSQL_USER?.trim());
-  if (!hasDatabase && !hasUser) {
-    write("MySQL seed skipped; configure MYSQL_DATABASE and MYSQL_USER to persist it.");
-    return summary;
-  }
-
-  const sequelize = createDatabaseFromEnv();
-  try {
-    const { Service, Alert } = defineOpsModels(sequelize);
-    await sequelize.authenticate();
-    await sequelize.sync();
-    const serviceIdByName = new Map(
-      seedServices.map((service) => [service.name, service.id]),
-    );
-    const databaseAlerts = seedAlerts.map((alert) => {
-      const serviceId = serviceIdByName.get(alert.service);
-      if (!serviceId) {
-        throw new Error(`Seed alert references unknown service: ${alert.service}`);
-      }
-      return {
-        id: alert.id,
-        serviceId,
-        title: alert.title,
-        severity: alert.severity,
-        status: alert.status,
-      };
-    });
-
-    await sequelize.transaction(async (transaction) => {
-      await Service.bulkCreate(seedServices, {
-        updateOnDuplicate: ["name", "team", "environment"],
-        transaction,
-      });
-      await Alert.bulkCreate(databaseAlerts, {
-        updateOnDuplicate: ["serviceId", "title", "severity", "status"],
-        transaction,
-      });
-    });
-    write("Seeded MySQL with the five services and six alerts.");
-    return summary;
-  } finally {
-    await sequelize.close();
-  }
+  return summary;
 }
 
 async function main(): Promise<void> {
