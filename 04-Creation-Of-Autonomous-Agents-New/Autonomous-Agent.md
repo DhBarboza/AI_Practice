@@ -667,12 +667,6 @@ Critérios de aceite:
 
 #### Output:
 
-Ran terminal command: git status --short -- 2-Ops-Pilot && printf '\n--- tracked changes ---\n' && git diff --name-status HEAD -- 2-Ops-Pilot
-
-Ran terminal command: rg --files 2-Ops-Pilot/specs/002-reflection-layer
-
-#### Resultado:
-
 **Arquivos novos:**
 
 - `2-Ops-Pilot/specs/002-reflection-layer/contracts/reflection.md`
@@ -894,4 +888,52 @@ Critérios de aceite:
 
 - `2-Ops-Pilot/specs/003-chat-http-api/checklists/requirements.md`
 - `2-Ops-Pilot/specs/003-chat-http-api/spec.md`
+```
+
+### 2. Prompt:
+
+#### Input:
+
+```md
+/speckit.plan 003-chat-http-api
+```
+
+#### Output:
+
+```md
+**Arquivos novos:**
+
+- `2-Ops-Pilot/specs/003-chat-http-api/contracts/chat-http.md`
+- `2-Ops-Pilot/specs/003-chat-http-api/data-model.md`
+- `2-Ops-Pilot/specs/003-chat-http-api/plan.md`
+- `2-Ops-Pilot/specs/003-chat-http-api/quickstart.md`
+- `2-Ops-Pilot/specs/003-chat-http-api/research.md`
+```
+
+### 3. Prompt:
+
+#### Input:
+
+```md
+/speckit.tasks 003-chat-http-api
+```
+
+#### Output:
+
+```md
+
+```
+
+### 4. Prompt
+
+#### Input:
+
+```md
+/speckit.implement 003-chat-http-api
+```
+
+#### Output:
+
+```md
+
 ```
