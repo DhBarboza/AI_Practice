@@ -847,6 +847,21 @@ Verificação: **34 testes passaram**, `npm run typecheck` passou.
 
 Executar no terminal dentro do projeto `AI_Practice/04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot`:
 
+#### Input:
+
 ```bash
 npm run bench
+```
+
+#### Ouput:
+
+```bash
+| cenário | estratégia       | acerto | llmCalls | latencyMs          |
+|---------|------------------|--------|----------|--------------------|
+| C1      | react            | sim    | 2        | 6449.893264        |
+| C1      | plan-and-execute | sim    | 3        | 43323.374889       |
+| C2      | react            | sim    | 7        | 22369.414619999996 |
+| C2      | plan-and-execute | não    | 3        | 38626.793177       |
+| C3      | react            | não    | 4        | 10527.590729000003 |
+| C3      | plan-and-execute | não    | 3        | 21793.01640200001  |
 ```
