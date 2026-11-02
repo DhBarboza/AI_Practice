@@ -637,7 +637,7 @@ npm run arena -- "abra três incidentes sev2 para os alertas do checkout, paymen
 
 ## CRÍTICAS E BENCH MARK COM PADRÃO REFLECTION
 
-### Prompt:
+### 1. Prompt:
 
 ```md
 /speckit.specify Camada Reflection: withReflection(strategy, opts) decora qualquer ReasoningStrategy: executa a base; um crítico (mesmo modelo, saída estruturada { approved, feedback }) avalia a resposta contra as observações do trace; se reprovar, regenera com o feedback no contexto; para em approved ou maxReflections (default 2). Evento "critique" no trace; métricas somam as chamadas extras. Arena: reflect:react e reflect:plan-and-execute.
@@ -654,7 +654,18 @@ Critérios de aceite:
 
 #### Resultado:
 
-Vou comparar o estado atual do `2-Ops-Pilot` com o Git para separar arquivos novos, modificados e removidos.
+**Arquivos novos:**
+
+- `2-Ops-Pilot/specs/002-reflection-layer/spec.md`
+- `2-Ops-Pilot/specs/002-reflection-layer/checklists/requirements.md`
+
+### 2. Prompt:
+
+```md
+/speckit.plan 002-reflection-layer002-reflection-layer
+```
+
+#### Output:
 
 Ran terminal command: git status --short -- 2-Ops-Pilot && printf '\n--- tracked changes ---\n' && git diff --name-status HEAD -- 2-Ops-Pilot
 
@@ -664,10 +675,18 @@ Ran terminal command: rg --files 2-Ops-Pilot/specs/002-reflection-layer
 
 **Arquivos novos:**
 
-- `2-Ops-Pilot/specs/002-reflection-layer/spec.md`
-- `2-Ops-Pilot/specs/002-reflection-layer/checklists/requirements.md`
+- `2-Ops-Pilot/specs/002-reflection-layer/contracts/reflection.md`
+- `2-Ops-Pilot/specs/002-reflection-layer/contracts/arena-cli.md`
+- `2-Ops-Pilot/specs/002-reflection-layer/data-model.md`
+- `2-Ops-Pilot/specs/002-reflection-layer/plan.md`
+- `2-Ops-Pilot/specs/002-reflection-layer/quickstart.md`
+- `2-Ops-Pilot/specs/002-reflection-layer/research.md`
 
-### Prompt:
+**Arquivos modificados:**
+
+- `2-Ops-Pilot/specs/002-reflection-layer/spec.md`
+
+### 3. Prompt:
 
 ```md
 /speckit.tasks 002-reflection-layer002-reflection-layer

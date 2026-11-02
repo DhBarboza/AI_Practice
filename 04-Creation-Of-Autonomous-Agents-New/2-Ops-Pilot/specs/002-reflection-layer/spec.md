@@ -97,4 +97,5 @@ As an OpsPilot user, I want to run the reflective React and Plan-and-Execute str
 - The maximum reflection count is a non-negative integer and counts regenerations after the initial base response; therefore, the critic can evaluate the initial response and each regenerated response up to the configured limit.
 - A rejected critique at the limit is recorded, but does not trigger another regeneration; this makes the final generated response the one returned after continuous rejection.
 - The critic's structured approval and feedback are internal evaluation results; the user-facing result remains the latest generated reasoning response.
+- Built-in strategies and the default critic use the same configured model. Callers wrapping a custom strategy backed by another model provide a critic using that strategy's model.
 - The Arena's reflective options use the same reflection defaults as `withReflection` unless explicitly configured otherwise.
