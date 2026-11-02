@@ -29,7 +29,7 @@ Represents the critic's evaluation of one candidate.
 | Field | Type | Constraints |
 |---|---|---|
 | `maxReflections` | non-negative integer | Defaults to `2`; counts regenerations after the initial response. Zero bypasses the critic. |
-| `critic` | async function (optional) | Accepts the candidate answer and accumulated trace observations; returns a validated critique. Use for deterministic tests or when a custom strategy uses a different model. When absent, the configured model-backed critic is used. |
+| `critic` | async function (optional) | Accepts the original request and accumulated reasoning result; returns a validated critique. Use for deterministic tests or when a custom strategy uses a different model. When absent, the configured model-backed critic is used. |
 
 ## Relationships and State Transitions
 

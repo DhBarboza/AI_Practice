@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { parseArenaArgs, runArena } from "./arena.js";
+import { withReflection } from "./agents/reflection.js";
 import type {
   ReasoningInput,
   ReasoningStrategy,
@@ -99,4 +100,45 @@ test("arena runs each selected strategy with the same input and prints each resu
   assert.ok(output.some((line) => line.includes("=== react ===")));
   assert.ok(output.some((line) => line.includes("=== plan-and-execute ===")));
   assert.ok(output.some((line) => line.includes('"llmCalls":1')));
+});
+
+test("arena lists reflective strategies and runs selected reflective entries", async () => {
+  const defaultOptions = parseArenaArgs(["Review the alerts"]);
+  assert.ok(defaultOptions.strategyNames.includes("reflect:react"));
+  assert.ok(defaultOptions.strategyNames.includes("reflect:plan-and-execute"));
+
+  const observedInputs: ReasoningInput[] = [];
+  const baseReact = createStrategy("react", (input) => {
+    observedInputs.push(input);
+  });
+  const basePlanAndExecute = createStrategy("plan-and-execute", (input) => {
+    observedInputs.push(input);
+  });
+  const registry = [
+    withReflection(baseReact, {
+      critic: async () => ({ approved: true, feedback: "" }),
+    }),
+    withReflection(basePlanAndExecute, {
+      critic: async () => ({ approved: true, feedback: "" }),
+    }),
+  ];
+  const output: string[] = [];
+
+  await runArena(
+    [
+      "Review the alerts",
+      "--strategies",
+      "reflect:react,reflect:plan-and-execute",
+    ],
+    registry,
+    (line) => output.push(line),
+  );
+
+  assert.deepEqual(observedInputs, [
+    { input: "Review the alerts", maxIterations: 8 },
+    { input: "Review the alerts", maxIterations: 8 },
+  ]);
+  assert.ok(output.some((line) => line.includes("=== reflect:react ===")));
+  assert.ok(output.some((line) => line.includes("=== reflect:plan-and-execute ===")));
+  assert.ok(output.some((line) => line.includes("CRITIQUE")));
 });

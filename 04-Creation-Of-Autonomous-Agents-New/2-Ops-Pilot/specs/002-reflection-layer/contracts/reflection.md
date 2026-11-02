@@ -5,13 +5,7 @@
 ```ts
 interface ReflectionOptions {
   maxReflections?: number;
-  critic?: (context: CritiqueContext) => Promise<Critique>;
-}
-
-interface CritiqueContext {
-  input: string;
-  answer: string;
-  observations: Extract<TraceEvent, { type: "observation" }>[];
+  critic?: (input: string, result: ReasoningResult) => Promise<Critique>;
 }
 
 interface Critique {
@@ -25,7 +19,7 @@ The implementation validates options (`maxReflections` is a non-negative integer
 For a positive maximum:
 
 1. Run the wrapped strategy once with the input.
-2. Ask the configured critic to assess the response using the original input, its answer, and observation events in the accumulated trace. The default critic uses the same configured OpenRouter model and settings as the built-in strategies. Callers wrapping a custom strategy backed by a different model supply a critic using that strategy's model.
+2. Ask the configured critic to assess the response using the original input and the accumulated result. The default critic evaluates the answer only against the original request and observation events from the accumulated trace. It uses the same configured OpenRouter model and settings as the built-in strategies. Callers wrapping a custom strategy backed by a different model supply a critic using that strategy's model.
 3. Append one `critique` trace event for every evaluation.
 4. Return the current candidate if approved.
 5. If rejected and regeneration budget remains, rerun the wrapped strategy with the original input plus the rejection feedback in context.

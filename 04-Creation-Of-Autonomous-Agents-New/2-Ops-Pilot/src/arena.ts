@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { z } from "zod";
 import { planAndExecuteStrategy } from "./agents/plan-and-execute.js";
 import { reactStrategy } from "./agents/react.js";
+import { withReflection } from "./agents/reflection.js";
 import type {
   ReasoningInput,
   ReasoningStrategy,
@@ -12,6 +13,11 @@ import { formatTrace } from "./agents/trace.js";
 const defaultStrategies = new Map<string, ReasoningStrategy>([
   [reactStrategy.name, reactStrategy],
   [planAndExecuteStrategy.name, planAndExecuteStrategy],
+  [`reflect:${reactStrategy.name}`, withReflection(reactStrategy)],
+  [
+    `reflect:${planAndExecuteStrategy.name}`,
+    withReflection(planAndExecuteStrategy),
+  ],
 ]);
 
 export interface ArenaOptions {

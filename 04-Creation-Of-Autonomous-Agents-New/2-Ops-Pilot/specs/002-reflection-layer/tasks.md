@@ -50,11 +50,11 @@ No tasks.
 
 ### Tests for User Story 1
 
-- [ ] T001 [US1] Add offline tests for approved-first-pass and reject-then-approve behavior, including answer/observation context, feedback in the next input, critique trace events, and summed calls in `src/agents/reflection.test.ts`; confirm the tests fail before implementation.
+- [X] T001 [US1] Add offline tests for approved-first-pass and reject-then-approve behavior, including answer/observation context, feedback in the next input, critique trace events, and summed calls in `src/agents/reflection.test.ts`; confirm the tests fail before implementation.
 
 ### Implementation for User Story 1
 
-- [ ] T002 [US1] Implement `withReflection(strategy, opts?)` and the validated structured critic in `src/agents/reflection.ts`; use `createModel()` for the default critic, support an injected critic for deterministic tests/custom models, pass trace observations and the candidate answer to the critic, feed rejection feedback to the next strategy run, and return the approved candidate with combined trace and call metrics.
+- [X] T002 [US1] Implement `withReflection(strategy, opts?)` and the validated structured critic in `src/agents/reflection.ts`; use `createModel()` for the default critic, support an injected critic for deterministic tests/custom models, pass trace observations and the candidate answer to the critic, feed rejection feedback to the next strategy run, and return the approved candidate with combined trace and call metrics.
 
 **Checkpoint**: User Story 1 is independently usable with the default reflection limit and deterministic injected dependencies.
 
@@ -68,11 +68,11 @@ No tasks.
 
 ### Tests for User Story 2
 
-- [ ] T003 [US2] Add offline tests for `maxReflections: 0`, default and explicit limits, continuous rejection, last-response return, critique-event count, critic and regeneration metrics, and invalid option values in `src/agents/reflection.test.ts`; confirm the tests fail before implementation.
+- [X] T003 [US2] Add offline tests for `maxReflections: 0`, default and explicit limits, continuous rejection, last-response return, critique-event count, critic and regeneration metrics, and invalid option values in `src/agents/reflection.test.ts`; confirm the tests fail before implementation.
 
 ### Implementation for User Story 2
 
-- [ ] T004 [US2] Enforce non-negative integer reflection limits and the default of two, bypass critic construction and invocation at zero, stop after the final allowed critique without another regeneration, append each critique in order, and report whole-run elapsed latency in `src/agents/reflection.ts`.
+- [X] T004 [US2] Enforce non-negative integer reflection limits and the default of two, bypass critic construction and invocation at zero, stop after the final allowed critique without another regeneration, append each critique in order, and report whole-run elapsed latency in `src/agents/reflection.ts`.
 
 **Checkpoint**: User Stories 1 and 2 satisfy the full reflection and retry-boundary acceptance criteria.
 
@@ -86,12 +86,12 @@ No tasks.
 
 ### Tests for User Story 3
 
-- [ ] T005 [P] [US3] Add Arena tests that verify both reflective names are available in default selection and that explicitly selected reflective registry entries dispatch through `runArena` in `src/arena.test.ts`; use deterministic strategies and confirm tests fail before registration.
+- [X] T005 [P] [US3] Add Arena tests that verify both reflective names are available in default selection and that explicitly selected reflective registry entries dispatch through `runArena` in `src/arena.test.ts`; use deterministic strategies and confirm tests fail before registration.
 
 ### Implementation for User Story 3
 
-- [ ] T006 [US3] Register `reflect:react` as `withReflection(reactStrategy)` and `reflect:plan-and-execute` as `withReflection(planAndExecuteStrategy)` in the default strategy registry in `src/arena.ts`.
-- [ ] T007 [P] [US3] Update the usage example and expected Arena output for reflective strategy names in `specs/002-reflection-layer/contracts/arena-cli.md` and `specs/002-reflection-layer/quickstart.md`.
+- [X] T006 [US3] Register `reflect:react` as `withReflection(reactStrategy)` and `reflect:plan-and-execute` as `withReflection(planAndExecuteStrategy)` in the default strategy registry in `src/arena.ts`.
+- [X] T007 [P] [US3] Update the usage example and expected Arena output for reflective strategy names in `specs/002-reflection-layer/contracts/arena-cli.md` and `specs/002-reflection-layer/quickstart.md`.
 
 **Checkpoint**: Both reflective strategies are listed and runnable through the existing Arena workflow.
 
@@ -101,7 +101,7 @@ No tasks.
 
 **Purpose**: Verify the complete feature and preserve repository-wide checks.
 
-- [ ] T008 Run `npm test` and `npm run typecheck` from the repository root using the scripts in `package.json`; resolve any regressions in the touched `src/agents/` and `src/arena.ts` files.
+- [X] T008 Run `npm test` and `npm run typecheck` from the repository root using the scripts in `package.json`; resolve any regressions in the touched `src/agents/` and `src/arena.ts` files.
 
 ---
 

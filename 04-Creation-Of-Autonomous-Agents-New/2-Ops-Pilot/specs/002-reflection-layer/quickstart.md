@@ -23,13 +23,15 @@ Expected outcomes:
 
 ## Run reflective Arena strategies
 
+Both reflective names are included in the Arena's default strategy list.
+
 ```sh
 npm run arena -- --input "List the firing alerts" \
   --strategies reflect:react,reflect:plan-and-execute \
   --max-iterations 8
 ```
 
-Expected outcome: one output section per selected strategy with its final answer, ordered trace including critique events, total model-call count, and elapsed latency. A missing model setting, invalid option, or model/tool error is reported explicitly.
+Expected outcome: one output section per selected strategy with its final answer, ordered trace including critique events, total model-call count including critic and regeneration calls, and elapsed latency. A missing model setting, invalid option, or model/tool error is reported explicitly.
 
 ## Reference contracts
 
