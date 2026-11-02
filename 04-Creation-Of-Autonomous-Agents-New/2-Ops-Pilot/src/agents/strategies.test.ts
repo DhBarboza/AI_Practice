@@ -113,6 +113,39 @@ test("Plan-and-Execute replans after each tool action and respects the action bu
   assert.equal(result.answer, "There are firing alerts.");
 });
 
+test("Plan-and-Execute can execute the initial plan without invoking the replanner", async () => {
+  const executed: string[] = [];
+  let replanned = false;
+  const strategy = createPlanAndExecuteStrategy({
+    enableReplanning: false,
+    createEngine: () => ({
+      async plan() {
+        return { steps: ["First action", "Second action"] };
+      },
+      async execute(step) {
+        executed.push(step);
+        return {
+          tool: "list_alerts",
+          args: { status: "firing" },
+          output: "[]",
+        };
+      },
+      async replan() {
+        replanned = true;
+        throw new Error("Replanner must not be called.");
+      },
+    }),
+  });
+
+  const result = await strategy.run({ input: "Run the plan", maxIterations: 4 });
+
+  assert.deepEqual(executed, ["First action", "Second action"]);
+  assert.equal(replanned, false);
+  assert.equal(result.answer, "Completed 2 planned action(s).");
+  assert.equal(result.metrics.llmCalls, 3);
+  assert.equal(result.trace.at(-1)?.type, "answer");
+});
+
 test("Plan-and-Execute never executes more than eight steps", async () => {
   let executed = 0;
   let replanned = 0;

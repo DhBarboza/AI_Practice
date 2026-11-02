@@ -691,3 +691,162 @@ Ran terminal command: rg --files 2-Ops-Pilot/specs/002-reflection-layer
 ```md
 /speckit.tasks 002-reflection-layer002-reflection-layer
 ```
+
+#### Resultado:
+
+**Arquivos novos:**
+
+- `2-Ops-Pilot/specs/002-reflection-layer/tasks.md`
+
+### 4. Prompt
+
+````md
+/speckit.implement 002-reflection-layer
+
+Ao executar o implement, leve em conta o exemplo abaixo como referência do padrão de reflection:
+
+```ts
+const verdictSchema = z.object({
+    approved: z.boolean(),
+    feedback: z
+        .string()
+        .describe(
+            "se reprovado: o que corrigir, de forma específica e acionável",
+        ),
+});
+
+async function critique(input: string, result: ReasoningResult) {
+    return createModel()
+        .withStructuredOutput(verdictSchema)
+        .invoke([
+            ["system", CRITIC_PROMPT], // avalie APENAS contra as observações do trace e do pedido
+            [
+                "user",
+                `Pedido: ${input}\nObservações: ${observationsOf(result.trace)}\nResposta: ${result.answer}`,
+            ],
+        ]);
+}
+```
+````
+
+```
+
+```
+
+#### Output:
+
+**Arquivos novos:**
+
+- `2-Ops-Pilot/src/agents/reflection.ts`
+- `2-Ops-Pilot/src/agents/reflection.test.ts`
+
+**Arquivos modificados:**
+
+- `2-Ops-Pilot/example.ts`
+- `2-Ops-Pilot/specs/002-reflection-layer/contracts/reflection.md`
+- `2-Ops-Pilot/specs/002-reflection-layer/data-model.md`
+- `2-Ops-Pilot/specs/002-reflection-layer/quickstart.md`
+- `2-Ops-Pilot/specs/002-reflection-layer/tasks.md`
+- `2-Ops-Pilot/src/arena.test.ts`
+- `2-Ops-Pilot/src/arena.ts`
+
+### 5. Terminal
+
+Executar no terminal dentro do projeto `AI_Practice/04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot`:
+
+```bash
+npm run arena -- "faça um resumo do estado da plantação com uma recomendação do que atacar primeiro" --strategies react,reflect:react
+```
+
+#### Output:
+
+```md
+Answer:
+**Resumo do estado atual (alertas ativos – status _firing_)**
+
+| Alerta    | Serviço      | Severidade   | Descrição                                         |
+| --------- | ------------ | ------------ | ------------------------------------------------- |
+| alert-001 | **Checkout** | **critical** | Taxa de erro no checkout elevada                  |
+| alert-002 | **Payments** | warning      | Latência do provedor de pagamento acima do limite |
+| alert-003 | **Ops API**  | warning      | Pressão de memória nos pods da API de operações   |
+
+**O que atacar primeiro**
+
+1. **Checkout (critical)** – Prioridade máxima.
+    - É o único alerta com severidade _critical_ e afeta diretamente a conclusão de pedidos, ou seja, impacto imediato na receita e na experiência do cliente.
+    - Ação sugerida: investigar logs de erro do serviço de checkout, verificar se há falhas de integração, aumento de tráfego ou problemas de dependência (ex.: banco de dados, filas) e, se necessário, abrir um incidente de severidade _critical_.
+
+2. **Payments (warning)** – Segundo em prioridade.
+    - Latência elevada pode causar timeouts e abandono de carrinho, mas ainda não está gerando erros críticos.
+    - Ação sugerida: checar o provedor de pagamento, tempo de resposta das APIs e possíveis gargalos de rede.
+
+3. **Ops API (warning)** – Terceiro.
+    - Pressão de memória pode afetar a estabilidade da API interna, mas o impacto direto no usuário final é menor no momento.
+    - Ação sugerida: revisar uso de memória dos pods, possíveis vazamentos e considerar escalonamento ou reinício controlado.
+
+**Recomendação rápida:** comece pelo **Checkout**, pois é o único alerta crítico e tem impacto direto no faturamento. Após estabilizá-lo, siga para Payments e, por fim, Ops API.
+Trace:
+[01] THOUGHT: The agent selected an operational tool for the request.
+[02] ACTION list*alerts({"status":"firing"})
+[03] OBSERVATION list_alerts: [{"id":"alert-001","service":"Checkout","title":"Elevated checkout error rate","severity":"critical","status":"firing"},{"id":"alert-002","service":"Payments","title":"Payment provider latency above threshold","severity":"warning","status":"firing"},{"id":"alert-003","service":"Ops API","title":"API pod memory pressure","severity":"warning","status":"firing"}]
+[04] ANSWER: \*\*Resumo do estado atual (alertas ativos – status \_firing*)\*\*
+
+| Alerta    | Serviço      | Severidade   | Descrição                                         |
+| --------- | ------------ | ------------ | ------------------------------------------------- |
+| alert-001 | **Checkout** | **critical** | Taxa de erro no checkout elevada                  |
+| alert-002 | **Payments** | warning      | Latência do provedor de pagamento acima do limite |
+| alert-003 | **Ops API**  | warning      | Pressão de memória nos pods da API de operações   |
+
+**O que atacar primeiro**
+
+1. **Checkout (critical)** – Prioridade máxima.
+    - É o único alerta com severidade _critical_ e afeta diretamente a conclusão de pedidos, ou seja, impacto imediato na receita e na experiência do cliente.
+    - Ação sugerida: investigar logs de erro do serviço de checkout, verificar se há falhas de integração, aumento de tráfego ou problemas de dependência (ex.: banco de dados, filas) e, se necessário, abrir um incidente de severidade _critical_.
+
+2. **Payments (warning)** – Segundo em prioridade.
+    - Latência elevada pode causar timeouts e abandono de carrinho, mas ainda não está gerando erros críticos.
+    - Ação sugerida: checar o provedor de pagamento, tempo de resposta das APIs e possíveis gargalos de rede.
+
+3. **Ops API (warning)** – Terceiro.
+    - Pressão de memória pode afetar a estabilidade da API interna, mas o impacto direto no usuário final é menor no momento.
+    - Ação sugerida: revisar uso de memória dos pods, possíveis vazamentos e considerar escalonamento ou reinício controlado.
+
+**Recomendação rápida:** comece pelo **Checkout**, pois é o único alerta crítico e tem impacto direto no faturamento. Após estabilizá-lo, siga para Payments e, por fim, Ops API.
+Metrics: {"llmCalls":2,"latencyMs":10240.426024}
+```
+
+### 6. Criar um comparativo (Benchmark)
+
+#### Input:
+
+```md
+Crie src/bench.ts: 3 cenários x 2 estratégias (react, plan-and-execute), com acerto verificado no ESTADO do store após rodar, e tabela consolidada. Flags: `--scenario` e `--no-replanner`.
+
+Cenários:
+
+- C1 (direto): "quantos alertas críticos estão disparando?"
+- C2 (estruturado): "abra três incidentes sev2 para checkout, payment e catalog, nessa mesma ordem, e resolva o primeiro"
+- C3 (dinâmico): "dos alertas disparando, abra um incidente para o mais antigo e diga quantos sobraram"
+
+Colunas da tabela: cenário, estratégia, acerto, llmCalls, latencyMs
+```
+
+#### Output:
+
+```md
+Implementado em `src/bench.ts`, com testes em `src/bench.test.ts`. O benchmark executa os três cenários com ReAct e Plan-and-Execute, verifica os resultados no store isolado de cada execução e imprime a tabela consolidada.
+
+Uso: `npm run bench`, `npm run bench -- --scenario C1` ou `npm run bench -- --scenario C2,C3 --no-replanner`. O modo sem replanner executa o plano inicial em sequência; Sev2 corresponde a `high`, e `Catalog` é adicionado somente ao store do benchmark.
+
+**Observação:** como os alertas não têm timestamp, C3 considera mais antigo o primeiro alerta disparando na ordem do seed. Não executei chamadas reais aos modelos; a validação foi offline.
+
+Verificação: **34 testes passaram**, `npm run typecheck` passou.
+```
+
+### 7. Terminal
+
+Executar no terminal dentro do projeto `AI_Practice/04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot`:
+
+```bash
+npm run bench
+```

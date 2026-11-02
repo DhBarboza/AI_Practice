@@ -1,31 +1,21 @@
-// implementar o plan-execute.ts seguindo o exemplo abaixo
-
-// o estado de referencia
-const PEState = Annotation.Root({
-    input: Annotation<string>(),
-    plan: Annotation<string>(),
-    done: Annotation<[string, string][]>({
-        reducer: (a, b) => a.concat(b),
-        default: () => [],
-    }),
-    answer: Annotation<string>(),
-});
-
-// o planner - referencia
-const planSchema = z.object({
-    steps: z
-        .array(z.string())
+// exemplo para implementação dentro do padrão de reflection
+const verdictSchema = z.object({
+    approved: z.boolean(),
+    feedback: z
+        .string()
         .describe(
-            "passos curtos, ordenados, executáveis com as ferramentas disponíveis",
+            "se reprovado: o que corrigir, de forma específica e acionável",
         ),
 });
 
-async function planner(state: typeof PEState.State) {
-    const plan = await createModel()
-        .withStructuredOutput(planSchema)
+async function critique(input: string, result: ReasoningResult) {
+    return createModel()
+        .withStructuredOutput(verdictSchema)
         .invoke([
-            ["system", PLANNER_PROMPT],
-            ["user", state.input],
+            ["system", CRITIC_PROMPT], // avalie APENAS contra as observações do trace e do pedido
+            [
+                "user",
+                `Pedido: ${input}\nObservações: ${observationsOf(result.trace)}\nResposta: ${result.answer}`,
+            ],
         ]);
-    return { plan: plan.steps };
 }

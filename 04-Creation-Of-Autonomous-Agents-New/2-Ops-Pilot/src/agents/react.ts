@@ -22,6 +22,7 @@ type AgentRunner = (
 
 interface ReactDependencies {
   runAgent?: AgentRunner;
+  createStore?: () => MemoryOpsStore;
 }
 
 const runPrebuiltReactAgent: AgentRunner = async (
@@ -49,7 +50,7 @@ export function createReactStrategy(
     async run(input: ReasoningInput): Promise<ReasoningResult> {
       assertValidReasoningInput(input);
       const startedAt = performance.now();
-      const store = new MemoryOpsStore();
+      const store = dependencies.createStore?.() ?? new MemoryOpsStore();
       let toolCalls = 0;
       const messages = await runAgent(input.input, input.maxIterations, store, () => {
         if (toolCalls >= input.maxIterations) return false;

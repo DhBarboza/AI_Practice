@@ -85,7 +85,9 @@ export interface PlanEngine {
 }
 
 interface PlanDependencies {
-  createEngine(store: MemoryOpsStore): PlanEngine;
+  createEngine?(store: MemoryOpsStore): PlanEngine;
+  createStore?: () => MemoryOpsStore;
+  enableReplanning?: boolean;
 }
 
 class ToolExecutionError extends Error {
@@ -195,7 +197,7 @@ function createDefaultPlanEngine(store: MemoryOpsStore): PlanEngine {
 }
 
 export function createPlanAndExecuteStrategy(
-  dependencies: PlanDependencies = { createEngine: createDefaultPlanEngine },
+  dependencies: PlanDependencies = {},
 ): ReasoningStrategy {
   return {
     name: "plan-and-execute",
@@ -203,8 +205,10 @@ export function createPlanAndExecuteStrategy(
       assertValidReasoningInput(input);
       const startedAt = performance.now();
       const actionLimit = Math.min(input.maxIterations, 8);
-      const store = new MemoryOpsStore();
-      const engine = dependencies.createEngine(store);
+      const store = dependencies.createStore?.() ?? new MemoryOpsStore();
+      const engine =
+        dependencies.createEngine?.(store) ?? createDefaultPlanEngine(store);
+      const enableReplanning = dependencies.enableReplanning !== false;
       const PlanState = Annotation.Root({
         input: Annotation<string>(),
         plan: Annotation<string[]>(),
@@ -275,17 +279,26 @@ export function createPlanAndExecuteStrategy(
             failures = [...failures, `${tool}: ${message}`];
           }
 
+          const remainingPlan = state.plan.slice(1);
           const trace: TraceEvent[] = [
             ...state.trace,
             { type: "action", tool, args },
             { type: "observation", tool, content: observation },
           ];
+          let answer = state.answer;
+          if (!enableReplanning && remainingPlan.length === 0) {
+            answer = failures.length > 0
+              ? `Some requested actions failed: ${failures.join("; ")}. Completed ${state.iterations + 1} planned action(s).`
+              : `Completed ${state.iterations + 1} planned action(s).`;
+            trace.push({ type: "answer", content: answer });
+          }
           return {
-            plan: state.plan.slice(1),
+            plan: remainingPlan,
             done: [[step, observation] as [string, string]],
             trace,
             iterations: state.iterations + 1,
             failures,
+            answer,
             llmCalls: state.llmCalls + 1,
           };
         })
@@ -350,7 +363,16 @@ export function createPlanAndExecuteStrategy(
           (state) => (state.plan.length ? "executor" : END),
           { executor: "executor", [END]: END },
         )
-        .addEdge("executor", "replanner")
+        .addConditionalEdges(
+          "executor",
+          (state) =>
+            enableReplanning
+              ? "replanner"
+              : state.plan.length
+                ? "executor"
+                : END,
+          { executor: "executor", replanner: "replanner", [END]: END },
+        )
         .addConditionalEdges(
           "replanner",
           (state) => (state.plan.length ? "executor" : END),
