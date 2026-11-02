@@ -631,4 +631,44 @@ Execute o script de seed. Por enquanto, vamos usar apenas o arquivo .json com as
 npm run arena - "quantos alertas criticos estao disparando" -- strategies react
 ```
 
+```bash
 npm run arena -- "abra três incidentes sev2 para os alertas do checkout, payments e catalog, nessa ordem, e resolva o primeiro" -strategies plan-execute
+```
+
+## CRÍTICAS E BENCH MARK COM PADRÃO REFLECTION
+
+### Prompt:
+
+```md
+/speckit.specify Camada Reflection: withReflection(strategy, opts) decora qualquer ReasoningStrategy: executa a base; um crítico (mesmo modelo, saída estruturada { approved, feedback }) avalia a resposta contra as observações do trace; se reprovar, regenera com o feedback no contexto; para em approved ou maxReflections (default 2). Evento "critique" no trace; métricas somam as chamadas extras. Arena: reflect:react e reflect:plan-and-execute.
+
+Critérios de aceite:
+
+- maxReflections = 0 se comporta igual à estratégia base.
+- Aprovada de primeira: 1 execução base + 1 crítica, sem regeneração.
+- Reprovação contínua: para em maxReflections e retorna a última resposta gerada.
+- Um evento "critique" no trace por avaliação.
+- Métricas incluem as chamadas do crítico e das regenerações.
+- reflect:react e reflect:plan-and-execute aparecem e rodam na Arena.
+```
+
+#### Resultado:
+
+Vou comparar o estado atual do `2-Ops-Pilot` com o Git para separar arquivos novos, modificados e removidos.
+
+Ran terminal command: git status --short -- 2-Ops-Pilot && printf '\n--- tracked changes ---\n' && git diff --name-status HEAD -- 2-Ops-Pilot
+
+Ran terminal command: rg --files 2-Ops-Pilot/specs/002-reflection-layer
+
+#### Resultado:
+
+**Arquivos novos:**
+
+- `2-Ops-Pilot/specs/002-reflection-layer/spec.md`
+- `2-Ops-Pilot/specs/002-reflection-layer/checklists/requirements.md`
+
+### Prompt:
+
+```md
+/speckit.tasks 002-reflection-layer002-reflection-layer
+```
