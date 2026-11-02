@@ -865,3 +865,33 @@ npm run bench
 | C3      | react            | não    | 4        | 10527.590729000003 |
 | C3      | plan-and-execute | não    | 3        | 21793.01640200001  |
 ```
+
+Obs.: Cuidado ao executar o scrip de `benck`, usando modelos free batemos o limite de `request` diários
+
+## UMA API QUE TAMBÉM É UM AGENTE
+
+### 1. Prompt:
+
+#### Input:
+
+```md
+/speckit.specify POST /chat em src/http/server.ts (ou o padrão do Express): body { message, strategy?, reflect? } validado com zod; default react. Respostas: 200 { answer, trace, metrics }; 400 body inválido (issues do zod); 422 estratégia desconhecida; 504 se estourar o timeout de 180s. Registry em src/agents/index.ts (nome -> estratégia); reflect aplica withReflection.
+
+Critérios de aceite:
+
+- Body válido sem strategy usa react.
+- Body inválido retorna 400 com as issues do zod.
+- strategy desconhecida retorna 422.
+- Requisição que passa de 180s retorna 504.
+- reflect: true aplica withReflection sobre a estratégia escolhida.
+- Teste de integração com estratégia fake determinística, sem rede.
+```
+
+#### Output:
+
+```md
+**Arquivos novos:**
+
+- `2-Ops-Pilot/specs/003-chat-http-api/checklists/requirements.md`
+- `2-Ops-Pilot/specs/003-chat-http-api/spec.md`
+```
