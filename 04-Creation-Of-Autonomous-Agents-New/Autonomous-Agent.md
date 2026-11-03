@@ -958,3 +958,49 @@ Validação: **40 testes passaram**, `npm run typecheck` passou e `git diff --ch
 - `2-Ops-Pilot/specs/003-chat-http-api/quickstart.md`
 - `2-Ops-Pilot/specs/003-chat-http-api/tasks.md`
 ```
+
+### Executar a API:
+
+Na pasta do projeto, use **Node.js 24**:
+
+```bash
+npm install
+cp .env.example .env
+```
+
+Configure no `.env` as variáveis necessárias para o provedor de modelo e, em seguida, escolha como executar:
+
+```bash
+npm run dev     # aplicação principal
+npm run http    # API HTTP; padrão: http://localhost:3000
+npm run arena   # Arena de estratégias
+npm run bench   # benchmark
+```
+
+Para testar a API, com `npm run http` rodando, abra outro terminal e envie:
+
+```bash
+curl -X POST http://localhost:3000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"quantos alertas críticos estão disparando?"}'
+```
+
+Os scripts disponíveis estão em `package.json`; use `.env.example` como referência para a configuração local.
+
+#### Output:
+
+```bash
+curl -X POST http://localhost:3000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"quantos alertas críticos estão disparando?"}'
+{"answer":"Há **1 alerta crítico** disparando:\n\n- **Checkout**: Elevated checkout error rate (severity: critical)\n\nOs outros 2 alertas disparados são de severidade warning (Payments eOps API).","trace":[{"type":"thought","content":"The agent selected an operational tool for the request."},{"type":"action","tool":"list_alerts","args":{"status":"firing"}},{"type":"observation","tool":"list_alerts","content":"[{\"id\":\"alert-001\",\"service\":\"Checkout\",\"title\":\"Elevated checkout error rate\",\"severity\":\"critical\",\"status\":\"firing\"},{\"id\":\"alert-002\",\"service\":\"Payments\",\"title\":\"Payment provider latency above threshold\",\"severity\":\"warning\",\"status\":\"firing\"},{\"id\":\"alert-003\",\"service\":\"Ops API\",\"title\":\"API pod memory pressure\",\"severity\":\"warning\",\"status\":\"firing\"}]"},{"type":"answer","content":"Há **1 alerta crítico** disparando:\n\n- **Checkout**: Elevated checkout error rate (severity: critical)\n\nOs outros 2 alertas disparados são de severidade warning (Payments e Ops API)."}],"metrics":{"llmCalls":2,"latencyMs":5393.469161000001}
+```
+
+Outra chamada:
+
+```bash
+curl -s localhost:3000/chat -X POST \
+  -H 'content-type: application/json' \
+  -d '{"message":"abra um incidente sev2 para o catalog","strategy":"react","reflect":true}' \
+  | jq '{answer, llmCalls: .metrics.llmCalls}'
+```
