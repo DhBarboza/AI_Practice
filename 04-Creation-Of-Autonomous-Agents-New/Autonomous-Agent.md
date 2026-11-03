@@ -937,5 +937,24 @@ Critérios de aceite:
 #### Output:
 
 ```md
+Implementação concluída; as 10 tarefas estão marcadas como feitas em `tasks.md`.
 
+- Criei o registry de estratégias em `src/agents/index.ts` e o endpoint Express em `src/http/server.ts`, com validação Zod, `react` como padrão, reflexão opcional, respostas 400/422/500/504 e timeout de 180 segundos.
+- Adicionei o comando `npm run http` e testes de integração com estratégias fake em `src/http/server.test.ts`.
+- Atualizei o `.gitignore` para ignorar `.env.*` sem ignorar `.env.example`.
+
+Validação: **40 testes passaram**, `npm run typecheck` passou e `git diff --check` não apontou problemas. O timeout encerra a espera HTTP, mas não cancela trabalho já iniciado pela estratégia.
+
+**Arquivos novos:**
+
+- `2-Ops-Pilot/src/agents/index.ts`
+- `2-Ops-Pilot/src/http/server.test.ts`
+- `2-Ops-Pilot/src/http/server.ts`
+
+**Arquivos modificados:**
+
+- `2-Ops-Pilot/package.json`
+- `2-Ops-Pilot/specs/003-chat-http-api/contracts/chat-http.md`
+- `2-Ops-Pilot/specs/003-chat-http-api/quickstart.md`
+- `2-Ops-Pilot/specs/003-chat-http-api/tasks.md`
 ```

@@ -23,6 +23,16 @@ Content-Type: application/json
 
 The body is strict; unknown fields are invalid.
 
+When `strategy` is omitted, `react` is selected. When `reflect` is `true`, the selected base strategy is decorated with reflection for that request.
+
+Example reflected request:
+
+```sh
+curl -X POST http://localhost:3000/chat \
+  -H 'content-type: application/json' \
+  -d '{"message":"List firing alerts","strategy":"react","reflect":true}'
+```
+
 ## Responses
 
 ### 200 OK
@@ -83,3 +93,5 @@ The server returns this response when execution exceeds 180 seconds. It does not
 ## Composition and Testing
 
 The agent registry is the source of supported base strategy names. The Express application factory accepts an alternate registry and a timeout override for deterministic integration tests. The HTTP server listens on `PORT`, defaulting to `3000`. Tests use a fake strategy and short deadline; they do not call the model provider or external network services.
+
+Start the service with `npm run http`. Set `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` for model-backed requests.

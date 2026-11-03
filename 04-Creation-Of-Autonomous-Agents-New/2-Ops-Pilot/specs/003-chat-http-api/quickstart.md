@@ -31,3 +31,5 @@ curl -X POST http://localhost:3000/chat \
 ```
 
 Expected successful response: HTTP 200 containing only `answer`, `trace`, and `metrics`. The request schema, response examples, and error status contract are documented in [Chat HTTP Contract](./contracts/chat-http.md).
+
+To enable reflection in an HTTP request, set `"reflect": true` in its JSON body. Invalid bodies return HTTP 400 with `issues`, unknown strategy names return HTTP 422, unexpected failures return HTTP 500, and requests exceeding 180 seconds return HTTP 504.

@@ -36,7 +36,7 @@ No tasks.
 
 **Purpose**: Provide a single named registry of base strategies for the HTTP controller to resolve.
 
-- [ ] T001 [P] Export a readonly name-to-strategy registry containing the base `react` and `plan-and-execute` strategies from `src/agents/index.ts`; do not include reflective aliases because request-level reflection decorates the selected base strategy.
+- [X] T001 [P] Export a readonly name-to-strategy registry containing the base `react` and `plan-and-execute` strategies from `src/agents/index.ts`; do not include reflective aliases because request-level reflection decorates the selected base strategy.
 
 **Checkpoint**: HTTP stories can resolve named strategies without hard-coded route branches.
 
@@ -50,12 +50,12 @@ No tasks.
 
 ### Tests for User Story 1
 
-- [ ] T002 [US1] Add HTTP integration tests for default `react`, explicit strategy selection, exact 200 response fields, and per-request reflection decoration using fake strategies and an injected decorator in `src/http/server.test.ts`; confirm the tests fail before implementation.
+- [X] T002 [US1] Add HTTP integration tests for default `react`, explicit strategy selection, exact 200 response fields, and per-request reflection decoration using fake strategies and an injected decorator in `src/http/server.test.ts`; confirm the tests fail before implementation.
 
 ### Implementation for User Story 1
 
-- [ ] T003 [US1] Create the Express app factory and `POST /chat` handler in `src/http/server.ts`; validate strict request JSON with Zod, default omitted strategy to `react`, resolve from the injected/default registry, apply the injectable reflection decorator only when `reflect` is true, validate output with `ReasoningResultSchema`, and return only `answer`, `trace`, and `metrics`.
-- [ ] T004 [US1] Add an explicit HTTP startup entry point in `src/http/server.ts` that listens on `PORT` or `3000`, and add the `http` script using the existing Node/tsx conventions in `package.json`.
+- [X] T003 [US1] Create the Express app factory and `POST /chat` handler in `src/http/server.ts`; validate strict request JSON with Zod, default omitted strategy to `react`, resolve from the injected/default registry, apply the injectable reflection decorator only when `reflect` is true, validate output with `ReasoningResultSchema`, and return only `answer`, `trace`, and `metrics`.
+- [X] T004 [US1] Add an explicit HTTP startup entry point in `src/http/server.ts` that listens on `PORT` or `3000`, and add the `http` script using the existing Node/tsx conventions in `package.json`.
 
 **Checkpoint**: A valid deterministic request returns the expected successful response and reflection is opt-in.
 
@@ -69,11 +69,11 @@ No tasks.
 
 ### Tests for User Story 2
 
-- [ ] T005 [US2] Add integration tests for schema-invalid bodies, unknown fields, malformed JSON, unknown strategy, Zod issue details, and zero strategy calls on failures in `src/http/server.test.ts`; confirm the tests fail before implementation.
+- [X] T005 [US2] Add integration tests for schema-invalid bodies, unknown fields, malformed JSON, unknown strategy, Zod issue details, and zero strategy calls on failures in `src/http/server.test.ts`; confirm the tests fail before implementation.
 
 ### Implementation for User Story 2
 
-- [ ] T006 [US2] Handle Express JSON parser errors and Zod request validation as HTTP 400 with an `issues` array, return HTTP 422 with a generic unknown-strategy error for registry misses, and return a generic HTTP 500 for other errors without stack traces in `src/http/server.ts`.
+- [X] T006 [US2] Handle Express JSON parser errors and Zod request validation as HTTP 400 with an `issues` array, return HTTP 422 with a generic unknown-strategy error for registry misses, and return a generic HTTP 500 for other errors without stack traces in `src/http/server.ts`.
 
 **Checkpoint**: Request and strategy-selection errors are distinguishable, structured, and do not execute strategies.
 
@@ -87,11 +87,11 @@ No tasks.
 
 ### Tests for User Story 3
 
-- [ ] T007 [US3] Add integration tests for successful completion before an injected short deadline and timeout response after it, asserting HTTP 504 contains no partial answer in `src/http/server.test.ts`; confirm timeout testing completes promptly.
+- [X] T007 [US3] Add integration tests for successful completion before an injected short deadline and timeout response after it, asserting HTTP 504 contains no partial answer in `src/http/server.test.ts`; confirm timeout testing completes promptly.
 
 ### Implementation for User Story 3
 
-- [ ] T008 [US3] Add an injectable request timeout defaulting to 180,000 ms, race strategy execution against the deadline, clear the timer when execution settles, and return HTTP 504 with a generic timeout body and no partial result in `src/http/server.ts`.
+- [X] T008 [US3] Add an injectable request timeout defaulting to 180,000 ms, race strategy execution against the deadline, clear the timer when execution settles, and return HTTP 504 with a generic timeout body and no partial result in `src/http/server.ts`.
 
 **Checkpoint**: The route responds within the configured deadline and distinguishes timeout from normal strategy failures.
 
@@ -101,8 +101,8 @@ No tasks.
 
 **Purpose**: Document invocation and verify the feature against the complete project.
 
-- [ ] T009 [P] Document the HTTP startup command, request example, response shape, and error responses in `specs/003-chat-http-api/quickstart.md` and `specs/003-chat-http-api/contracts/chat-http.md`.
-- [ ] T010 Run `npm test` and `npm run typecheck` from the repository root using the scripts in `package.json`; resolve regressions in `src/agents/index.ts`, `src/http/server.ts`, `src/http/server.test.ts`, and `package.json`.
+- [X] T009 [P] Document the HTTP startup command, request example, response shape, and error responses in `specs/003-chat-http-api/quickstart.md` and `specs/003-chat-http-api/contracts/chat-http.md`.
+- [X] T010 Run `npm test` and `npm run typecheck` from the repository root using the scripts in `package.json`; resolve regressions in `src/agents/index.ts`, `src/http/server.ts`, `src/http/server.test.ts`, and `package.json`.
 
 ---
 
