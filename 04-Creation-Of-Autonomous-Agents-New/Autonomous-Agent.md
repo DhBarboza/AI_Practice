@@ -921,7 +921,9 @@ Critérios de aceite:
 #### Output:
 
 ```md
+**Arquivos novos:**
 
+- `2-Ops-Pilot/specs/003-chat-http-api/tasks.md`
 ```
 
 ### 4. Prompt
@@ -929,7 +931,7 @@ Critérios de aceite:
 #### Input:
 
 ```md
-/speckit.implement 003-chat-http-api
+    /speckit.implement 003-chat-http-api
 ```
 
 #### Output:
