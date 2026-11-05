@@ -1004,3 +1004,67 @@ curl -s localhost:3000/chat -X POST \
   -d '{"message":"abra um incidente sev2 para o catalog","strategy":"react","reflect":true}' \
   | jq '{answer, llmCalls: .metrics.llmCalls}'
 ```
+
+## ESPECIFICANDO A INTEGRAÇÃO COM BANCO DE DADOS
+
+### 1. Prompt - Specify
+
+```md
+Primeiro atualize a constitution do projeto, pois vamos utilizar o SQLite ao invés de um
+banco de dados tradicional.
+
+/speckit.specify Persistência real de operações:
+
+- SqliteOpsStore (src/store/sqlite-ops-store.ts) implementa a interface OpsStore
+  existente via node:sqlite (DatabaseSync); caminho em OPSPILOT_DB (default
+  ./data/opspilot.db); ":memory:" nos testes
+- 4 tabelas - services, alerts, incidents, runbooks - espelhando os tipos atuais do
+  domínio (incidents ganha resolved_at e summary, anuláveis); DDL idempotente no
+  construtor; CHECK em todo campo de domínio fechado (tier, severity, status)
+- seed idempotente = cenário Mercadinho do mock (5 serviços, 6 alertas: 3 firing, 3
+  resolved; runbooks de checkout/payments/auth)
+- prepared statements em toda query; sem SQL concatenado
+- tools novas: list_incidents(status open | resolved | all, default open) e
+  consultar_runbook(service) - descrições pelas 6 regras
+- composição injeta o SqliteOpsStore; mock in-memory fica para testes e para o bench
+  (para que os cenários possam ser reproduzidos)
+- data/ no .gitignore
+- revisar descrições de src/agents/tools.ts pelas 6 regras (dívida do open_incident:
+  quando usar; .describe() em todo campo; enums)
+- testes ":memory:": seed, abrir/listar/resolver, filtros e CHECKs; testes das tools
+  existentes passam a rodar sobre ":memory:"
+```
+
+### 2. Prompt - Plan:
+
+#### Input:
+
+```md
+/speckit.plan 003-chat-http-api
+```
+
+#### Output:
+
+```md
+**Arquivos novos:**
+
+- `2-Ops-Pilot/specs/003-chat-http-api/contracts/chat-http.md`
+- `2-Ops-Pilot/specs/003-chat-http-api/data-model.md`
+- `2-Ops-Pilot/specs/003-chat-http-api/plan.md`
+- `2-Ops-Pilot/specs/003-chat-http-api/quickstart.md`
+- `2-Ops-Pilot/specs/003-chat-http-api/research.md`
+```
+
+### 3. Prompt - Tasks:
+
+#### Input:
+
+```md
+/speckit.tasks 003-chat-http-api
+```
+
+#### Output:
+
+```md
+
+```
