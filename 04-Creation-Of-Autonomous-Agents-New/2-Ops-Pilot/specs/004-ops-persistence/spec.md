@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "Persistência real de operações: SqliteOpsStore implementa OpsStore via node:sqlite (DatabaseSync), caminho em OPSPILOT_DB (default ./data/opspilot.db); :memory: nos testes; tabelas services, alerts, incidents, runbooks espelhando os tipos atuais do domínio (incidents ganha resolved_at e summary, anuláveis); DDL idempotente; CHECK nos campos fechados (tier, severity, status); seed idempotente do cenário Mercadinho (5 serviços, 6 alertas: 3 firing, 3 resolved; runbooks de checkout/payments/auth); prepared statements em toda query, sem SQL concatenado; novas tools list_incidents(status open | resolved | all, default open) e consultar_runbook(service); injetar SqliteOpsStore na composição, manter mock in-memory para testes e bench; ignorar data/ no Git; revisar descrições das tools pelas 6 regras (open_incident: quando usar; .describe() em todo campo; enums); testar seed, ciclo de incidentes, filtros e CHECKs em :memory:, e executar testes das tools existentes sobre :memory:."
+**Input**: User description: "Persistência real de operações: SqliteOpsStore implementa OpsStore via node:sqlite (DatabaseSync), caminho em OPSPILOT_DB (default ./data/opspilot.db); :memory: nos testes; tabelas services, alerts, incidents, runbooks espelhando os tipos atuais do domínio (incidents ganha resolved_at e summary, anuláveis); DDL idempotente; CHECK nos campos fechados (tier, severity, status); seed idempotente do cenário Mercadinho (5 serviços, 6 alertas: 3 firing, 3 resolved; runbooks de checkout/payments/auth); prepared statements em toda query, sem SQL concatenado; novas tools list_incidents(status open | resolved | all, default open) e consultar_runbook(service); injetar SqliteOpsStore na composição, manter mock in-memory para testes e bench; ignorar data/ no Git; revisar descrições das tools pelas 6 regras (open_incident: quando usar; .describe() em todo campo; enums); testar seed, ciclo de incidentes, filtros e CHECKs em :memory:, e executar testes das tools existentes sobre :memory:." Após esclarecimento, o catálogo persistente terá seis serviços: os cinco originais mais Auth para associar seu runbook."
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -24,8 +24,8 @@ resolution state remain available.
 **Acceptance Scenarios**:
 
 1. **Given** a new operational database, **When** the application initializes, **Then** it
-   contains the five Mercadinho services, six alerts (three firing and three resolved), and
-   runbooks for Checkout, Payments, and Auth.
+   contains the five original Mercadinho services plus Auth, six alerts (three firing and three
+   resolved), and runbooks for Checkout, Payments, and Auth.
 2. **Given** an initialized database, **When** the application initializes again, **Then** the
    seed records are not duplicated and existing incident state is preserved.
 3. **Given** an open incident, **When** an operator resolves it, **Then** its status becomes
@@ -106,8 +106,9 @@ run benchmark scenarios with the in-memory mock and verify that their outcomes r
   alert severity to `critical`, `warning`, or `info`, incident severity to `critical`, `high`,
   `medium`, or `low`, alert status to `firing` or `resolved`, and incident status to `open` or
   `resolved`. Invalid values MUST be rejected by persistent storage.
-- **FR-004**: The system MUST seed the Mercadinho scenario with exactly five services, six alerts
-  split evenly between firing and resolved statuses, and runbooks for Checkout, Payments, and Auth.
+- **FR-004**: The system MUST seed the Mercadinho scenario with its five existing services plus an
+  Auth service, six alerts split evenly between firing and resolved statuses, and runbooks for
+  Checkout, Payments, and Auth.
 - **FR-005**: Seed initialization MUST be repeatable without duplicating seed data or overwriting
   operator-created incident records.
 - **FR-006**: The system MUST preserve the existing operations-store behavior for listing services
@@ -153,8 +154,9 @@ run benchmark scenarios with the in-memory mock and verify that their outcomes r
 
 ### Measurable Outcomes
 
-- **SC-001**: Every fresh initialization produces exactly five services, six alerts (three firing
-  and three resolved), and one retrievable runbook for each of Checkout, Payments, and Auth.
+- **SC-001**: Every fresh initialization produces exactly six services (the five existing
+  Mercadinho services plus Auth), six alerts (three firing and three resolved), and one retrievable
+  runbook for each of Checkout, Payments, and Auth.
 - **SC-002**: Repeating initialization any number of times does not increase the count of seeded
   records or erase incident data created between initializations.
 - **SC-003**: An incident opened, resolved, and queried after reopening the operational store
@@ -172,8 +174,11 @@ run benchmark scenarios with the in-memory mock and verify that their outcomes r
 ## Assumptions
 
 - The added service tier is a closed three-value domain: `tier-1`, `tier-2`, and `tier-3`.
-- The existing five Mercadinho service and six alert records remain the source of the seed scenario;
-  the implementation assigns each seeded service one of the permitted tier values.
+- The five existing Mercadinho services and six alert records remain in the seed scenario; Auth is
+  added as a sixth service so its runbook can be associated with an actual service. Auth is a
+  production `platform` service and receives the `tier-1` tier.
+- The in-memory mock and benchmark retain the original five-service fixture; the persistent seed
+  adds Auth without changing the existing benchmark baseline.
 - The runbook seed contains one retrievable record per named service; a specific runbook authoring
   format or operational step content was not supplied.
 - Runbook lookup matches a service name without case sensitivity and reports a clear not-found

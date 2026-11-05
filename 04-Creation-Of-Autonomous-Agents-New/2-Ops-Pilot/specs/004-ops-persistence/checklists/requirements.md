@@ -35,4 +35,6 @@
   implementation constraints (SQLite API, configuration path, SQL statement requirements, tool
   names, and test boundaries). Removing these details would omit scope the user asked to preserve.
   The scenarios and success criteria remain focused on verifiable behavior.
-- Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`.
+- The three incomplete content-quality checks are intentionally accepted: the user explicitly
+  required implementation constraints in this infrastructure specification. No clarifications
+  remain, and the feature is ready for `/speckit-tasks`.

@@ -1009,6 +1009,8 @@ curl -s localhost:3000/chat -X POST \
 
 ### 1. Prompt - Specify
 
+#### Input:
+
 ```md
 Primeiro atualize a constitution do projeto, pois vamos utilizar o SQLite ao invés de um
 banco de dados tradicional.
@@ -1035,24 +1037,38 @@ banco de dados tradicional.
   existentes passam a rodar sobre ":memory:"
 ```
 
+#### Output:
+
+**Criado:**
+
+- 2-Ops-Pilot/specs/004-ops-persistence
+- 2-Ops-Pilot/specs/004-ops-persistence/checklists
+- 2-Ops-Pilot/specs/004-ops-persistence/checklists/requirements.md
+- 2-Ops-Pilot/specs/004-ops-persistence/spec.md
+
 ### 2. Prompt - Plan:
 
 #### Input:
 
 ```md
-/speckit.plan 003-chat-http-api
+/speckit.plan 004-ops-persistence
 ```
 
 #### Output:
 
 ```md
-**Arquivos novos:**
+Criados:
 
-- `2-Ops-Pilot/specs/003-chat-http-api/contracts/chat-http.md`
-- `2-Ops-Pilot/specs/003-chat-http-api/data-model.md`
-- `2-Ops-Pilot/specs/003-chat-http-api/plan.md`
-- `2-Ops-Pilot/specs/003-chat-http-api/quickstart.md`
-- `2-Ops-Pilot/specs/003-chat-http-api/research.md`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/004-ops-persistence/contracts/ops-tools.md`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/004-ops-persistence/data-model.md`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/004-ops-persistence/plan.md`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/004-ops-persistence/quickstart.md`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/004-ops-persistence/research.md`
+
+Modificados:
+
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/004-ops-persistence/checklists/requirements.md`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/004-ops-persistence/spec.md`
 ```
 
 ### 3. Prompt - Tasks:
@@ -1060,7 +1076,7 @@ banco de dados tradicional.
 #### Input:
 
 ```md
-/speckit.tasks 003-chat-http-api
+/speckit.tasks 004-ops-persistence
 ```
 
 #### Output:
