@@ -1219,3 +1219,91 @@ curl -sS http://localhost:3000/chat \
 ```
 
 Também pode pedir, por exemplo, “Liste os incidentes abertos” ou “Consulte o runbook do serviço Payments”. O servidor e o formato da requisição estão documentados em `server.ts` e `quickstart.md`.
+
+## VALIDANDO DISPONIBILIDADE DE PROVEDORES EXTERNOS
+
+### 1. Prompt - Specify:
+
+#### Input:
+
+```md
+/speckit.specify Tool de status de provedores externos:
+
+- Tool check_provider_status em src/agents/tools.ts: consulta a statuspage pública do
+  provedor via API statuspage.io (sem chave):
+  github -> https://www.githubstatus.com/api/v2/status.json
+  cloudflare -> https://www.cloudflarestatus.com/api/v2/status.json
+  Parâmetro provider (enum: github | cloudflare, default "github", .describe explicando).
+  Descrição orientada a quando usar: suspeita de problema externo, "é o nosso ou do
+  provedor?", dependência fora do ar.
+- Resiliência: timeout de 5s via AbortSignal.timeout; falha de rede ou 5xx, UMA nova
+  tentativa; resposta validada com zod
+  ({ status: { indicator, description } }); qualquer falha final retorna string de erro legível
+  como resultado da tool (erro é observação - nunca lançar exceção para fora da tool).
+- Retorno compacto (indicador + descrição, uma linha), para não inflar o contexto.
+- Teste: a função de fetch é injetável; testes cobrem sucesso, timeout e resposta inválida
+  sem uso de rede (fake fetch).
+```
+
+#### Outputs:
+
+```md
+Criados:
+
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/005-check-provider-status/checklists/requirements.md`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/005-check-provider-status/spec.md`
+```
+
+### 2. Prompt - Plan:
+
+#### Input:
+
+```md
+/speckit.plan 005-check-provider-status
+```
+
+#### Outputs:
+
+```md
+Criados:
+
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/005-check-provider-status/contracts/check-provider-status.md`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/005-check-provider-status/data-model.md`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/005-check-provider-status/plan.md`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/005-check-provider-status/quickstart.md`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/005-check-provider-status/research.md`
+
+Modificados:
+
+- `04-Creation-Of-Autonomous-Agents-New/Autonomous-Agent.md`
+
+Também continuam não rastreados desde a última consulta: `spec.md`, `requirements.md` e `Template.md`.
+```
+
+### 3. Prompt - Task:
+
+#### Input:
+
+```md
+/speckit.task 005-check-provider-status
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 4. Prompt - Implement:
+
+#### Input:
+
+```md
+
+```
+
+#### Outputs:
+
+```md
+
+```
