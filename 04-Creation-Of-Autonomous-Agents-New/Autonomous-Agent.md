@@ -1291,7 +1291,9 @@ Também continuam não rastreados desde a última consulta: `spec.md`, `requirem
 #### Outputs:
 
 ```md
+Criados:
 
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/005-check-provider-status/tasks.md`
 ```
 
 ### 4. Prompt - Implement:
