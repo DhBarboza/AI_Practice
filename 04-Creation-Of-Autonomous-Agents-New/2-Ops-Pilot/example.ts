@@ -1,36 +1,35 @@
-// Referência para implementação do sqlite-ops-StorageEvent
+// Referência para implementação do retorno de status da aplicação
 
-import { DatabaseSync } from "node:sqlite";
-import type { OpsStore, Incident, IncidentFilter } from "./ops-store.ts";
+const statusSchema = z.object({
+    status: z.object({ indicator: z.string(), description: z.string() }),
+});
 
-export class SqliteOpsStore implements OpsStore {
-    private _db: DatabaseSync;
+const STATUS_URL = {
+    github: "https://www.githubstatus.com/api/v2/status.json",
+    cloudflare: "https://www.cloudflarestatus.com/api/v2/status.json",
+} as const;
 
-    constructor(path = process.env.OPSPILOT_DB ?? "./data/opspilot.db") {
-        this._db = new DatabaseSync(path);
-        this._db.exec(`
-      CREATE TABLE IF NOT EXISTS incidents (
-        id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
-        service_id TEXT NOT NULL,
-        severity TEXT NOT NULL CHECK (severity IN ('sev1', 'sev2', 'sev3')),
-        status TEXT NOT NULL CHECK (status IN ('open', 'mitigated', 'resolved')),
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        resolved_at DATETIME,
-        summary TEXT
-        -- + services, alerts, runbooks e o seed idempotente da Mercadinho
-      );
-    `);
+async function fetchProviderStatus(
+    provider: keyof typeof STATUS_URL,
+    doFetch: typeof fetch = fetch,
+): Promise<string> {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+            const response = await doFetch(STATUS_URL[provider], {
+                signal: AbortSignal.timeout(5000),
+            });
+            if (response.status >= 500)
+                throw new Error(`upstream ${response.status}`);
+            if (!response.ok) {
+                return `status page de ${provider} respondeu HTTP ${response.status}`;
+            }
+            const { status } = statusSchema.parse(await response.json());
+            return `${provider} está ${status.indicator} - ${status.description}`;
+        } catch (error) {
+            if (attempt === 2) {
+                return `não consegui consultar o status de ${provider} (${(error as Error).message}). Responda com base nos alertas internos e avise o plantonista da limitação`;
+            }
+        }
     }
-
-    listIncidents(filter: IncidentFilter): Incident[] {
-        const where = filter === "all" ? "" : "WHERE status = ?";
-        const stmt = this._db.prepare(
-            `SELECT * FROM incidents ${where} ORDER BY created_at`,
-        );
-        return (filter === "all" ? stmt.all() : stmt.all(filter)) as Incident[];
-    }
-
-    // listAlerts(), openIncidents(), resolveIncident(), getRunbook(): mesmo padrão
-    // prepared statement + retorno tipado
+    return "unreachable";
 }
