@@ -1,6 +1,8 @@
 import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
 import { MemoryOpsStore } from "./store.js";
+import type { OpsStore } from "./store.js";
+import { SqliteOpsStore } from "../store/sqlite-ops-store.js";
 
 export interface SeedSummary {
   services: number;
@@ -10,7 +12,7 @@ export interface SeedSummary {
 }
 
 export function getSeedSummary(
-  store: MemoryOpsStore = new MemoryOpsStore(),
+  store: OpsStore = new MemoryOpsStore(),
 ): SeedSummary {
   const alerts = store.listAlerts();
   return {
@@ -23,14 +25,20 @@ export function getSeedSummary(
 
 export async function runSeed(
   write: (message: string) => void = console.log,
+  createStore: () => SqliteOpsStore = () => new SqliteOpsStore(),
 ): Promise<SeedSummary> {
-  const summary = getSeedSummary(new MemoryOpsStore());
-  write(
-    `Loaded src/agents/seed-data.json into the in-memory store with ${summary.services} services and ` +
-      `${summary.alerts} alerts (${summary.firingAlerts} firing, ` +
-      `${summary.resolvedAlerts} resolved).`,
-  );
-  return summary;
+  const store = createStore();
+  try {
+    const summary = getSeedSummary(store);
+    write(
+      `Initialized SQLite operational data with ${summary.services} services and ` +
+        `${summary.alerts} alerts (${summary.firingAlerts} firing, ` +
+        `${summary.resolvedAlerts} resolved).`,
+    );
+    return summary;
+  } finally {
+    store.close();
+  }
 }
 
 async function main(): Promise<void> {

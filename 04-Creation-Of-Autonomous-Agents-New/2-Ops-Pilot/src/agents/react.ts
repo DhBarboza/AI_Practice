@@ -2,6 +2,7 @@ import { HumanMessage } from "@langchain/core/messages";
 import type { BaseMessage } from "@langchain/core/messages";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { MemoryOpsStore } from "./store.js";
+import type { OpsStore } from "./store.js";
 import { createModel } from "./model.js";
 import { createOpsTools } from "./tools.js";
 import { countAiMessages, lastText, toTrace } from "./helpers.js";
@@ -16,13 +17,13 @@ import type {
 type AgentRunner = (
   input: string,
   maxIterations: number,
-  store: MemoryOpsStore,
+  store: OpsStore,
   allowToolCall: () => boolean,
 ) => Promise<readonly BaseMessage[]>;
 
 interface ReactDependencies {
   runAgent?: AgentRunner;
-  createStore?: () => MemoryOpsStore;
+  createStore?: () => OpsStore;
 }
 
 const runPrebuiltReactAgent: AgentRunner = async (

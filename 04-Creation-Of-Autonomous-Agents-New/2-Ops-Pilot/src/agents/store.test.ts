@@ -32,7 +32,10 @@ test("store reads return copies and incident lifecycle changes are isolated", ()
     "critical",
   );
   assert.equal(incident.id, "inc-001");
-  assert.equal(store.resolveIncident(incident.id).status, "resolved");
+  const resolvedIncident = store.resolveIncident(incident.id);
+  assert.equal(resolvedIncident.status, "resolved");
+  assert.ok(resolvedIncident.resolvedAt);
+  assert.equal(resolvedIncident.summary, null);
   assert.throws(
     () => store.resolveIncident(incident.id),
     IncidentAlreadyResolvedError,
@@ -43,6 +46,19 @@ test("store reads return copies and incident lifecycle changes are isolated", ()
     UnknownServiceError,
   );
   assert.equal(store.listIncidents().length, 1);
+});
+
+test("memory store filters incidents and resolves seeded runbooks case-insensitively", () => {
+  const store = new MemoryOpsStore();
+  const open = store.openIncident("Checkout errors", "Checkout", "critical");
+  store.resolveIncident(open.id);
+  store.openIncident("Payment delay", "Payments", "high");
+
+  assert.equal(store.listIncidents("open").length, 1);
+  assert.equal(store.listIncidents("resolved").length, 1);
+  assert.equal(store.listIncidents("all").length, 2);
+  assert.equal(store.getRunbook("checkout").service, "Checkout");
+  assert.throws(() => store.getRunbook("Missing"), /No runbook/);
 });
 
 test("store constructor validates records, duplicate identifiers, and service references", () => {

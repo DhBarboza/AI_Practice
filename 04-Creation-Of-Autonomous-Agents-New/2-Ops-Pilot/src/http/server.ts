@@ -4,10 +4,11 @@ import { resolve } from "node:path";
 import express from "express";
 import type { ErrorRequestHandler, Express } from "express";
 import { z } from "zod";
-import { agentRegistry } from "../agents/index.js";
+import { agentRegistry, createAgentRegistry } from "../agents/index.js";
 import { withReflection } from "../agents/reflection.js";
 import type { ReasoningInput, ReasoningStrategy } from "../agents/types.js";
 import { ReasoningResultSchema } from "../agents/types.js";
+import { SqliteOpsStore } from "../store/sqlite-ops-store.js";
 
 export const DEFAULT_CHAT_TIMEOUT_MS = 180_000;
 
@@ -133,10 +134,33 @@ async function main(): Promise<void> {
     throw new Error("PORT must be an integer between 1 and 65535.");
   }
 
-  const server = createServer(createApp());
-  server.listen(port, () => {
-    console.log(`OpsPilot HTTP server listening on port ${port}`);
-  });
+  const store = new SqliteOpsStore();
+  const server = createServer(createApp({ registry: createAgentRegistry(store) }));
+  server.once("close", () => store.close());
+  try {
+    await new Promise<void>((resolveListen, rejectListen) => {
+      server.once("error", rejectListen);
+      server.listen(port, () => {
+        server.off("error", rejectListen);
+        console.log(`OpsPilot HTTP server listening on port ${port}`);
+        resolveListen();
+      });
+    });
+  } catch (error) {
+    store.close();
+    throw error;
+  }
+
+  const shutdown = () => {
+    server.close((error) => {
+      if (error) {
+        console.error(error.message);
+        process.exitCode = 1;
+      }
+    });
+  };
+  process.once("SIGINT", shutdown);
+  process.once("SIGTERM", shutdown);
 }
 
 if (

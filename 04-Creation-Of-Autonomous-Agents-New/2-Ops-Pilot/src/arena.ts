@@ -1,24 +1,15 @@
 import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
 import { z } from "zod";
-import { planAndExecuteStrategy } from "./agents/plan-and-execute.js";
-import { reactStrategy } from "./agents/react.js";
+import { createAgentRegistry } from "./agents/index.js";
 import { withReflection } from "./agents/reflection.js";
+import type { OpsStore } from "./agents/store.js";
+import { SqliteOpsStore } from "./store/sqlite-ops-store.js";
 import type {
   ReasoningInput,
   ReasoningStrategy,
 } from "./agents/types.js";
 import { formatTrace } from "./agents/trace.js";
-
-const defaultStrategies = new Map<string, ReasoningStrategy>([
-  [reactStrategy.name, reactStrategy],
-  [planAndExecuteStrategy.name, planAndExecuteStrategy],
-  [`reflect:${reactStrategy.name}`, withReflection(reactStrategy)],
-  [
-    `reflect:${planAndExecuteStrategy.name}`,
-    withReflection(planAndExecuteStrategy),
-  ],
-]);
 
 export interface ArenaOptions {
   input: string;
@@ -35,6 +26,18 @@ const ArenaOptionsSchema = z
   .strict();
 
 export type StrategyRegistry = readonly ReasoningStrategy[];
+
+export function createArenaStrategies(store?: OpsStore): StrategyRegistry {
+  const strategies = [...createAgentRegistry(store).values()];
+  return [
+    ...strategies,
+    ...strategies.map((strategy) => withReflection(strategy)),
+  ];
+}
+
+const defaultStrategies = new Map(
+  createArenaStrategies().map((strategy) => [strategy.name, strategy]),
+);
 
 function toStrategyMap(registry: StrategyRegistry): Map<string, ReasoningStrategy> {
   return new Map(registry.map((strategy) => [strategy.name, strategy]));
@@ -118,11 +121,11 @@ export async function runArena(
 }
 
 async function main(args: readonly string[]): Promise<void> {
+  const store = new SqliteOpsStore();
   try {
-    await runArena(args);
-  } catch (error) {
-    console.error(error instanceof Error ? error.message : error);
-    process.exitCode = 1;
+    await runArena(args, createArenaStrategies(store));
+  } finally {
+    store.close();
   }
 }
 

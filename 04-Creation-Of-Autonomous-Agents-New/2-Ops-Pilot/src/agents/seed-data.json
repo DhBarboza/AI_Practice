@@ -4,31 +4,36 @@
       "id": "svc-api",
       "name": "Ops API",
       "team": "platform",
-      "environment": "production"
+      "environment": "production",
+      "tier": "tier-1"
     },
     {
       "id": "svc-checkout",
       "name": "Checkout",
       "team": "commerce",
-      "environment": "production"
+      "environment": "production",
+      "tier": "tier-1"
     },
     {
       "id": "svc-payments",
       "name": "Payments",
       "team": "commerce",
-      "environment": "production"
+      "environment": "production",
+      "tier": "tier-1"
     },
     {
       "id": "svc-notifications",
       "name": "Notifications",
       "team": "platform",
-      "environment": "production"
+      "environment": "production",
+      "tier": "tier-2"
     },
     {
       "id": "svc-worker",
       "name": "Background Worker",
       "team": "platform",
-      "environment": "staging"
+      "environment": "staging",
+      "tier": "tier-3"
     }
   ],
   "alerts": [

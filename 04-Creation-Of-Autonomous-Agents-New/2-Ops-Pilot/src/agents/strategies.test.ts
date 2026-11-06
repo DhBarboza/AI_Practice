@@ -7,6 +7,7 @@ import {
 } from "./plan-and-execute.js";
 import { createReactStrategy } from "./react.js";
 import { ReasoningResultSchema } from "./types.js";
+import { MemoryOpsStore } from "./store.js";
 
 test("ReAct strategy produces a typed trace and counts returned model messages", async () => {
   const strategy = createReactStrategy({
@@ -65,6 +66,41 @@ test("ReAct strategy refuses tool actions beyond maxIterations", async () => {
       allowed.push(allowToolCall());
       return [new AIMessage("Stopped at the action limit.")];
     },
+  });
+
+  test("ReAct and Plan-and-Execute use the injected operations store", async () => {
+    const store = new MemoryOpsStore();
+    let reactStore: unknown;
+    const react = createReactStrategy({
+      createStore: () => store,
+      runAgent: async (_input, _maxIterations, injectedStore) => {
+        reactStore = injectedStore;
+        return [new AIMessage("Store injected.")];
+      },
+    });
+    await react.run({ input: "Check operations", maxIterations: 1 });
+    assert.equal(reactStore, store);
+
+    let planStore: unknown;
+    const plan = createPlanAndExecuteStrategy({
+      createStore: () => store,
+      createEngine: (injectedStore) => {
+        planStore = injectedStore;
+        return {
+          async plan() {
+            return { steps: [], answer: "No action required." };
+          },
+          async replan() {
+            return { decision: "finish", answer: "No action required." };
+          },
+          async execute() {
+            throw new Error("No execution expected.");
+          },
+        };
+      },
+    });
+    await plan.run({ input: "Check operations", maxIterations: 1 });
+    assert.equal(planStore, store);
   });
 
   await strategy.run({ input: "List alerts", maxIterations: 1 });

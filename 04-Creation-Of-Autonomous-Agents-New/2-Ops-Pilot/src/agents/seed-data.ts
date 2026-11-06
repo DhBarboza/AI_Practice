@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { z } from "zod";
 import { AlertSchema, ServiceSchema } from "./types.js";
-import type { Alert, Service } from "./types.js";
+import type { Alert, Runbook, Service } from "./types.js";
 
 const SeedDataSchema = z
   .object({
@@ -18,3 +18,23 @@ const seedData = SeedDataSchema.parse(
 
 export const seedServices: Service[] = seedData.services;
 export const seedAlerts: Alert[] = seedData.alerts;
+export const seedRunbooks: Runbook[] = [
+  {
+    service: "Checkout",
+    title: "Checkout diagnostics",
+    content:
+      "Review recent checkout error rates, inspect application logs, and verify upstream dependencies. Escalate to the commerce on-call if errors persist.",
+  },
+  {
+    service: "Payments",
+    title: "Payments diagnostics",
+    content:
+      "Review authorization failure rates and provider latency, inspect payment service logs, and verify provider status. Escalate before changing payment routing.",
+  },
+  {
+    service: "Auth",
+    title: "Auth diagnostics",
+    content:
+      "Review authentication error rates, inspect identity service logs, and verify token and identity-provider health. Escalate suspected credential or access issues.",
+  },
+];

@@ -3,6 +3,7 @@ import { z } from "zod";
 export const AlertStatusSchema = z.enum(["firing", "resolved"]);
 export const AlertFilterStatusSchema = z.enum(["firing", "resolved", "all"]);
 export const AlertSeveritySchema = z.enum(["critical", "warning", "info"]);
+export const ServiceTierSchema = z.enum(["tier-1", "tier-2", "tier-3"]);
 export const IncidentSeveritySchema = z.enum([
   "critical",
   "high",
@@ -10,6 +11,7 @@ export const IncidentSeveritySchema = z.enum([
   "low",
 ]);
 export const IncidentStatusSchema = z.enum(["open", "resolved"]);
+export const IncidentFilterSchema = z.enum(["open", "resolved", "all"]);
 
 export const ServiceSchema = z
   .object({
@@ -17,6 +19,7 @@ export const ServiceSchema = z
     name: z.string().min(1),
     team: z.string().min(1),
     environment: z.string().min(1),
+    tier: ServiceTierSchema,
   })
   .strict();
 
@@ -37,6 +40,16 @@ export const IncidentSchema = z
     service: z.string().min(1),
     severity: IncidentSeveritySchema,
     status: IncidentStatusSchema,
+    resolvedAt: z.string().datetime().nullable(),
+    summary: z.string().nullable(),
+  })
+  .strict();
+
+export const RunbookSchema = z
+  .object({
+    service: z.string().min(1),
+    title: z.string().min(1),
+    content: z.string().min(1),
   })
   .strict();
 
@@ -104,11 +117,14 @@ export const ReasoningResultSchema = z
 export type AlertStatus = "firing" | "resolved";
 export type AlertFilterStatus = z.infer<typeof AlertFilterStatusSchema>;
 export type AlertSeverity = "critical" | "warning" | "info";
+export type ServiceTier = z.infer<typeof ServiceTierSchema>;
 export type IncidentSeverity = "critical" | "high" | "medium" | "low";
+export type IncidentFilter = z.infer<typeof IncidentFilterSchema>;
 
 export type Service = z.infer<typeof ServiceSchema>;
 export type Alert = z.infer<typeof AlertSchema>;
 export type Incident = z.infer<typeof IncidentSchema>;
+export type Runbook = z.infer<typeof RunbookSchema>;
 export type TraceEvent = z.infer<typeof TraceEventSchema>;
 export type ReasoningInput = z.infer<typeof ReasoningInputSchema>;
 

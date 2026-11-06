@@ -1086,3 +1086,98 @@ Modificados:
 
 - `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/004-ops-persistence/tasks.md`
 ```
+
+### 4 Prompt - Implement:
+
+#### Input:
+
+````md
+/speckit.implement
+
+    ```ts
+    // Referência para implementação do sqlite-ops-StorageEvent
+
+    import { DatabaseSync } from "node:sqlite";
+    import type { OpsStore, Incident, IncidentFilter } from "./ops-store.ts";
+
+    export class SqliteOpsStore implements OpsStore {
+        private _db: DatabaseSync;
+
+        constructor(path = process.env.OPSPILOT_DB ?? "./data/opspilot.db") {
+            this._db = new DatabaseSync(path);
+            this._db.exec(`
+        CREATE TABLE IF NOT EXISTS incidents (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            service_id TEXT NOT NULL,
+            severity TEXT NOT NULL CHECK (severity IN ('sev1', 'sev2', 'sev3')),
+            status TEXT NOT NULL CHECK (status IN ('open', 'mitigated', 'resolved')),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            resolved_at DATETIME,
+            summary TEXT
+            -- + services, alerts, runbooks e o seed idempotente da Mercadinho
+        );
+        `);
+        }
+
+        listIncidents(filter: IncidentFilter): Incident[] {
+            const where = filter === "all" ? "" : "WHERE status = ?";
+            const stmt = this._db.prepare(
+                `SELECT * FROM incidents ${where} ORDER BY created_at`,
+            );
+            return (filter === "all" ? stmt.all() : stmt.all(filter)) as Incident[];
+        }
+
+        // listAlerts(), openIncidents(), resolveIncident(), getRunbook(): mesmo padrão
+        // prepared statement + retorno tipado
+    }
+    ```
+
+```
+
+```
+````
+
+#### Output:
+
+```md
+Ran terminal command: git status --short --untracked-files=all
+
+Criados:
+
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/store/sqlite-ops-store.test.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/store/sqlite-ops-store.ts`
+
+Modificados:
+
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/.gitignore`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/example.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/package-lock.json`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/package.json`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/004-ops-persistence/tasks.md`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/index.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/plan-and-execute.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/react.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/seed-data.json`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/seed-data.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/seed.test.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/seed.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/store.test.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/store.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/strategies.test.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/tools.test.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/tools.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/types.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/arena.test.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/arena.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/bench.test.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/bench.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/http/server.test.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/http/server.ts`
+- `04-Creation-Of-Autonomous-Agents-New/Autonomous-Agent.md`
+
+Removidos:
+
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/database.test.ts`
+- `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/database.ts`
+```

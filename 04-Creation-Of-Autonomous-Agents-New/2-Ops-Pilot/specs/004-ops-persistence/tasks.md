@@ -26,7 +26,7 @@ description: "Executable implementation tasks for Ops Persistence"
 
 **Purpose**: Prepare the repository for a local persistent SQLite database.
 
-- [ ] T001 Add `data/` to `.gitignore` so the default operational database is not versioned.
+- [X] T001 Add `data/` to `.gitignore` so the default operational database is not versioned.
 
 ---
 
@@ -35,11 +35,11 @@ description: "Executable implementation tasks for Ops Persistence"
 **Purpose**: Define the shared domain/store boundary and preserve the deterministic in-memory
 implementation before story-specific work begins.
 
-- [ ] T002 Define the `OpsStore` interface and shared Zod/domain types in `src/agents/store.ts`
+- [X] T002 Define the `OpsStore` interface and shared Zod/domain types in `src/agents/store.ts`
   and `src/agents/types.ts`, including Service `tier` (`tier-1`, `tier-2`, `tier-3`), Incident
   nullable `resolvedAt` and `summary`, incident-list filters (`open`, `resolved`, `all`), and
   Runbook fields.
-- [ ] T003 Update `MemoryOpsStore` and the mock fixtures to implement the shared contract in
+- [X] T003 Update `MemoryOpsStore` and the mock fixtures to implement the shared contract in
   `src/agents/store.ts`, `src/agents/seed-data.json`, `src/agents/seed-data.ts`, and
   `src/agents/store.test.ts`; keep the mock at the original five services, provide deterministic
   runbook lookup, and update the Catalog benchmark fixture in `src/bench.ts` and
@@ -61,20 +61,20 @@ and data survival after close/reopen.
 
 ### Tests for User Story 1
 
-- [ ] T004 [US1] Add `node:test` cases in `src/store/sqlite-ops-store.test.ts` for constructor DDL,
+- [X] T004 [US1] Add `node:test` cases in `src/store/sqlite-ops-store.test.ts` for constructor DDL,
   six persistent seed services, six alerts split 3/3 by status, three runbooks, and repeated
   initialization without duplicate fixtures or erased incidents.
-- [ ] T005 [US1] Add `node:test` cases in `src/store/sqlite-ops-store.test.ts` for opening,
+- [X] T005 [US1] Add `node:test` cases in `src/store/sqlite-ops-store.test.ts` for opening,
   listing, resolving, and reopening incidents; all/open/resolved store filters; nullable
   `resolvedAt` and `summary`; and SQLite rejection of invalid tier, severity, and status values.
 
 ### Implementation for User Story 1
 
-- [ ] T006 [US1] Implement idempotent four-table schema creation, foreign keys, required fields,
+- [X] T006 [US1] Implement idempotent four-table schema creation, foreign keys, required fields,
   closed-value CHECK constraints, and transactional non-destructive seed inserts in
   `src/store/sqlite-ops-store.ts`; include the six production services (the original five plus
   Auth), six alerts, and Checkout/Payments/Auth runbooks.
-- [ ] T007 [US1] Implement `SqliteOpsStore` service/alert/incident/runbook queries in
+- [X] T007 [US1] Implement `SqliteOpsStore` service/alert/incident/runbook queries in
   `src/store/sqlite-ops-store.ts` using prepared statements and bound values only; support
   `OPSPILOT_DB` with default `./data/opspilot.db`, `:memory:`, file-parent creation, stable
   incident IDs, resolution timestamps, domain errors, and explicit `close()`.
@@ -95,17 +95,17 @@ of each tool's described inputs.
 
 ### Tests for User Story 2
 
-- [ ] T008 [P] [US2] Update `src/agents/tools.test.ts` to use `SqliteOpsStore(':memory:')` and
+- [X] T008 [P] [US2] Update `src/agents/tools.test.ts` to use `SqliteOpsStore(':memory:')` and
   cover the existing alert/open/resolve tools plus `list_incidents` default/open/resolved/all
   behavior and `consultar_runbook` for Checkout, Payments, Auth, and an unknown service.
 
 ### Implementation for User Story 2
 
-- [ ] T009 [US2] Update `createOpsTools` in `src/agents/tools.ts` to accept `OpsStore`, add
+- [X] T009 [US2] Update `createOpsTools` in `src/agents/tools.ts` to accept `OpsStore`, add
   `list_incidents` and `consultar_runbook`, and ensure all five operational tool descriptions
   state purpose, when to use, accepted values/defaults, and effects/results; add `.describe()` to
   every input field and use enums for closed values.
-- [ ] T010 [US2] Extend the plan-and-execute tool schema, planner prompt, and executor dispatch in
+- [X] T010 [US2] Extend the plan-and-execute tool schema, planner prompt, and executor dispatch in
   `src/agents/plan-and-execute.ts` to support `list_incidents` and `consultar_runbook` without
   bypassing the validated tools or changing existing planning behavior.
 
@@ -125,31 +125,31 @@ the default database file.
 
 ### Tests for User Story 3
 
-- [ ] T011 [US3] Add deterministic composition and regression assertions in
+- [X] T011 [US3] Add deterministic composition and regression assertions in
   `src/http/server.test.ts`, `src/arena.test.ts`, `src/agents/strategies.test.ts`, and
   `src/bench.test.ts` proving that production can inject the persistent store while strategy tests
   and benchmarks remain independent of file-backed SQLite.
 
 ### Implementation for User Story 3
 
-- [ ] T012 [US3] Update strategy dependencies and store factory signatures in `src/agents/react.ts`
+- [X] T012 [US3] Update strategy dependencies and store factory signatures in `src/agents/react.ts`
   and `src/agents/plan-and-execute.ts` to depend on `OpsStore`, accept injected stores, and retain
   `MemoryOpsStore` defaults for isolated strategy tests.
-- [ ] T013 [US3] Add a store-aware strategy registry factory in `src/agents/index.ts` that builds
+- [X] T013 [US3] Add a store-aware strategy registry factory in `src/agents/index.ts` that builds
   the production ReAct and plan-and-execute strategies with the supplied `OpsStore` while
   preserving a memory-backed registry for deterministic callers.
-- [ ] T014 [US3] Wire the HTTP production entry point in `src/http/server.ts` to construct a
+- [X] T014 [US3] Wire the HTTP production entry point in `src/http/server.ts` to construct a
   file-backed `SqliteOpsStore` from `OPSPILOT_DB`, inject it into the strategy registry, and close
   its connection during orderly server shutdown.
-- [ ] T015 [US3] Wire the production CLI in `src/arena.ts` to construct and inject the configured
+- [X] T015 [US3] Wire the production CLI in `src/arena.ts` to construct and inject the configured
   SQLite store, and close the connection on successful completion and error paths.
-- [ ] T016 [US3] Update `runSeed` in `src/agents/seed.ts` to initialize and summarize the
+- [X] T016 [US3] Update `runSeed` in `src/agents/seed.ts` to initialize and summarize the
   configured persistent store, close it on completion, and preserve the existing `npm run seed`
   command in `package.json`.
-- [ ] T017 [US3] Keep benchmark execution isolated from production persistence in `src/bench.ts`
+- [X] T017 [US3] Keep benchmark execution isolated from production persistence in `src/bench.ts`
   and `src/bench.test.ts`, using `MemoryOpsStore` and the original five-service fixture regardless
   of `OPSPILOT_DB`.
-- [ ] T018 [US3] Remove the superseded database definitions and tests from
+- [X] T018 [US3] Remove the superseded database definitions and tests from
   `src/agents/database.ts` and `src/agents/database.test.ts`, then remove Sequelize, MySQL, and
   related type dependencies from `package.json` and `package-lock.json` after confirming no active
   imports remain.
@@ -164,7 +164,7 @@ repeatable and do not touch persistent operational data.
 **Purpose**: Validate the complete feature against project quality gates and its documented
 end-to-end scenarios.
 
-- [ ] T019 Run `npm run typecheck`, `npm test`, and the offline persistent-store scenarios in
+- [X] T019 Run `npm run typecheck`, `npm test`, and the offline persistent-store scenarios in
   `specs/004-ops-persistence/quickstart.md`; confirm benchmark isolation through
   `src/bench.test.ts` and ensure `git diff --check` passes.
 

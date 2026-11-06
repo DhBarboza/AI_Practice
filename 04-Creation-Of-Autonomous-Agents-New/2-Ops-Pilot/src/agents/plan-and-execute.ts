@@ -3,6 +3,7 @@ import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { z } from "zod";
 import { createModel } from "./model.js";
 import { MemoryOpsStore } from "./store.js";
+import type { OpsStore } from "./store.js";
 import { createOpsTools } from "./tools.js";
 import { assertValidReasoningInput, ReasoningResultSchema } from "./types.js";
 import type {
@@ -18,6 +19,10 @@ const PlanStepSchema = z.discriminatedUnion("tool", [
     args: z.object({ status: z.enum(["firing", "resolved", "all"]).optional() }),
   }).strict(),
   z.object({
+  tool: z.literal("list_incidents"),
+  args: z.object({ status: z.enum(["open", "resolved", "all"]).optional() }),
+  }).strict(),
+  z.object({
     tool: z.literal("open_incident"),
     args: z.object({
       title: z.string().trim().min(1),
@@ -28,6 +33,10 @@ const PlanStepSchema = z.discriminatedUnion("tool", [
   z.object({
     tool: z.literal("resolve_incident"),
     args: z.object({ id: z.string().trim().min(1) }),
+  }).strict(),
+  z.object({
+    tool: z.literal("consultar_runbook"),
+    args: z.object({ service: z.string().trim().min(1) }),
   }).strict(),
 ]);
 
@@ -50,8 +59,10 @@ const ReplanSchema = z
 const PLANNER_PROMPT =
   "Create a short, ordered plan with one action per step, using only these tools: " +
   "list_alerts(status?: firing|resolved|all) reads the seeded alerts; " +
+  "list_incidents(status?: open|resolved|all) lists incidents and defaults to open; " +
   "open_incident(title, service, severity) creates an incident for a known service; " +
-  "resolve_incident(id) resolves an existing incident. " +
+  "resolve_incident(id) resolves an existing incident; " +
+  "consultar_runbook(service) reads the service's runbook. " +
   "Return no more than 8 steps. If no tool is needed, return an empty steps array and a concise answer.";
 
 const EXECUTOR_PROMPT =
@@ -85,8 +96,8 @@ export interface PlanEngine {
 }
 
 interface PlanDependencies {
-  createEngine?(store: MemoryOpsStore): PlanEngine;
-  createStore?: () => MemoryOpsStore;
+  createEngine?(store: OpsStore): PlanEngine;
+  createStore?: () => OpsStore;
   enableReplanning?: boolean;
 }
 
@@ -114,16 +125,24 @@ function observationText(value: unknown): string {
   return JSON.stringify(value) ?? String(value);
 }
 
-function createDefaultPlanEngine(store: MemoryOpsStore): PlanEngine {
+function createDefaultPlanEngine(store: OpsStore): PlanEngine {
   const model = createModel();
   const planner = model.withStructuredOutput(PlanSchema);
   const replanner = model.withStructuredOutput(ReplanSchema);
-  const [listAlertsTool, openIncidentTool, resolveIncidentTool] =
+  const [
+    listAlertsTool,
+    openIncidentTool,
+    resolveIncidentTool,
+    listIncidentsTool,
+    consultarRunbookTool,
+  ] =
     createOpsTools(store);
   const executor = model.bindTools([
     listAlertsTool,
     openIncidentTool,
     resolveIncidentTool,
+    listIncidentsTool,
+    consultarRunbookTool,
   ]);
 
   return {
@@ -183,6 +202,18 @@ function createDefaultPlanEngine(store: MemoryOpsStore): PlanEngine {
               tool: selectedStep.tool,
               args: selectedStep.args,
               output: await resolveIncidentTool.invoke(selectedStep.args),
+            };
+          case "list_incidents":
+            return {
+              tool: selectedStep.tool,
+              args: selectedStep.args,
+              output: await listIncidentsTool.invoke(selectedStep.args),
+            };
+          case "consultar_runbook":
+            return {
+              tool: selectedStep.tool,
+              args: selectedStep.args,
+              output: await consultarRunbookTool.invoke(selectedStep.args),
             };
         }
       } catch (error) {

@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseArenaArgs, runArena } from "./arena.js";
+import { createArenaStrategies, parseArenaArgs, runArena } from "./arena.js";
 import { withReflection } from "./agents/reflection.js";
+import { MemoryOpsStore } from "./agents/store.js";
+import { SqliteOpsStore } from "./store/sqlite-ops-store.js";
 import type {
   ReasoningInput,
   ReasoningStrategy,
@@ -110,6 +112,21 @@ test("arena lists reflective strategies and runs selected reflective entries", a
   const observedInputs: ReasoningInput[] = [];
   const baseReact = createStrategy("react", (input) => {
     observedInputs.push(input);
+  });
+
+  test("arena strategy factory accepts an injected operations store", (t) => {
+    const store = new SqliteOpsStore(":memory:");
+    t.after(() => store.close());
+    const strategies = createArenaStrategies(store);
+    assert.deepEqual(
+      strategies.map(({ name }) => name).sort(),
+      [
+        "plan-and-execute",
+        "react",
+        "reflect:plan-and-execute",
+        "reflect:react",
+      ],
+    );
   });
   const basePlanAndExecute = createStrategy("plan-and-execute", (input) => {
     observedInputs.push(input);

@@ -171,6 +171,7 @@ function createBenchmarkStore(): MemoryOpsStore {
     name: "Catalog",
     team: "commerce",
     environment: "production",
+    tier: "tier-2",
   };
   return new MemoryOpsStore([...seedServices, catalog], seedAlerts);
 }

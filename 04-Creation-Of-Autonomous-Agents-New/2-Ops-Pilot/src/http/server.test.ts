@@ -4,6 +4,8 @@ import test from "node:test";
 import { createApp } from "./server.js";
 import type { ReasoningStrategy } from "../agents/types.js";
 import type { ChatServerOptions } from "./server.js";
+import { createOpsTools } from "../agents/tools.js";
+import { SqliteOpsStore } from "../store/sqlite-ops-store.js";
 
 function fakeStrategy(
   name: string,
@@ -60,6 +62,35 @@ test("POST /chat defaults to react and returns exactly the reasoning result fiel
     });
     assert.deepEqual(inputs, ["List alerts"]);
   });
+});
+
+test("POST /chat supports a strategy composed with an injected SQLite store", async (t) => {
+  const store = new SqliteOpsStore(":memory:");
+  t.after(() => store.close());
+  const [listAlerts] = createOpsTools(store);
+  const strategy = fakeStrategy("react", async () => {
+    const alerts = JSON.parse(
+      await listAlerts.invoke({ status: "firing" }),
+    ) as unknown[];
+    return {
+      answer: `${alerts.length} alerts firing.`,
+      trace: [],
+      metrics: { llmCalls: 0, latencyMs: 1 },
+    };
+  });
+
+  await withServer(
+    { registry: new Map([["react", strategy]]) },
+    async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: "Check firing alerts" }),
+      });
+      assert.equal(response.status, 200);
+      assert.equal((await response.json()).answer, "3 alerts firing.");
+    },
+  );
 });
 
 test("POST /chat selects an explicit strategy and decorates it only when requested", async () => {
