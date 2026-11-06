@@ -1181,3 +1181,41 @@ Removidos:
 - `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/database.test.ts`
 - `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/src/agents/database.ts`
 ```
+
+### How to test:
+
+A API expõe **uma rota**, `POST /chat`. As operações — consultar alertas, abrir ou resolver incidentes e consultar runbooks — são solicitadas em linguagem natural; o agente escolhe a ferramenta. Não há endpoints REST separados como `/alerts` ou `/incidents`.
+
+1. Inicie o servidor em um terminal:
+
+```bash
+npm run http
+```
+
+Ele usa a porta `3000` por padrão. Para respostas do agente, configure `OPENROUTER_API_KEY` e `OPENROUTER_MODEL` no ambiente ou no `.env` — não envie essas credenciais no `curl`.
+
+2. Em outro terminal, consulte alertas:
+
+```bash
+curl -i http://localhost:3000/chat \
+  -H 'content-type: application/json' \
+  -d '{"message":"Liste os alertas que estão disparando"}'
+```
+
+Abra um incidente:
+
+```bash
+curl -sS http://localhost:3000/chat \
+  -H 'content-type: application/json' \
+  -d '{"message":"Abra um incidente de severidade high para o serviço Checkout: falha no processamento de compras"}'
+```
+
+A resposta inclui `answer`, `trace` e `metrics`. Use o ID do incidente retornado para pedir a resolução:
+
+```bash
+curl -sS http://localhost:3000/chat \
+  -H 'content-type: application/json' \
+  -d '{"message":"Resolva o incidente ID_DO_INCIDENTE"}'
+```
+
+Também pode pedir, por exemplo, “Liste os incidentes abertos” ou “Consulte o runbook do serviço Payments”. O servidor e o formato da requisição estão documentados em `server.ts` e `quickstart.md`.
