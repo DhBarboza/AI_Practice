@@ -53,14 +53,14 @@ ReAct and plan-and-execute.
 > Write fake-fetch tests before the corresponding implementation and verify they fail for the
 > expected missing behavior.
 
-- [ ] T001 [US1] Add fake-fetch tests for GitHub and Cloudflare endpoint selection, default GitHub, valid status parsing, and one-line output in `src/agents/provider-status.test.ts`
+- [X] T001 [US1] Add fake-fetch tests for GitHub and Cloudflare endpoint selection, default GitHub, valid status parsing, and one-line output in `src/agents/provider-status.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T002 [US1] Implement the injectable provider-status service with the two fixed endpoints and Zod validation of non-empty `status.indicator` and `status.description` in `src/agents/provider-status.ts`
-- [ ] T003 [US1] Add tool tests for provider default, explicit provider selection, compact output, and tool purpose/parameter descriptions in `src/agents/tools.test.ts`
-- [ ] T004 [US1] Add the `check_provider_status` input schema, GitHub default, incident-triage description, and service invocation to `createOpsTools` in `src/agents/tools.ts`
-- [ ] T005 [US1] Register `check_provider_status` in plan-and-execute's tool schema, bound-tool list, and execution dispatch in `src/agents/plan-and-execute.ts`
+- [X] T002 [US1] Implement the injectable provider-status service with the two fixed endpoints and Zod validation of non-empty `status.indicator` and `status.description` in `src/agents/provider-status.ts`
+- [X] T003 [US1] Add tool tests for provider default, explicit provider selection, compact output, and tool purpose/parameter descriptions in `src/agents/tools.test.ts`
+- [X] T004 [US1] Add the `check_provider_status` input schema, GitHub default, incident-triage description, and service invocation to `createOpsTools` in `src/agents/tools.ts`
+- [X] T005 [US1] Register `check_provider_status` in plan-and-execute's tool schema, bound-tool list, and execution dispatch in `src/agents/plan-and-execute.ts`
 
 **Checkpoint**: User Story 1 can be independently validated with fake fetch and the tool is
 available to both agent strategies.
@@ -80,12 +80,12 @@ retry, terminal failures do not retry, and final failures resolve to readable to
 
 > Write these failure-path tests before implementing retry and final-error handling.
 
-- [ ] T006 [P] [US2] Add fake-fetch tests for timeout/network and 5xx retries, one-retry maximum, no retry for non-5xx HTTP errors, malformed JSON, and invalid/empty status fields in `src/agents/provider-status.test.ts`
-- [ ] T007 [P] [US2] Add a tool invocation test proving final provider failures return a readable result instead of rejecting in `src/agents/tools.test.ts`
+- [X] T006 [P] [US2] Add fake-fetch tests for timeout/network and 5xx retries, one-retry maximum, no retry for non-5xx HTTP errors, malformed JSON, and invalid/empty status fields in `src/agents/provider-status.test.ts`
+- [X] T007 [P] [US2] Add a tool invocation test proving final provider failures return a readable result instead of rejecting in `src/agents/tools.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T008 [US2] Add a fresh `AbortSignal.timeout(5000)` per attempt, retry network/timeout and HTTP 5xx failures exactly once, and convert every final failure into a sanitized single-line result in `src/agents/provider-status.ts`
+- [X] T008 [US2] Add a fresh `AbortSignal.timeout(5000)` per attempt, retry network/timeout and HTTP 5xx failures exactly once, and convert every final failure into a sanitized single-line result in `src/agents/provider-status.ts`
 
 **Checkpoint**: User Story 2 failure paths are independently testable without network access and
 never escape the tool as an exception.
@@ -97,7 +97,7 @@ never escape the tool as an exception.
 **Purpose**: Verify the completed feature against its documented validation procedure and existing
 project quality gates.
 
-- [ ] T009 Run the focused provider/tool tests from `specs/005-check-provider-status/quickstart.md`, then run `npm run typecheck` and `npm test` using the scripts in `package.json`
+- [X] T009 Run the focused provider/tool tests from `specs/005-check-provider-status/quickstart.md`, then run `npm run typecheck` and `npm test` using the scripts in `package.json`
 
 ---
 

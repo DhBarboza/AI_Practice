@@ -111,6 +111,69 @@ test("all operational tools describe their purpose and every input field", (t) =
   );
 });
 
+test("check_provider_status defaults to GitHub and accepts both providers", async (t) => {
+  const store = new SqliteOpsStore(":memory:");
+  t.after(() => store.close());
+  const urls: string[] = [];
+  const doFetch: typeof fetch = async (input) => {
+    urls.push(String(input));
+    return new Response(
+      JSON.stringify({
+        status: { indicator: "operational", description: "All services normal" },
+      }),
+      { status: 200 },
+    );
+  };
+  const [, , , , , checkProviderStatus] = createOpsTools(
+    store,
+    undefined,
+    doFetch,
+  );
+
+  const defaultResult = await checkProviderStatus.invoke({});
+  const cloudflareResult = await checkProviderStatus.invoke({
+    provider: "cloudflare",
+  });
+
+  assert.equal(defaultResult, "github está operational - All services normal");
+  assert.equal(
+    cloudflareResult,
+    "cloudflare está operational - All services normal",
+  );
+  assert.deepEqual(urls, [
+    "https://www.githubstatus.com/api/v2/status.json",
+    "https://www.cloudflarestatus.com/api/v2/status.json",
+  ]);
+  assert.equal(
+    checkProviderStatus.schema.safeParse({ provider: "example.com" }).success,
+    false,
+  );
+  assert.match(checkProviderStatus.description, /external|extern/i);
+  assert.match(checkProviderStatus.description, /Use quando/i);
+  assert.ok(checkProviderStatus.schema.shape.provider.description);
+});
+
+test("check_provider_status returns a readable result when status fetching fails", async (t) => {
+  const store = new SqliteOpsStore(":memory:");
+  t.after(() => store.close());
+  let calls = 0;
+  const doFetch: typeof fetch = async () => {
+    calls += 1;
+    throw new Error("network unavailable");
+  };
+  const [, , , , , checkProviderStatus] = createOpsTools(
+    store,
+    undefined,
+    doFetch,
+  );
+
+  const result = await checkProviderStatus.invoke({ provider: "github" });
+
+  assert.equal(calls, 2);
+  assert.match(result, /não consegui consultar o status de github/);
+  assert.match(result, /network unavailable/);
+});
+
 test("tool iteration limiter blocks mutations after the allowed action budget", async (t) => {
   let allowedCalls = 0;
   const store = new SqliteOpsStore(":memory:");

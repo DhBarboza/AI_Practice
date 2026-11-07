@@ -2,6 +2,7 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { z } from "zod";
 import { createModel } from "./model.js";
+import { ProviderSchema } from "./provider-status.js";
 import { MemoryOpsStore } from "./store.js";
 import type { OpsStore } from "./store.js";
 import { createOpsTools } from "./tools.js";
@@ -38,6 +39,10 @@ const PlanStepSchema = z.discriminatedUnion("tool", [
     tool: z.literal("consultar_runbook"),
     args: z.object({ service: z.string().trim().min(1) }),
   }).strict(),
+  z.object({
+    tool: z.literal("check_provider_status"),
+    args: z.object({ provider: ProviderSchema.optional() }),
+  }).strict(),
 ]);
 
 const PlanSchema = z
@@ -62,7 +67,8 @@ const PLANNER_PROMPT =
   "list_incidents(status?: open|resolved|all) lists incidents and defaults to open; " +
   "open_incident(title, service, severity) creates an incident for a known service; " +
   "resolve_incident(id) resolves an existing incident; " +
-  "consultar_runbook(service) reads the service's runbook. " +
+  "consultar_runbook(service) reads the service's runbook; " +
+  "check_provider_status(provider?: github|cloudflare) checks a public provider status page. " +
   "Return no more than 8 steps. If no tool is needed, return an empty steps array and a concise answer.";
 
 const EXECUTOR_PROMPT =
@@ -135,6 +141,7 @@ function createDefaultPlanEngine(store: OpsStore): PlanEngine {
     resolveIncidentTool,
     listIncidentsTool,
     consultarRunbookTool,
+    checkProviderStatusTool,
   ] =
     createOpsTools(store);
   const executor = model.bindTools([
@@ -143,6 +150,7 @@ function createDefaultPlanEngine(store: OpsStore): PlanEngine {
     resolveIncidentTool,
     listIncidentsTool,
     consultarRunbookTool,
+    checkProviderStatusTool,
   ]);
 
   return {
@@ -214,6 +222,12 @@ function createDefaultPlanEngine(store: OpsStore): PlanEngine {
               tool: selectedStep.tool,
               args: selectedStep.args,
               output: await consultarRunbookTool.invoke(selectedStep.args),
+            };
+          case "check_provider_status":
+            return {
+              tool: selectedStep.tool,
+              args: selectedStep.args,
+              output: await checkProviderStatusTool.invoke(selectedStep.args),
             };
         }
       } catch (error) {

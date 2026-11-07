@@ -1248,7 +1248,7 @@ Também pode pedir, por exemplo, “Liste os incidentes abertos” ou “Consult
 #### Outputs:
 
 ```md
-Criados:
+**Criados:**
 
 - `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/005-check-provider-status/checklists/requirements.md`
 - `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/005-check-provider-status/spec.md`
@@ -1265,7 +1265,7 @@ Criados:
 #### Outputs:
 
 ```md
-Criados:
+**Criados:**
 
 - `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/005-check-provider-status/contracts/check-provider-status.md`
 - `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/005-check-provider-status/data-model.md`
@@ -1273,7 +1273,7 @@ Criados:
 - `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/005-check-provider-status/quickstart.md`
 - `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/005-check-provider-status/research.md`
 
-Modificados:
+**Modificados:**
 
 - `04-Creation-Of-Autonomous-Agents-New/Autonomous-Agent.md`
 
@@ -1291,7 +1291,7 @@ Também continuam não rastreados desde a última consulta: `spec.md`, `requirem
 #### Outputs:
 
 ```md
-Criados:
+**Criados:**
 
 - `04-Creation-Of-Autonomous-Agents-New/2-Ops-Pilot/specs/005-check-provider-status/tasks.md`
 ```
@@ -1345,5 +1345,18 @@ async function fetchProviderStatus(
 #### Outputs:
 
 ```md
+**Criados:**
 
+- `2-Ops-Pilot/src/agents/provider-status.test.ts`
+- `2-Ops-Pilot/src/agents/provider-status.ts`
+
+**Modificados:**
+
+- `2-Ops-Pilot/.gitignore` — alteração staged
+- `2-Ops-Pilot/specs/005-check-provider-status/tasks.md`
+- `2-Ops-Pilot/src/agents/plan-and-execute.ts`
+- `2-Ops-Pilot/src/agents/tools.test.ts`
+- `2-Ops-Pilot/src/agents/tools.ts`
 ```
+
+### Teste:

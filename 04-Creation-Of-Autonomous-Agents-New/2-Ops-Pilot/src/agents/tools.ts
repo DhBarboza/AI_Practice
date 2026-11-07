@@ -1,6 +1,7 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { defaultOpsStore } from "./store.js";
+import { fetchProviderStatus, ProviderSchema } from "./provider-status.js";
 import {
   AlertSchema,
   AlertFilterStatusSchema,
@@ -57,10 +58,18 @@ const consultRunbookInputSchema = z
       .describe("Name of the service whose operational runbook is needed."),
   })
   .strict();
+const checkProviderStatusInputSchema = z
+  .object({
+    provider: ProviderSchema.default("github").describe(
+      "Provedor cuja página pública consultar: github ou cloudflare. Se omitido, usa github.",
+    ),
+  })
+  .strict();
 
 export function createOpsTools(
   store: OpsStore = defaultOpsStore,
   allowToolCall?: ToolCallLimiter,
+  doFetch: typeof fetch = fetch,
 ) {
   const isAllowed = (name: string, args: Record<string, unknown>) =>
     allowToolCall?.(name, args) ?? true;
@@ -153,7 +162,30 @@ export function createOpsTools(
     },
   );
 
-  return [listAlerts, openIncident, resolveIncident, listIncidents, consultarRunbook] as const;
+  const checkProviderStatus = tool(
+    async ({ provider }) => {
+      const args = { provider };
+      if (!isAllowed("check_provider_status", args)) {
+        return "Iteration limit reached; this tool call was not executed.";
+      }
+      return fetchProviderStatus(provider, doFetch);
+    },
+    {
+      name: "check_provider_status",
+      description:
+        "Consulta o status público do GitHub ou Cloudflare. Use quando suspeitar de problema externo ou dependência indisponível e precisar distinguir se a falha é nossa ou do provedor. Retorna o indicador e a descrição atuais em uma linha; não determina causa raiz nem executa ações.",
+      schema: checkProviderStatusInputSchema,
+    },
+  );
+
+  return [
+    listAlerts,
+    openIncident,
+    resolveIncident,
+    listIncidents,
+    consultarRunbook,
+    checkProviderStatus,
+  ] as const;
 }
 
 export const store = defaultOpsStore;
@@ -164,4 +196,5 @@ export const [
   resolveIncident,
   listIncidents,
   consultarRunbook,
+  checkProviderStatus,
 ] = opsTools;
