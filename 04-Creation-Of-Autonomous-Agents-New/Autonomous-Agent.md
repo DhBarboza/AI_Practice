@@ -1360,3 +1360,33 @@ async function fetchProviderStatus(
 ```
 
 ### Teste:
+
+A tool não tem uma rota HTTP própria. Para testá-la com `curl`, inicie o servidor com `npm run http` e peça ao agente para verificar o provedor pelo endpoint `/chat` (`server.ts`):
+
+```bash
+curl -sS http://localhost:3000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"Verifique o status público do GitHub usando check_provider_status e resuma o resultado."}'
+```
+
+Para Cloudflare:
+
+```bash
+curl -sS http://localhost:3000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"Use check_provider_status para verificar o Cloudflare e informe o indicador e a descrição."}'
+```
+
+A resposta deve ser JSON com `answer`, `trace` e `metrics`. Isso executa o agente e consulta o status público real; requer a configuração de modelo já usada pelo OpsPilot. Para testar sem modelo nem rede, rode os testes automatizados: `node --import tsx --test src/agents/provider-status.test.ts src/agents/tools.test.ts`.
+
+Use o endpoint `POST /chat` pedindo ao agente para abrir o incidente. Informe um título, o nome exato de um serviço conhecido e a severidade (`critical`, `high`, `medium` ou `low`), conforme a tool em `tools.ts`.
+
+Por exemplo:
+
+```bash
+curl -X POST http://localhost:3000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"Abra um incidente high para o serviço Checkout: falhas intermitentes no checkout."}'
+```
+
+A resposta JSON inclui o resultado da ação no `trace`. Para verificação, você pode pedir depois: “Liste os incidentes abertos.”
