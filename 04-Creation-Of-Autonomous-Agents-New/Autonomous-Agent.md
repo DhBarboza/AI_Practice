@@ -1390,3 +1390,64 @@ curl -X POST http://localhost:3000/chat \
 ```
 
 A resposta JSON inclui o resultado da ação no `trace`. Para verificação, você pode pedir depois: “Liste os incidentes abertos.”
+
+## DISPONIBILIZANDO NOSSO AGENTE VIA MCP
+
+### 1. Prompt - Specify:
+
+#### Input:
+
+```md
+/speckit.specify MCP server do OpsPilot: `src/mcp/server.ts` com `@modelcontextprotocol/sdk`, transport stdio, expondo `list_alerts`, `open_incident` e `resolve_incident`, reutilizando o mesmo `OpsStore` e os mesmos schemas zod das tools existentes (uma única fonte de verdade). Nome do server: `opspilot`. Script npm: `mcp = "tsx src/mcp/server.ts"` (se precisar de env, alterar o script e carregá-las antes). REGRA CRÍTICA: nenhum `console.log` no server; no stdio o stdout é o canal do protocolo, e o diagnóstico vai para o stderr. Teste: subir o server e validar a lista de tools.
+```
+
+#### Outputs:
+
+```md
+**Criados:**
+
+- `2-Ops-Pilot/specs/006-mcp-server/spec.md`
+- `2-Ops-Pilot/specs/006-mcp-server/checklists/requirements.md`
+```
+
+### 2. Prompt - Plan:
+
+#### Input:
+
+```md
+/speckit.plan 004-ops-persistence
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 3. Prompt - Task:
+
+#### Input:
+
+```md
+/speckit.tasks 004-ops-persistence
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 4. Prompt - Implement:
+
+#### Input:
+
+```md
+
+```
+
+#### Outputs:
+
+```md
+
+```
