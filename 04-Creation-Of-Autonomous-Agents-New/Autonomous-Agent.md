@@ -1511,3 +1511,82 @@ console.error("opspilot MCP server: pronto (stdio)"); // stderr, nunca stdout
 ```
 
 ### Importando MCP
+
+Criado o arquivo `2-Ops-Pilot/.vscode/mcp.json`
+
+### 5. Criar incidente (Via MCP):
+
+#### Input:
+
+crie no OpsPilot um incidente de serveridade low de teste para notifications
+
+#### Output:
+
+```md
+Incidente de teste criado para **Notifications**, com severidade **low** e status **open**.
+
+ID: `inc-09dfcc70-8746-4a53-8b02-fec326360daa`
+```
+
+### 6. Consultar inicidentes abertos
+
+#### Input:
+
+```bash
+curl -sS http://localhost:3000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"Liste os incidentes abertos."}'
+```
+
+#### Output:
+
+```json
+{
+    "answer": "Aqui estão os incidentes abertos atualmente:\n\n1. **Incidente ID:** inc-6771c1ed-f550-4972-940e-4f34675e22bb\n   - **Título:** Intermittent Checkout Failures\n   - **Serviços:** Checkout\n   - **Severidade:** high\n   - **Status:** open\n\n2. **Incidente ID:** inc-09dfcc70-8746-4a53-8b02-fec326360daa\n   - **Título:** Incidente de teste para notifications\n   - **Serviços:** Notifications\n   - **Severidade:** low\n   - **Status:** open",
+    "trace": [
+        {
+            "type": "thought",
+            "content": "The agent selected an operational tool for the request."
+        },
+        {
+            "type": "action",
+            "tool": "list_incidents",
+            "args": {
+                "status": "open"
+            }
+        },
+        {
+            "type": "observation",
+            "tool": "list_incidents",
+            "content": [
+                {
+                    "id": "inc-6771c1ed-f550-4972-940e-4f34675e22bb",
+                    "title": "Intermittent Checkout Failures",
+                    "service": "Checkout",
+                    "severity": "high",
+                    "status": "open",
+                    "resolvedAt": null,
+                    "summary": null
+                },
+                {
+                    "id": "inc-09dfcc70-8746-4a53-8b02-fec326360daa",
+                    "title": "Incidente de teste para notifications",
+                    "service": "Notifications",
+                    "severity": "low",
+                    "status": "open",
+                    "resolvedAt": null,
+                    "summary": null
+                }
+            ]
+        },
+        {
+            "type": "answer",
+            "content": "Aqui estão os incidentes abertos atualmente:\n\n1. **Incidente ID:** inc-6771c1ed-f550-4972-940e-4f34675e22bb\n   - **Título:** Intermittent Checkout Failures\n   - **Serviços:** Checkout\n   - **Severidade:** high\n   - **Status:** open\n\n2. **Incidente ID:** inc-09dfcc70-8746-4a53-8b02-fec326360daa\n   - **Título:** Incidente de teste para notifications\n   - **Serviços:** Notifications\n   - **Severidade:** low\n   - **Status:** open"
+        }
+    ],
+    "metrics": {
+        "llmCalls": 2,
+        "latencyMs": 6905.735539999994
+    }
+}
+```
