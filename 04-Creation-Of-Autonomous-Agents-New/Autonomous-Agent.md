@@ -1415,7 +1415,7 @@ A resposta JSON inclui o resultado da ação no `trace`. Para verificação, voc
 #### Input:
 
 ```md
-/speckit.plan 004-ops-persistence
+/speckit.plan 006-mcp-server
 ```
 
 #### Outputs:
@@ -1429,7 +1429,7 @@ A resposta JSON inclui o resultado da ação no `trace`. Para verificação, voc
 #### Input:
 
 ```md
-/speckit.tasks 004-ops-persistence
+/speckit.tasks 006-mcp-server
 ```
 
 #### Outputs:
