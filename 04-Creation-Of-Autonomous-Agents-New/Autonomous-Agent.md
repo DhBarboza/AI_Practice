@@ -1421,7 +1421,13 @@ A resposta JSON inclui o resultado da ação no `trace`. Para verificação, voc
 #### Outputs:
 
 ```md
+**Criados:**
 
+- `2-Ops-Pilot/specs/006-mcp-server/plan.md`
+- `2-Ops-Pilot/specs/006-mcp-server/quickstart.md`
+- `2-Ops-Pilot/specs/006-mcp-server/contracts/mcp-tools.md`
+- `2-Ops-Pilot/specs/006-mcp-server/data-model.md`
+- `2-Ops-Pilot/specs/006-mcp-server/research.md`
 ```
 
 ### 3. Prompt - Task:
@@ -1435,7 +1441,9 @@ A resposta JSON inclui o resultado da ação no `trace`. Para verificação, voc
 #### Outputs:
 
 ```md
+**Criados:**
 
+- `2-Ops-Pilot/specs/006-mcp-server/task.md`
 ```
 
 ### 4. Prompt - Implement:
