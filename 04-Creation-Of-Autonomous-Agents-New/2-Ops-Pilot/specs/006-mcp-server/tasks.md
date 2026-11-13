@@ -21,7 +21,7 @@ foundational; each story then has its own acceptance tests and implementation wo
 
 **Purpose**: Add the runtime SDK and the supported server command.
 
-- [ ] T001 Add `@modelcontextprotocol/sdk` as a runtime dependency and add the `mcp` npm script using `node --env-file-if-exists=.env --import tsx src/mcp/server.ts` in `package.json` and update `package-lock.json`
+- [X] T001 Add `@modelcontextprotocol/sdk` as a runtime dependency and add the `mcp` npm script using `node --env-file-if-exists=.env --import tsx src/mcp/server.ts` in `package.json` and update `package-lock.json`
 
 ---
 
@@ -29,7 +29,7 @@ foundational; each story then has its own acceptance tests and implementation wo
 
 **Purpose**: Provide a reusable, isolated test-process harness before story-specific tests.
 
-- [ ] T002 Create a stdio-client test helper that launches `npm run --silent mcp` with `OPSPILOT_DB=:memory:` and closes the MCP client and child process in `src/mcp/test-utils.ts`
+- [X] T002 Create a stdio-client test helper that launches `npm run --silent mcp` with `OPSPILOT_DB=:memory:` and closes the MCP client and child process in `src/mcp/test-utils.ts`
 
 **Checkpoint**: The SDK dependency and isolated child-process test harness are ready.
 
@@ -45,11 +45,11 @@ verify exact names, descriptions, schemas, and protocol-clean stdout.
 
 ### Tests for User Story 1
 
-- [ ] T003 [US1] Add a child-process integration test that initializes the server, asserts the exact three tool names and their metadata, and fails on non-protocol stdout in `src/mcp/server.test.ts`
+- [X] T003 [US1] Add a child-process integration test that initializes the server, asserts the exact three tool names and their metadata, and fails on non-protocol stdout in `src/mcp/server.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T004 [US1] Implement `opspilot` stdio server composition and lifecycle in `src/mcp/server.ts`, constructing one `SqliteOpsStore`, creating tools from that store, registering only `list_alerts`, `open_incident`, and `resolve_incident` with their existing names/descriptions/Zod schemas, delegating calls to those same tool instances, writing diagnostics only to stderr, and closing the store on shutdown
+- [X] T004 [US1] Implement `opspilot` stdio server composition and lifecycle in `src/mcp/server.ts`, constructing one `SqliteOpsStore`, creating tools from that store, registering only `list_alerts`, `open_incident`, and `resolve_incident` with their existing names/descriptions/Zod schemas, delegating calls to those same tool instances, writing diagnostics only to stderr, and closing the store on shutdown
 
 **Checkpoint**: An MCP client can discover exactly the requested tools and stdout remains usable
 as the protocol channel.
@@ -66,11 +66,11 @@ that incident, and verify invalid inputs or domain failures are reported as fail
 
 ### Tests for User Story 2
 
-- [ ] T005 [US2] Add integration tests for alert listing, incident creation and resolution, invalid arguments, unknown services/IDs, and repeated resolution through MCP in `src/mcp/tools.test.ts`
+- [X] T005 [US2] Add integration tests for alert listing, incident creation and resolution, invalid arguments, unknown services/IDs, and repeated resolution through MCP in `src/mcp/tools.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T006 [US2] Ensure tool validation and domain exceptions are returned as failed MCP tool results with clear messages, without false success responses, in `src/mcp/server.ts`
+- [X] T006 [US2] Verify that the SDK maps validation and domain exceptions thrown by the existing tool instances to failed MCP results with clear messages, as tested in `src/mcp/tools.test.ts` and delegated by `src/mcp/server.ts`
 
 **Checkpoint**: All three tools return their established results and mutations, and failures are
 surfaced without being represented as successful calls.
@@ -81,8 +81,8 @@ surfaced without being represented as successful calls.
 
 **Purpose**: Align the validation guide with the shipped command and run all required checks.
 
-- [ ] T007 Update the launch and verification instructions to match the final `mcp` command and test behavior in `specs/006-mcp-server/quickstart.md`
-- [ ] T008 Run `npm run typecheck`, `npm test`, and the quickstart MCP process scenario; resolve any failures in `src/mcp/server.ts`, `src/mcp/server.test.ts`, `src/mcp/tools.test.ts`, or `specs/006-mcp-server/quickstart.md`
+- [X] T007 Confirm the launch and verification instructions match the final `mcp` command and test behavior in `specs/006-mcp-server/quickstart.md`
+- [X] T008 Run `npm run typecheck`, `npm test`, and the quickstart MCP process scenario; resolve any failures in `src/mcp/server.ts`, `src/mcp/server.test.ts`, `src/mcp/tools.test.ts`, or `specs/006-mcp-server/quickstart.md`
 
 ---
 
