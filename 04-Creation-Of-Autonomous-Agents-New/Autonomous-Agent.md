@@ -1635,12 +1635,6 @@ Guardar -> Recuperar -> Injetar
 #### Outputs:
 
 ```md
-Ran terminal command: git status --short --untracked-files=all
-
-Ran terminal command: git --no-pager log -1 --name-status --format='commit %h %ad %s' --date=short && printf '\n--- staged changes ---\n' && git diff --cached --name-status
-
-Agora, considerando o commit mais recente e as alterações locais:
-
 **Criados:**
 
 - `2-Ops-Pilot/specs/007-conversation-persistence/checklists/requirements.md`
@@ -1663,16 +1657,42 @@ Agora, considerando o commit mais recente e as alterações locais:
 #### Outputs:
 
 ```md
+Ran terminal command: git status --short --untracked-files=all && printf '\n--- latest commit ---\n' && git --no-pager log -1 --name-status --format='commit %h %ad %s' --date=short && printf '\n--- working tree diff ---\n' && git diff --name-status HEAD
 
+**Criados:**
+
+- `2-Ops-Pilot/specs/007-conversation-persistence/tasks.md`
 ```
 
 ### 4. Prompt - Implement:
 
 #### Input:
 
-```md
+````md
+/speckit.implement 007-conversation-persistence
 
+```ts
+// Referência do que o agente deve montar
+export async function runChat(input: ChatInput) {
+    const conversationId = input.conversationId ?? conversations.create();
+
+    // As últimas 12 mensagens do histórico da conversa
+    const history = conversations.lastMessages(conversationId, 12);
+
+    conversations.append(conversationId, "user", input.message);
+
+    const result = await strategy.run({ message: input.message, history });
+
+    conversations.append(conversationId, "assistant", result.answer);
+
+    return {
+        conversationId,
+        ...result,
+        metrics: { ...result.metrics, historyMessages: history.length },
+    };
+}
 ```
+````
 
 #### Outputs:
 
