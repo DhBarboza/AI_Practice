@@ -1,113 +1,58 @@
-### Base de mana
-
-1 Command Tower
-1 Exotic Orchard
-1 Reflecting Pool
-1 Tundra
-1 Underground Sea
-1 Volcanic Island
-1 Scrubland
-1 Badlands
-1 Plateau
-1 Watery Grave
-1 Hallowed Fountain
-1 Steam Vents
-1 Godless Shrine
-1 Blood Crypt
-1 Sacred Foundry
-1 Flooded Strand
-1 Polluted Delta
-1 Scalding Tarn
-1 Bloodstained Mire
-1 Marsh Flats
-1 Arid Mesa
-1 Raffine's Tower
-1 Raugrin Triome
-1 Xander's Lounge
-1 Prairie Stream
-1 Sunken Hollow
-1 Smoldering Marsh
-1 Radiant Summit
-1 Scorched Geyser
-1 Eclipsed Steppe
-1 Theorist's Sanctum
-2 Island
-2 Plains
-1 Swamp
-1 Mountain
-
-### Base atual
-
-1 Restless Anchorage
-1 Path of Ancestry
-1 Isolated Chapel
-1 Sulfur Falls
-1 Drowned Catacomb
-1 Caves of Koilos
-1 Sulfurous Springs
-1 Battlefield Forge
-1 Glacial Fortress
-1 Kher Keep
-3 Island
-1 Reflecting Pool
-1 Fetid Heath
-2 Mountain
-2 Swamp
-1 Contaminated Landscape
-1 Perilous Landscape
-1 Fabled Passage
-4 Plains
-1 Exotic Orchard
-1 Mystic Gate
-1 Radiant Summit
-1 Shivan Reef
-1 Clifftop Retreat
-1 Prairie Stream
-1 Underground River
-1 Sunken Ruins
-1 Restless Spire
-1 Command Tower
-1 Turbulent Crater
-1 Turbulent Shore
-1 Turbulent Wetlands
-
-### Já Possuí:
-
-1 Command Tower
-1 Exotic Orchard
-1 Reflecting Pool
-1 Prairie Stream
-1 Radiant Summit
-2 Island
-2 Plains
-1 Swamp
-1 Mountain
-
-### Não Possuí:
-
-1 Tundra (30A)
-1 Underground Sea (30A)
-1 Volcanic Island (30A)
-1 Scrubland (30A)
-1 Badlands (30A)
-1 Plateau (30A)
-1 Watery Grave
-1 Hallowed Fountain
-1 Steam Vents
-1 Godless Shrine
-1 Blood Crypt
-1 Sacred Foundry
-1 Flooded Strand
-1 Polluted Delta
-1 Scalding Tarn
-1 Bloodstained Mire
-1 Marsh Flats
-1 Arid Mesa
-1 Raffine's Tower
-1 Raugrin Triome
-1 Xander's Lounge
-1 Sunken Hollow
-1 Smoldering Marsh
-1 Scorched Geyser
-1 Eclipsed Steppe
-1 Theorist's Sanctum
+Mana base:
+1 Command Tower (CMM)
+1 Exotic Orchard (CMM)
+1 Frontier Bivouac (KTK)
+1 Ketria Triome (IKO)
+1 Breeding Pool (RNA)
+1 Stomping Ground (RNA)
+1 Steam Vents (GRN)
+1 Hinterland Harbor (DOM)
+1 Sulfur Falls (DOM)
+1 Rootbound Crag (XLN)
+1 Rejuvenating Springs (CMM)
+1 Spire Garden (CMR)
+1 Training Center (CMR)
+1 Rockfall Vale (MID)
+1 Dreamroot Cascade (VOW)
+1 Stormcarved Coast (VOW)
+1 Bountiful Landscape (TDC)
+1 Reflecting Pool (CLB)
+1 Wooded Foothills (KTK)
+1 Birds of Paradise (CCBLC)
+1 Delighted Halfling (LTR)
+1 Fanatic of Rhonas (MH3)
+1 Bloom Tender (EVE)
+1 Animar, Soul of Elements (CMM)
+1 Gwenna, Eyes of Gaea (BRO)
+1 Selvala, Heart of the Wilds (CN2)
+1 Uro, Titan of Nature's Wrath (THB)
+1 Solphim, Mayhem Dominus (ONE)
+1 Terror of the Peaks (M21)
+1 Wistfulness (ECL)
+1 Xenagos, God of Revels (BNG)
+1 Etali, Primal Conqueror (MOM)
+1 Hullbreaker Horror (VOW)
+1 Vaultborn Tyrant (BIG)
+1 Apex Devastator (CMR)
+1 Radagast of Rhosgobel (LTC)
+1 Roaming Throne (LCI)
+1 Kogla, the Titan Ape (IKO)
+1 Ghalta, Stampede Tyrant (LCI)
+1 Zopandrel, Hunger Dominus (ONE)
+2 Rhystic Study (CMM)
+2 Cyclonic Rift (RTR)
+2 Fierce Guardianship (C20)
+2 Consecrated Sphinx (MBS)
+1 Swan Song (THS)
+2 Mana Drain (CMM)
+1 The Great Henge (ELD)
+1 Last March of the Ents (LTC)
+1 Shadow in the Warp (40K)
+1 Old Gnawbone (AFR)
+2 Astral Dragon (CLB)
+1 Ancient Copper Dragon (CLB)
+1 Ancient Silver Dragon (CLB)
+1 Twinflame Tyrant (FDN)
+1 Ancient Bronze Dragon (CLB)
+1 Canopy Gargantuan (TDC)
+1 Bolt Bend (WAR)

@@ -1590,3 +1590,78 @@ curl -sS http://localhost:3000/chat \
     }
 }
 ```
+
+## MEMÓRIA EPISÓDICA PARA NOSSO AGENTE
+
+Gestão de contexto com persistência
+
+- Conversa curta (Working memory)
+- Conversa longa (Ex: Copilot-instructions.md)
+- Memoria Epsódica (Tabela de Mensagens)
+- Memória Semântica (Fatos soltos de um epsódio)
+
+Guardar -> Recuperar -> Injetar
+
+### 1. Prompt - Specify:
+
+#### Input:
+
+```md
+/speckit.specify Conversa persistente:
+
+- ConversationStore (append/lastMessages/create) + tabela messages, como no SqliteOpsStore
+- /chat: conversationId opcional, devolvido na resposta
+- 12 últimas mensagens no prompt via composição; métrica historyMessages
+- Testes ":memory:" + fake
+```
+
+#### Outputs:
+
+```md
+**Criados:**
+
+- `2-Ops-Pilot/specs/007-conversation-persistence/checklists/requirements.md`
+- `2-Ops-Pilot/specs/007-conversation-persistence/spec.md`
+```
+
+### 2. Prompt - Plan:
+
+#### Input:
+
+```md
+/speckit.plan 004-ops-persistence
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 3. Prompt - Task:
+
+#### Input:
+
+```md
+/speckit.tasks 004-ops-persistence
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 4. Prompt - Implement:
+
+#### Input:
+
+```md
+
+```
+
+#### Outputs:
+
+```md
+
+```
