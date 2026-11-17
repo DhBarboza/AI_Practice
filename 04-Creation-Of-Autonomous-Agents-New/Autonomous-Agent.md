@@ -1629,13 +1629,27 @@ Guardar -> Recuperar -> Injetar
 #### Input:
 
 ```md
-/speckit.plan 004-ops-persistence
+/speckit.plan 007-conversation-persistence
 ```
 
 #### Outputs:
 
 ```md
+Ran terminal command: git status --short --untracked-files=all
 
+Ran terminal command: git --no-pager log -1 --name-status --format='commit %h %ad %s' --date=short && printf '\n--- staged changes ---\n' && git diff --cached --name-status
+
+Agora, considerando o commit mais recente e as alterações locais:
+
+**Criados:**
+
+- `2-Ops-Pilot/specs/007-conversation-persistence/checklists/requirements.md`
+- `2-Ops-Pilot/specs/007-conversation-persistence/spec.md`
+- `2-Ops-Pilot/specs/007-conversation-persistence/contracts/chat-api.md`
+- `2-Ops-Pilot/specs/007-conversation-persistence/data-model.md`
+- `2-Ops-Pilot/specs/007-conversation-persistence/plan.md`
+- `2-Ops-Pilot/specs/007-conversation-persistence/quickstart.md`
+- `2-Ops-Pilot/specs/007-conversation-persistence/research.md`
 ```
 
 ### 3. Prompt - Task:
@@ -1643,7 +1657,7 @@ Guardar -> Recuperar -> Injetar
 #### Input:
 
 ```md
-/speckit.tasks 004-ops-persistence
+/speckit.tasks 007-conversation-persistence
 ```
 
 #### Outputs:
