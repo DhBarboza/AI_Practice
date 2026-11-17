@@ -63,5 +63,6 @@ from zero through 12.
 - When `conversationId` is omitted, the successful response provides a new identifier.
 - When a known identifier is supplied, at most the 12 newest saved messages are included in
   chronological order.
-- Only a successful strategy result is persisted as a user message and assistant response.
+- The user message is persisted before strategy execution; the assistant response is persisted only
+  after success. If a strategy fails, the user message remains saved without an assistant reply.
 - An unknown identifier is never silently replaced with a new conversation.

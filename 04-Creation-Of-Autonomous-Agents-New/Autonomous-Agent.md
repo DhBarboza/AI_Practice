@@ -1657,8 +1657,6 @@ Guardar -> Recuperar -> Injetar
 #### Outputs:
 
 ```md
-Ran terminal command: git status --short --untracked-files=all && printf '\n--- latest commit ---\n' && git --no-pager log -1 --name-status --format='commit %h %ad %s' --date=short && printf '\n--- working tree diff ---\n' && git diff --name-status HEAD
-
 **Criados:**
 
 - `2-Ops-Pilot/specs/007-conversation-persistence/tasks.md`
@@ -1697,5 +1695,92 @@ export async function runChat(input: ChatInput) {
 #### Outputs:
 
 ```md
+**Criados:**
 
+- `2-Ops-Pilot/src/services/chat-service.test.ts`
+- `2-Ops-Pilot/src/services/chat-service.ts`
+- `2-Ops-Pilot/src/store/conversation-store.ts`
+- `2-Ops-Pilot/src/store/sqlite-conversation-store.test.ts`
+- `2-Ops-Pilot/src/store/sqlite-conversation-store.ts`
+
+**Modificados:**
+
+- `2-Ops-Pilot/specs/007-conversation-persistence/contracts/chat-api.md`
+- `2-Ops-Pilot/specs/007-conversation-persistence/data-model.md`
+- `2-Ops-Pilot/specs/007-conversation-persistence/plan.md`
+- `2-Ops-Pilot/specs/007-conversation-persistence/quickstart.md`
+- `2-Ops-Pilot/specs/007-conversation-persistence/research.md`
+- `2-Ops-Pilot/specs/007-conversation-persistence/spec.md`
+- `2-Ops-Pilot/specs/007-conversation-persistence/tasks.md`
+- `2-Ops-Pilot/src/http/server.test.ts`
+- `2-Ops-Pilot/src/http/server.ts`
+```
+
+### 5. Run:
+
+1. Inicie a API no terminal:
+
+```bash
+npm run http
+```
+
+Ela usa a porta `3000` por padrão. Em outro terminal, envie a primeira mensagem:
+
+```bash
+curl -sS http://localhost:3000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"Estou investigando alertas de checkout"}'
+```
+
+#### Output-1:
+
+```bash
+{"answer":"Investiguei os alertas atuais e encontrei um alerta específico relacionado ao checkout:\n\n**Alerta de Checkout:**\n- **ID:** alert-001\n- **Título:** \"Elevated checkout error rate\"\n- **Severidade:** Crítica\n- **Status:** Disparado\n\nEste é o único alerta ativo relacionado ao checkout no momento. Há também outros alertas ativos para Payments, Ops API e Notifications, mas eles não estão relacionados ao checkout.\n\nPara este alerta de checkout, você pode querer:\n1. Investigar a causa raiz do aumento da taxa de erro\n2. Verificar logs recentes do checkout\n3. Considerar abrir um incidente se precisar de resposta coordenada\n\nDeseja que eu abra um incidente para este alerta de checkout ou precise de mais informações sobre algum outro alerta?","trace":[{"type":"thought","content":"The agent selected an operational tool for the request."},{"type":"action","tool":"list_alerts","args":{}},{"type":"observation","tool":"list_alerts","content":"[{\"id\":\"alert-001\",\"service\":\"Checkout\",\"title\":\"Elevated checkout error rate\",\"severity\":\"critical\",\"status\":\"firing\"},{\"id\":\"alert-002\",\"service\":\"Payments\",\"title\":\"Payment provider latency above threshold\",\"severity\":\"warning\",\"status\":\"firing\"},{\"id\":\"alert-003\",\"service\":\"Ops API\",\"title\":\"API pod memory pressure\",\"severity\":\"warning\",\"status\":\"firing\"},{\"id\":\"alert-004\",\"service\":\"Notifications\",\"title\":\"Email delivery backlog\",\"severity\":\"info\",\"status\":\"resolved\"},{\"id\":\"alert-005\",\"service\":\"Background Worker\",\"title\":\"Worker heartbeat missed\",\"severity\":\"warning\",\"status\":\"resolved\"},{\"id\":\"alert-006\",\"service\":\"Payments\",\"title\":\"Payment authorization failures\",\"severity\":\"critical\",\"status\":\"resolved\"}]"},{"type":"answer","content":"Investiguei os alertas atuais e encontrei um alerta específico relacionado ao checkout:\n\n**Alerta de Checkout:**\n- **ID:** alert-001\n- **Título:** \"Elevated checkout error rate\"\n- **Severidade:** Crítica\n- **Status:** Disparado\n\nEste é o único alerta ativo relacionado ao checkout no momento. Há também outros alertas ativos para Payments, Ops API e Notifications, mas eles não estão relacionados ao checkout.\n\nPara este alerta de checkout, você pode querer:\n1. Investigar a causa raiz do aumento da taxa de erro\n2. Verificar logs recentes do checkout\n3. Considerar abrir um incidente se precisar de resposta coordenada\n\nDeseja que eu abra um incidente para este alerta de checkout ou precise de mais informações sobre algum outro alerta?"}],"metrics":{"llmCalls":2,"latencyMs":3917.765450000001,"historyMessages":0},"conversationId":"conv-f6018f60-acd0-444e-82db-f9ffb67f9c90"}
+```
+
+A resposta inclui `conversationId` e `metrics.historyMessages: 0`. Copie o ID retornado e use-o na próxima mensagem:
+
+```bash
+curl -sS http://localhost:3000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"O que eu já verifiquei?","conversationId":"COLE_O_ID_AQUI"}'
+```
+
+```bash
+curl -sS http://localhost:3000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"O que eu já verifiquei?","conversationId":"conv-f6018f60-acd0-444e-82db-f9ffb67f9c90"}'
+```
+
+#### Output-2:
+
+```bash
+{"answer":"Você já verificou o seguinte até agora:\n\n1. **Consultou os alertas ativos** e encontrou um alerta relacionado a checkout:\n   - **ID:** `alert-001`\n   - **Título:** “Elevated checkout error rate”\n   - **Severidade:** Crítica\n   - **Status:** Disparado\n\n2. **Identificou que esse é o único alerta ativo relacionado ao checkout** no momento.\n\n3. **Observou outrosalertas ativos**, mas que estão para **Payments, Ops API e Notifications**, ou seja, não estão relacionados ao checkout.\n\n4. **Ainda não abriu um incidente** para o alerta de checkout — a sugestão foi levantada, mas não foi executada.\n\nResumindo: o foco da investigação até agora foi **mapear e confirmar o alerta de checkout**, sem que tenhamos aberto um incidente formalmente.","trace":[{"type":"answer","content":"Você já verificou o seguinte até agora:\n\n1. **Consultou os alertas ativos** e encontrou um alerta relacionado a checkout:\n   - **ID:** `alert-001`\n  - **Título:** “Elevated checkout error rate”\n   - **Severidade:** Crítica\n   - **Status:** Disparado\n\n2. **Identificou que esse é o único alerta ativo relacionado ao checkout** no momento.\n\n3. **Observou outros alertas ativos**, mas que estão para **Payments, Ops API e Notifications**, ou seja, não estão relacionados ao checkout.\n\n4. **Ainda não abriu um incidente** para o alerta de checkout — a sugestão foi levantada, mas não foi executada.\n\nResumindo: o foco da investigação até agora foi **mapear e confirmar o alerta de checkout**, sem que tenhamos aberto um incidente formalmente."}],"metrics":{"llmCalls":1,"latencyMs":15665.935012000002,"historyMessages":2},"conversationId":"conv-f6018f60-acd0-444e-82db-f9ffb67f9c90"}
+```
+
+A segunda resposta deve devolver o mesmo `conversationId` e `historyMessages: 2` — a mensagem do usuário e a resposta anterior. A conversa usa as 12 mensagens anteriores mais recentes como contexto.
+
+Para testar um ID desconhecido:
+
+```bash
+curl -i http://localhost:3000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"Continuar","conversationId":"conv-nao-existe"}'
+```
+
+Deve retornar `404`. Para respostas reais, a configuração local do provedor de modelo precisa estar disponível para a API.
+
+#### Output-3:
+
+```bash
+HTTP/1.1 404 Not Found
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+Content-Length: 32
+ETag: W/"20-Wvi/Ti0J63Tshalqp+/noIrazvY"
+Date: Tue, 17 Nov 2026 02:20:07 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"error":"Unknown conversation"}
 ```

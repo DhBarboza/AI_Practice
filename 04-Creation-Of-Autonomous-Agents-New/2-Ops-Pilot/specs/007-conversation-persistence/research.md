@@ -24,14 +24,12 @@
 
 ### Scope and order of persisted history
 
-- **Decision**: Load the newest 12 saved messages and pass that selected set to the strategy in
-  chronological order. Append the current user message and assistant answer only after a successful
-  strategy result.
-- **Rationale**: This implements the specified recent-history window and avoids retaining
-  incomplete exchanges after strategy failures.
-- **Alternatives considered**: Including the current user message in the saved-history count would
-  make `historyMessages` inconsistent with the number of prior messages; older conversation
-  messages do not belong in the bounded prompt.
+- **Decision**: Load the newest 12 saved messages in chronological order, append the current user
+  message before strategy execution, and append the assistant answer only after a successful result.
+- **Rationale**: This follows the chat orchestration contract and ensures each attempted user
+  message is retained while keeping the current message out of its own history count.
+- **Alternatives considered**: Persisting both messages only after success would discard the
+  attempted user message when the strategy fails and would differ from the requested call order.
 
 ### Keep the history metric at the chat-response boundary
 

@@ -7,8 +7,9 @@
 ## Summary
 
 Add persistent conversation history to `POST /chat`. A new application service will resolve or
-create a conversation, load at most the 12 latest messages, compose them with the current request
-for the selected strategy, and persist the successful exchange. A SQLite-backed
+create a conversation, load at most the 12 latest messages, append the current user message, compose
+the history with the current request for the selected strategy, and append the assistant response
+after success. A SQLite-backed
 `ConversationStore` will follow the existing `SqliteOpsStore` patterns. The API response will
 include `conversationId` and `metrics.historyMessages` without changing the existing answer, trace,
 strategy, reflection, or timeout behavior.
@@ -89,17 +90,18 @@ their current string-based input contract; the service composes labeled history 
 
 ## Design Decisions
 
-- `ConversationStore` exposes `create`, `append`, and `lastMessages`. `create` produces an opaque
-  `conv-`-prefixed UUID. A supplied non-empty identifier is looked up through its saved messages;
-  no saved messages means it is unknown.
+- `ConversationStore` exposes `create`, single-message `append`, and `lastMessages`. `create`
+  produces an opaque `conv-`-prefixed UUID. A supplied non-empty identifier is looked up through
+  its saved messages; no saved messages means it is unknown.
 - `SqliteConversationStore` uses the existing `OPSPILOT_DB` configuration and creates an
   idempotent `messages` table. It validates rows at the storage boundary and uses prepared
   statements for all variable values.
 - A new chat gets an identifier from `create`; a resumed chat loads at most 12 prior messages.
   The service orders those messages chronologically, formats them with explicit user/assistant
   labels, and appends the current message as the request's prompt.
-- After a successful strategy result, the service appends the current user message and the
-  assistant response. Failed strategy executions do not add a completed exchange.
+- The service appends the current user message before strategy execution and appends the assistant
+  response only after success. A failed strategy leaves the user message available to a later
+  request.
 - The service adds the selected history count to the response metrics as `historyMessages`. Keep
   the existing strategy-level metrics contract unchanged; the chat response schema owns this
   chat-specific metric.

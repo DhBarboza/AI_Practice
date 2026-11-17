@@ -6,9 +6,16 @@ import type { ErrorRequestHandler, Express } from "express";
 import { z } from "zod";
 import { agentRegistry, createAgentRegistry } from "../agents/index.js";
 import { withReflection } from "../agents/reflection.js";
-import type { ReasoningInput, ReasoningStrategy } from "../agents/types.js";
-import { ReasoningResultSchema } from "../agents/types.js";
+import type { ReasoningStrategy } from "../agents/types.js";
+import { ConversationIdSchema } from "../store/conversation-store.js";
+import type { ConversationStore } from "../store/conversation-store.js";
 import { SqliteOpsStore } from "../store/sqlite-ops-store.js";
+import { SqliteConversationStore } from "../store/sqlite-conversation-store.js";
+import {
+  composeReasoningStrategy,
+  createChatService,
+  UnknownConversationError,
+} from "../services/chat-service.js";
 
 export const DEFAULT_CHAT_TIMEOUT_MS = 180_000;
 
@@ -17,10 +24,12 @@ const ChatRequestSchema = z
     message: z.string().trim().min(1),
     strategy: z.string().trim().min(1).optional(),
     reflect: z.boolean().optional(),
+    conversationId: ConversationIdSchema.optional(),
   })
   .strict();
 
 export interface ChatServerOptions {
+  conversationStore: ConversationStore;
   registry?: ReadonlyMap<string, ReasoningStrategy>;
   timeoutMs?: number;
   reflect?: (strategy: ReasoningStrategy) => ReasoningStrategy;
@@ -61,13 +70,14 @@ function isJsonParserError(error: unknown): boolean {
   );
 }
 
-export function createApp(options: ChatServerOptions = {}): Express {
+export function createApp(options: ChatServerOptions): Express {
   const registry = options.registry ?? agentRegistry;
   const timeoutMs = options.timeoutMs ?? DEFAULT_CHAT_TIMEOUT_MS;
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
     throw new Error("timeoutMs must be a positive finite number.");
   }
   const reflect = options.reflect ?? withReflection;
+  const chatService = createChatService(options.conversationStore);
   const app = express();
 
   app.use(express.json());
@@ -78,8 +88,12 @@ export function createApp(options: ChatServerOptions = {}): Express {
       return;
     }
 
-    const { message, strategy: strategyName = "react", reflect: shouldReflect = false } =
-      parsedRequest.data;
+    const {
+      message,
+      strategy: strategyName = "react",
+      reflect: shouldReflect = false,
+      conversationId,
+    } = parsedRequest.data;
     const baseStrategy = registry.get(strategyName);
     if (!baseStrategy) {
       response.status(422).json({ error: "Unknown strategy" });
@@ -87,19 +101,24 @@ export function createApp(options: ChatServerOptions = {}): Express {
     }
 
     const strategy = shouldReflect ? reflect(baseStrategy) : baseStrategy;
-    const input: ReasoningInput = { input: message, maxIterations: 8 };
 
     try {
-      const result = await runWithTimeout(strategy.run(input), timeoutMs);
-      const validated = ReasoningResultSchema.parse(result);
-      response.status(200).json({
-        answer: validated.answer,
-        trace: validated.trace,
-        metrics: validated.metrics,
-      });
+      const result = await runWithTimeout(
+        chatService.runChat({
+          message,
+          conversationId,
+          strategy: composeReasoningStrategy(strategy),
+        }),
+        timeoutMs,
+      );
+      response.status(200).json(result);
     } catch (error) {
       if (error instanceof RequestTimeoutError) {
         response.status(504).json({ error: "Request timed out" });
+        return;
+      }
+      if (error instanceof UnknownConversationError) {
+        response.status(404).json({ error: "Unknown conversation" });
         return;
       }
       response.status(500).json({ error: "Internal server error" });
@@ -135,8 +154,17 @@ async function main(): Promise<void> {
   }
 
   const store = new SqliteOpsStore();
-  const server = createServer(createApp({ registry: createAgentRegistry(store) }));
-  server.once("close", () => store.close());
+  const conversationStore = new SqliteConversationStore();
+  const server = createServer(
+    createApp({
+      registry: createAgentRegistry(store),
+      conversationStore,
+    }),
+  );
+  server.once("close", () => {
+    store.close();
+    conversationStore.close();
+  });
   try {
     await new Promise<void>((resolveListen, rejectListen) => {
       server.once("error", rejectListen);
@@ -148,6 +176,7 @@ async function main(): Promise<void> {
     });
   } catch (error) {
     store.close();
+    conversationStore.close();
     throw error;
   }
 

@@ -6,6 +6,12 @@ import type { ReasoningStrategy } from "../agents/types.js";
 import type { ChatServerOptions } from "./server.js";
 import { createOpsTools } from "../agents/tools.js";
 import { SqliteOpsStore } from "../store/sqlite-ops-store.js";
+import type { ConversationStore } from "../store/conversation-store.js";
+import { SqliteConversationStore } from "../store/sqlite-conversation-store.js";
+
+type TestChatServerOptions = Omit<ChatServerOptions, "conversationStore"> & {
+  conversationStore?: ConversationStore;
+};
 
 function fakeStrategy(
   name: string,
@@ -19,10 +25,12 @@ function fakeStrategy(
 }
 
 async function withServer(
-  options: ChatServerOptions,
+  options: TestChatServerOptions,
   run: (baseUrl: string) => Promise<void>,
 ): Promise<void> {
-  const server = createServer(createApp(options));
+  const conversationStore =
+    options.conversationStore ?? new SqliteConversationStore(":memory:");
+  const server = createServer(createApp({ ...options, conversationStore }));
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
   assert.ok(address && typeof address !== "string");
@@ -30,13 +38,67 @@ async function withServer(
   try {
     await run(`http://127.0.0.1:${address.port}`);
   } finally {
-    await new Promise<void>((resolve, reject) =>
-      server.close((error) => (error ? reject(error) : resolve())),
-    );
+    try {
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve())),
+      );
+    } finally {
+      conversationStore.close();
+    }
   }
 }
 
-test("POST /chat defaults to react and returns exactly the reasoning result fields", async () => {
+test("POST /chat returns a conversation ID and resumes the saved history", async () => {
+  const prompts: string[] = [];
+  const strategy = fakeStrategy("react", async (input) => {
+    prompts.push(input.input);
+    return {
+      answer: "A useful answer",
+      trace: [],
+      metrics: { llmCalls: 1, latencyMs: 2 },
+    };
+  });
+  const conversationStore = new SqliteConversationStore(":memory:");
+
+  await withServer(
+    { registry: new Map([["react", strategy]]), conversationStore },
+    async (baseUrl) => {
+      const firstResponse = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: "First question" }),
+      });
+      assert.equal(firstResponse.status, 200);
+      const firstResult = (await firstResponse.json()) as {
+        conversationId: string;
+        metrics: { historyMessages: number };
+      };
+      assert.match(firstResult.conversationId, /^conv-/);
+      assert.equal(firstResult.metrics.historyMessages, 0);
+
+      const secondResponse = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          message: "Follow-up",
+          conversationId: firstResult.conversationId,
+        }),
+      });
+      assert.equal(secondResponse.status, 200);
+      const secondResult = (await secondResponse.json()) as {
+        conversationId: string;
+        metrics: { historyMessages: number };
+      };
+      assert.equal(secondResult.conversationId, firstResult.conversationId);
+      assert.equal(secondResult.metrics.historyMessages, 2);
+      assert.match(prompts[1] ?? "", /User: First question/);
+      assert.match(prompts[1] ?? "", /Assistant: A useful answer/);
+      assert.match(prompts[1] ?? "", /Current message: Follow-up/);
+    },
+  );
+});
+
+test("POST /chat defaults to react and returns its result with conversation metadata", async () => {
   const inputs: string[] = [];
   const react = fakeStrategy("react", async (input) => {
     inputs.push(input.input);
@@ -55,11 +117,19 @@ test("POST /chat defaults to react and returns exactly the reasoning result fiel
     });
 
     assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), {
+    const result = (await response.json()) as {
+      answer: string;
+      trace: unknown[];
+      metrics: { llmCalls: number; latencyMs: number; historyMessages: number };
+      conversationId: string;
+    };
+    assert.deepEqual(result, {
       answer: "Firing alerts checked.",
       trace: [{ type: "answer", content: "Firing alerts checked." }],
-      metrics: { llmCalls: 2, latencyMs: 5 },
+      metrics: { llmCalls: 2, latencyMs: 5, historyMessages: 0 },
+      conversationId: result.conversationId,
     });
+    assert.match(result.conversationId, /^conv-/);
     assert.deepEqual(inputs, ["List alerts"]);
   });
 });
@@ -194,6 +264,59 @@ test("POST /chat returns 422 for unknown strategies without execution", async ()
     assert.deepEqual(await response.json(), { error: "Unknown strategy" });
     assert.equal(calls, 0);
   });
+});
+
+test("POST /chat rejects malformed and unknown conversation IDs without executing the strategy", async () => {
+  let createCalls = 0;
+  let strategyCalls = 0;
+  const strategy = fakeStrategy("react", async () => {
+    strategyCalls += 1;
+    return {
+      answer: "Unexpected call",
+      trace: [],
+      metrics: { llmCalls: 1, latencyMs: 1 },
+    };
+  });
+  const conversationStore: ConversationStore = {
+    create() {
+      createCalls += 1;
+      return "conv-unexpected";
+    },
+    append() {
+      throw new Error("Unexpected append");
+    },
+    lastMessages() {
+      return [];
+    },
+    close() {},
+  };
+
+  await withServer(
+    { registry: new Map([["react", strategy]]), conversationStore },
+    async (baseUrl) => {
+      const malformedResponse = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: "Hi", conversationId: " " }),
+      });
+      assert.equal(malformedResponse.status, 400);
+
+      const unknownResponse = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          message: "Hi",
+          conversationId: "conv-not-found",
+        }),
+      });
+      assert.equal(unknownResponse.status, 404);
+      assert.deepEqual(await unknownResponse.json(), {
+        error: "Unknown conversation",
+      });
+      assert.equal(createCalls, 0);
+      assert.equal(strategyCalls, 0);
+    },
+  );
 });
 
 test("POST /chat returns 504 when strategy execution exceeds the deadline", async () => {

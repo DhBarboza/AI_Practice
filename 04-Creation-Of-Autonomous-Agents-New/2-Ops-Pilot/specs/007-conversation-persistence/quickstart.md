@@ -23,6 +23,7 @@ Expected outcomes:
 - Chat tests use deterministic fake strategies and make no external requests.
 - The HTTP tests verify a returned `conversationId`, successful continuation, 12-message history
   selection, and the matching `historyMessages` value.
+- A failed strategy leaves its user message saved without an assistant response.
 
 Run the project's required verification commands:
 

@@ -14,7 +14,7 @@ exchange has been persisted.
 
 ## Message
 
-A single completed user message or assistant response belonging to a conversation.
+A user message or assistant response belonging to a conversation.
 
 | Field | Type | Constraints |
 |---|---|---|
@@ -27,7 +27,9 @@ A single completed user message or assistant response belonging to a conversatio
 ### Relationships and ordering
 
 - One conversation has zero or more messages; each message belongs to exactly one conversation.
-- Each successful request persists the current user message and the returned assistant answer.
+- The current user message is appended before strategy execution; an assistant message is appended
+  only after a successful result.
+- A failed strategy execution leaves its user message saved without an assistant message.
 - Message order is established by append order.
 - For a continued conversation, select at most the 12 latest messages, then provide that selection
   in chronological order.
@@ -45,4 +47,5 @@ the selected strategy for that request.
 - An empty or malformed identifier is an invalid request; a non-empty identifier without saved
   messages is unknown and returns a not-found response.
 - Stored rows are validated before conversion to domain messages.
-- A failed strategy execution does not persist a completed exchange.
+- A failed strategy execution does not append an assistant response; the request's user message
+  remains persisted.

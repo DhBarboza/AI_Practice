@@ -58,7 +58,8 @@ As an API client, I want an invalid or unknown conversation identifier to produc
 - When a conversation has exactly 12 saved messages, all 12 are included, in their original order.
 - When a conversation has more than 12 saved messages, older messages are excluded and the newest 12 remain ordered from oldest to newest.
 - A conversation identifier that is malformed or unknown must not be treated as an instruction to create a new conversation.
-- Only completed user and assistant messages are part of the persisted conversation; the current request is not counted as prior history for that request.
+- The current user message is appended before the assistant runs. If the assistant fails, that user message remains saved without an assistant response.
+- The current request is not counted as prior history for that same request.
 
 ## Requirements *(mandatory)*
 
@@ -67,7 +68,7 @@ As an API client, I want an invalid or unknown conversation identifier to produc
 - **FR-001**: The chat service MUST accept an optional `conversationId` when processing a message.
 - **FR-002**: When a request omits `conversationId`, the system MUST create a new conversation.
 - **FR-003**: Every successful chat response MUST include the identifier of the conversation used for that request, including a newly created identifier when the request omitted one.
-- **FR-004**: The system MUST persist completed user messages and corresponding assistant responses as part of their conversation, so that they remain available to later requests and after service restarts.
+- **FR-004**: The system MUST append the current user message before invoking the assistant and MUST append the assistant response after a successful result, so that messages remain available to later requests and after service restarts.
 - **FR-005**: When continuing a conversation, the system MUST include up to the 12 most recent saved messages as context, ordered from oldest to newest within that selected set.
 - **FR-006**: The system MUST exclude messages older than the 12 most recent saved messages from the context supplied for a request.
 - **FR-007**: The response metrics MUST include `historyMessages`, whose value is the exact number of saved prior messages included in the context for that request.
@@ -95,7 +96,8 @@ As an API client, I want an invalid or unknown conversation identifier to produc
 ## Assumptions
 
 - A chat without a `conversationId` starts a new conversation; a supplied identifier resumes an existing one.
-- A successful exchange persists its user message and assistant response. The current request is not part of the prior-history count for that same request.
+- The current user message is persisted before assistant execution; the assistant response is persisted only after success. If execution fails, the user message remains and can appear in the history of a later request.
+- The current request is not part of the prior-history count for that same request.
 - `historyMessages` counts only saved messages selected as prior context, not the current request or the newly generated response.
 - When more than 12 messages exist, history selection uses the 12 newest messages and presents that selected set in chronological order.
 - A malformed identifier is an invalid request; a well-formed but unknown identifier is not found. Neither condition starts a new conversation.
