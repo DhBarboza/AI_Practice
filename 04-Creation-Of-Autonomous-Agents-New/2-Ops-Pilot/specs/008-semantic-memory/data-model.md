@@ -19,15 +19,15 @@ paths. There is no `users` table in this feature, so `user_id` is not a foreign 
 
 - A user may have zero or more memories; each memory belongs to exactly one `user_id`.
 - The asynchronous store contract exposes `remember(userId, fact): Promise<void>`,
-  `recall(userId, query): Promise<Memory[]>`, and
+  `recall(userId, query, k = 3): Promise<Memory[]>`, and
   `forget(userId, fact): Promise<void>`. Recall returns the selected memory records; ranking scores
-  remain internal to the store.
+  remain internal to the store. Recall's optional `k` is a positive integer no greater than three.
 - `remember(userId, fact)` validates both inputs, embeds the fact, and compares it only with that
   user's existing embeddings. If any dot-product similarity is strictly greater than `0.92`, it
   does not insert a duplicate. A score of exactly `0.92` is not a duplicate.
-- `recall(userId, query)` embeds the query, compares it only with that user's memories, discards
-  scores below `0.3`, sorts by descending score, and returns no more than three facts. A score of
-  exactly `0.3` is eligible.
+- `recall(userId, query, k = 3)` embeds the query, compares it only with that user's memories,
+  sorts by descending score, takes the top `k` candidates, then retains only scores strictly
+  greater than `0.3`.
 - `forget(userId, fact)` removes the exact matching fact for that user. A non-match is a no-op;
   another user's rows are never changed.
 - Facts have no automatic expiration in this version. Forgetting is the only specified removal

@@ -48,7 +48,7 @@ Status: `200`
 ```
 
 The response shape remains unchanged. Recalled facts are prompt context and are not added as
-response fields. At most three facts with a dot-product score of at least `0.3` are added; if none
+response fields. At most three facts with a dot-product score greater than `0.3` are added; if none
 qualify, no memory section is added.
 
 ### Errors

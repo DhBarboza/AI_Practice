@@ -1857,6 +1857,104 @@ As colunas de memories: id, user_id, fact, embedding, created_at
 
 #### Input:
 
+````md
+/speckit.implement 008-semantic-memory
+
+```ts
+// referência par ao Recall:
+
+async function recall(userId: string, query: string, k = 3) {
+    const q = await embed(query);
+    return this._all(userId)
+        .map((mappedUser) => ({
+            ...mappedUser,
+            score: dot(q, mappedUser.embedding),
+        }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, k)
+        .filter((mappedUser) => mappedUser.score > 0.3); // relevância mínima
+}
+```
+````
+
+#### Outputs:
+
+```md
+**Criados:**
+
+- `2-Ops-Pilot/src/memory/embeddings.test.ts`
+- `2-Ops-Pilot/src/memory/embeddings.ts`
+- `2-Ops-Pilot/src/memory/memory-store.test.ts`
+- `2-Ops-Pilot/src/memory/memory-store.ts`
+- `2-Ops-Pilot/src/memory/semantic-recall.test.ts`
+- `2-Ops-Pilot/src/store/sqlite-memory-store.test.ts`
+- `2-Ops-Pilot/src/store/sqlite-memory-store.ts`
+
+**Modificados:**
+
+- `2-Ops-Pilot/package-lock.json`
+- `2-Ops-Pilot/package.json`
+- `2-Ops-Pilot/specs/008-semantic-memory/contracts/chat-api.md`
+- `2-Ops-Pilot/specs/008-semantic-memory/data-model.md`
+- `2-Ops-Pilot/specs/008-semantic-memory/plan.md`
+- `2-Ops-Pilot/specs/008-semantic-memory/quickstart.md`
+- `2-Ops-Pilot/specs/008-semantic-memory/spec.md`
+- `2-Ops-Pilot/specs/008-semantic-memory/tasks.md`
+- `2-Ops-Pilot/src/http/server.test.ts`
+- `2-Ops-Pilot/src/http/server.ts`
+- `2-Ops-Pilot/src/services/chat-service.test.ts`
+- `2-Ops-Pilot/src/services/chat-service.ts`
+- `Autonomous-Agent.md`
+```
+
+## Refletor
+
+### 1. Prompt - Specify:
+
+#### Input:
+
+```md
+/speckit.specify Refletor de aprendizado: após cada resposta, um modelo retorna { hasLearning, fact }; ele lê a última mensagem do usuário e destila fatos duráveis (nunca pedido pontual, nunca segredo) -> memories.remember assíncrono; tool forget_preference
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 2. Prompt - Plan:
+
+#### Input:
+
+```md
+/speckit.plan 004-ops-persistence
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 3. Prompt - Task:
+
+#### Input:
+
+```md
+/speckit.tasks 004-ops-persistence
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 4. Prompt - Implement:
+
+#### Input:
+
 ```md
 /speckit.implement 007-conversation-persistence
 ```

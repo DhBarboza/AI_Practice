@@ -59,7 +59,7 @@ An on-call user can remove a fact from their semantic memory so it is no longer 
 - A missing or empty user identifier is rejected; it must never cause unscoped recall, storage, or deletion.
 - An empty or whitespace-only fact is rejected and is not persisted.
 - A user with no memories receives an empty recall result.
-- Memories below the 0.3 minimum relevance score are excluded, including when fewer than three memories otherwise qualify.
+- Memories with a score at or below 0.3 are excluded, including when fewer than three memories otherwise qualify.
 - A forget request for a non-existent fact leaves all stored memories unchanged.
 - Similarity-based deduplication is scoped to the requesting user and uses a strict greater-than 0.92 threshold.
 
@@ -70,7 +70,7 @@ An on-call user can remove a fact from their semantic memory so it is no longer 
 - **FR-001**: The chat request MUST require a valid `userId` and use it to scope all memory operations for that request.
 - **FR-002**: The system MUST allow a fact to be remembered for a specific user and persist the fact, its user association, its embedding, and its creation time.
 - **FR-003**: The system MUST prevent a new fact from being stored as a duplicate when its similarity to an existing fact for the same user is greater than 0.92. A similarity of exactly 0.92 MUST NOT count as a duplicate.
-- **FR-004**: The system MUST recall no more than the three highest-ranked memories for the requesting user, ranked by dot product, and MUST exclude results with a score below 0.3.
+- **FR-004**: The system MUST recall no more than the three highest-ranked memories for the requesting user, ranked by dot product, and MUST exclude results with a score at or below 0.3.
 - **FR-005**: The system MUST inject recalled facts into the chat prompt as contextual information and MUST NOT include memories belonging to another user.
 - **FR-006**: The system MUST allow a user to forget a stored fact without changing another user's memories.
 - **FR-007**: The system MUST reject missing or empty user identifiers and empty facts before performing memory operations.
@@ -88,8 +88,8 @@ An on-call user can remove a fact from their semantic memory so it is no longer 
 
 ### Measurable Outcomes
 
-- **SC-001**: In a semantic-recall test where the query and stored fact share no words, the relevant fact is returned when its relevance score is at least 0.3.
-- **SC-002**: Every recall result contains at most three facts, and every returned fact meets the 0.3 minimum relevance score.
+- **SC-001**: In a semantic-recall test where the query and stored fact share no words, the relevant fact is returned when its relevance score is greater than 0.3.
+- **SC-002**: Every recall result contains at most three facts, and every returned fact has a relevance score greater than 0.3.
 - **SC-003**: A new fact with similarity greater than 0.92 to an existing fact for the same user does not create a second memory; a fact at or below 0.92 can be stored.
 - **SC-004**: Tests covering two users confirm that recall, deduplication, and forgetting never expose or modify the other user's memories.
 - **SC-005**: A forgotten fact is absent from subsequent recall for that user.
@@ -100,3 +100,4 @@ An on-call user can remove a fact from their semantic memory so it is no longer 
 - Facts are retained until explicitly forgotten; no automatic expiration or retention policy is introduced.
 - Forgetting targets an exact stored fact for the requesting user; a request for a fact that is not present leaves that user's other memories unchanged.
 - The explicitly requested local embedding model, normalization, pooling, lazy singleton, persistence shape, and source-file locations are fixed implementation constraints for this feature.
+- The supplied recall reference defines the relevance filter strictly as `score > 0.3`; a score of exactly 0.3 is excluded.

@@ -8,9 +8,14 @@ import { createOpsTools } from "../agents/tools.js";
 import { SqliteOpsStore } from "../store/sqlite-ops-store.js";
 import type { ConversationStore } from "../store/conversation-store.js";
 import { SqliteConversationStore } from "../store/sqlite-conversation-store.js";
+import type { MemoryStore } from "../memory/memory-store.js";
 
-type TestChatServerOptions = Omit<ChatServerOptions, "conversationStore"> & {
+type TestChatServerOptions = Omit<
+  ChatServerOptions,
+  "conversationStore" | "memoryStore"
+> & {
   conversationStore?: ConversationStore;
+  memoryStore?: MemoryStore;
 };
 
 function fakeStrategy(
@@ -30,7 +35,16 @@ async function withServer(
 ): Promise<void> {
   const conversationStore =
     options.conversationStore ?? new SqliteConversationStore(":memory:");
-  const server = createServer(createApp({ ...options, conversationStore }));
+  const memoryStore = options.memoryStore ?? {
+    async remember() {},
+    async recall() {
+      return [];
+    },
+    async forget() {},
+  };
+  const server = createServer(
+    createApp({ ...options, conversationStore, memoryStore }),
+  );
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
   assert.ok(address && typeof address !== "string");
@@ -66,7 +80,7 @@ test("POST /chat returns a conversation ID and resumes the saved history", async
       const firstResponse = await fetch(`${baseUrl}/chat`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message: "First question" }),
+        body: JSON.stringify({ userId: "user-1", message: "First question" }),
       });
       assert.equal(firstResponse.status, 200);
       const firstResult = (await firstResponse.json()) as {
@@ -80,6 +94,7 @@ test("POST /chat returns a conversation ID and resumes the saved history", async
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
+          userId: "user-1",
           message: "Follow-up",
           conversationId: firstResult.conversationId,
         }),
@@ -113,7 +128,7 @@ test("POST /chat defaults to react and returns its result with conversation meta
     const response = await fetch(`${baseUrl}/chat`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message: "List alerts" }),
+      body: JSON.stringify({ userId: "user-1", message: "List alerts" }),
     });
 
     assert.equal(response.status, 200);
@@ -155,7 +170,10 @@ test("POST /chat supports a strategy composed with an injected SQLite store", as
       const response = await fetch(`${baseUrl}/chat`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message: "Check firing alerts" }),
+        body: JSON.stringify({
+          userId: "user-1",
+          message: "Check firing alerts",
+        }),
       });
       assert.equal(response.status, 200);
       assert.equal((await response.json()).answer, "3 alerts firing.");
@@ -191,7 +209,11 @@ test("POST /chat selects an explicit strategy and decorates it only when request
       const normalResponse = await fetch(`${baseUrl}/chat`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message: "Normal", strategy: "selected" }),
+        body: JSON.stringify({
+          userId: "user-1",
+          message: "Normal",
+          strategy: "selected",
+        }),
       });
       assert.equal(normalResponse.status, 200);
       assert.equal(decoratedCalls, 0);
@@ -200,6 +222,7 @@ test("POST /chat selects an explicit strategy and decorates it only when request
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
+          userId: "user-1",
           message: "Reflect this",
           strategy: "selected",
           reflect: true,
@@ -227,6 +250,8 @@ test("POST /chat returns 400 issues for invalid and malformed bodies", async () 
     for (const body of [
       JSON.stringify({ message: "  ", reflect: "yes" }),
       JSON.stringify({ message: "Hi", unexpected: true }),
+      JSON.stringify({ message: "Missing user ID" }),
+      JSON.stringify({ userId: " ", message: "Empty user ID" }),
       "{",
     ]) {
       const response = await fetch(`${baseUrl}/chat`, {
@@ -258,7 +283,11 @@ test("POST /chat returns 422 for unknown strategies without execution", async ()
     const response = await fetch(`${baseUrl}/chat`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message: "Hi", strategy: "missing" }),
+      body: JSON.stringify({
+        userId: "user-1",
+        message: "Hi",
+        strategy: "missing",
+      }),
     });
     assert.equal(response.status, 422);
     assert.deepEqual(await response.json(), { error: "Unknown strategy" });
@@ -305,6 +334,7 @@ test("POST /chat rejects malformed and unknown conversation IDs without executin
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
+          userId: "user-1",
           message: "Hi",
           conversationId: "conv-not-found",
         }),
@@ -335,7 +365,7 @@ test("POST /chat returns 504 when strategy execution exceeds the deadline", asyn
       const response = await fetch(`${baseUrl}/chat`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message: "Wait" }),
+        body: JSON.stringify({ userId: "user-1", message: "Wait" }),
       });
       assert.equal(response.status, 504);
       assert.deepEqual(await response.json(), { error: "Request timed out" });
@@ -352,7 +382,7 @@ test("POST /chat returns 500 for strategy failures without leaking the error", a
     const response = await fetch(`${baseUrl}/chat`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message: "Fail" }),
+      body: JSON.stringify({ userId: "user-1", message: "Fail" }),
     });
     assert.equal(response.status, 500);
     assert.deepEqual(await response.json(), { error: "Internal server error" });

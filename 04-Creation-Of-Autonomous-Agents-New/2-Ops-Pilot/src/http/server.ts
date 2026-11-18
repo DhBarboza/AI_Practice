@@ -11,6 +11,9 @@ import { ConversationIdSchema } from "../store/conversation-store.js";
 import type { ConversationStore } from "../store/conversation-store.js";
 import { SqliteOpsStore } from "../store/sqlite-ops-store.js";
 import { SqliteConversationStore } from "../store/sqlite-conversation-store.js";
+import { SqliteMemoryStore } from "../store/sqlite-memory-store.js";
+import { MemoryUserIdSchema } from "../memory/memory-store.js";
+import type { MemoryStore } from "../memory/memory-store.js";
 import {
   composeReasoningStrategy,
   createChatService,
@@ -21,6 +24,7 @@ export const DEFAULT_CHAT_TIMEOUT_MS = 180_000;
 
 const ChatRequestSchema = z
   .object({
+    userId: MemoryUserIdSchema,
     message: z.string().trim().min(1),
     strategy: z.string().trim().min(1).optional(),
     reflect: z.boolean().optional(),
@@ -30,6 +34,7 @@ const ChatRequestSchema = z
 
 export interface ChatServerOptions {
   conversationStore: ConversationStore;
+  memoryStore: MemoryStore;
   registry?: ReadonlyMap<string, ReasoningStrategy>;
   timeoutMs?: number;
   reflect?: (strategy: ReasoningStrategy) => ReasoningStrategy;
@@ -77,7 +82,10 @@ export function createApp(options: ChatServerOptions): Express {
     throw new Error("timeoutMs must be a positive finite number.");
   }
   const reflect = options.reflect ?? withReflection;
-  const chatService = createChatService(options.conversationStore);
+  const chatService = createChatService(
+    options.conversationStore,
+    options.memoryStore,
+  );
   const app = express();
 
   app.use(express.json());
@@ -90,6 +98,7 @@ export function createApp(options: ChatServerOptions): Express {
 
     const {
       message,
+      userId,
       strategy: strategyName = "react",
       reflect: shouldReflect = false,
       conversationId,
@@ -105,6 +114,7 @@ export function createApp(options: ChatServerOptions): Express {
     try {
       const result = await runWithTimeout(
         chatService.runChat({
+          userId,
           message,
           conversationId,
           strategy: composeReasoningStrategy(strategy),
@@ -155,15 +165,25 @@ async function main(): Promise<void> {
 
   const store = new SqliteOpsStore();
   const conversationStore = new SqliteConversationStore();
+  let memoryStore: SqliteMemoryStore;
+  try {
+    memoryStore = new SqliteMemoryStore();
+  } catch (error) {
+    store.close();
+    conversationStore.close();
+    throw error;
+  }
   const server = createServer(
     createApp({
       registry: createAgentRegistry(store),
       conversationStore,
+      memoryStore,
     }),
   );
   server.once("close", () => {
     store.close();
     conversationStore.close();
+    memoryStore.close();
   });
   try {
     await new Promise<void>((resolveListen, rejectListen) => {
@@ -177,6 +197,7 @@ async function main(): Promise<void> {
   } catch (error) {
     store.close();
     conversationStore.close();
+    memoryStore.close();
     throw error;
   }
 

@@ -20,7 +20,7 @@ also requires tests for new logic paths.
 
 **Purpose**: Add the model inference dependency used by the feature.
 
-- [ ] T001 Add `@huggingface/transformers` to `package.json` and update `package-lock.json` with the project package manager.
+- [X] T001 Add `@huggingface/transformers` to `package.json` and update `package-lock.json` with the project package manager.
 
 ---
 
@@ -29,9 +29,9 @@ also requires tests for new logic paths.
 **Purpose**: Establish shared memory contracts, local embedding generation, and SQLite persistence
 before implementing any user story.
 
-- [ ] T002 Define validated memory and embedding schemas plus `MemoryStore` methods `remember(userId, fact): Promise<void>`, `recall(userId, query): Promise<Memory[]>`, and `forget(userId, fact): Promise<void>` in `src/memory/memory-store.ts`, preserving these `data-model.md` constraints verbatim: `id` — “Primary key, required, unique”; `user_id` — “Required, non-empty; scopes every memory operation”; `fact` — “Required, non-empty after trimming”; `embedding` — “Required; 384 Float32 little-endian components (1,536 bytes) from the configured model”; `created_at` — “Required; set when the memory is first inserted”.
-- [ ] T003 Write tests first in `src/memory/embeddings.test.ts` for lazy shared initialization, `pooling: "mean"`, `normalize: true`, output validation, and retry after initialization failure; then implement the `Xenova/all-MiniLM-L6-v2` feature-extraction pipeline in `src/memory/embeddings.ts`.
-- [ ] T004 Create the idempotent `memories` schema, `user_id` index, prepared statements, row validation, Float32 little-endian BLOB serialization, and injectable `DatabaseSync`/embedder test seams in `src/store/sqlite-memory-store.ts`; use `OPSPILOT_DB` with default `./data/opspilot.db` in production and `:memory:` in tests, preserve the five specified columns and their `data-model.md` constraints: `id` — “Primary key, required, unique”; `user_id` — “Required, non-empty; scopes every memory operation”; `fact` — “Required, non-empty after trimming”; `embedding` — “Required; 384 Float32 little-endian components (1,536 bytes) from the configured model”; `created_at` — “Required; set when the memory is first inserted”.
+- [X] T002 Define validated memory and embedding schemas plus `MemoryStore` methods `remember(userId, fact): Promise<void>`, `recall(userId, query, k = 3): Promise<Memory[]>`, and `forget(userId, fact): Promise<void>` in `src/memory/memory-store.ts`, preserving these `data-model.md` constraints verbatim: `id` — “Primary key, required, unique”; `user_id` — “Required, non-empty; scopes every memory operation”; `fact` — “Required, non-empty after trimming”; `embedding` — “Required; 384 Float32 little-endian components (1,536 bytes) from the configured model”; `created_at` — “Required; set when the memory is first inserted”.
+- [X] T003 Write tests first in `src/memory/embeddings.test.ts` for lazy shared initialization, `pooling: "mean"`, `normalize: true`, output validation, and retry after initialization failure; then implement the `Xenova/all-MiniLM-L6-v2` feature-extraction pipeline in `src/memory/embeddings.ts`.
+- [X] T004 Create the idempotent `memories` schema, `user_id` index, prepared statements, row validation, Float32 little-endian BLOB serialization, and injectable `DatabaseSync`/embedder test seams in `src/store/sqlite-memory-store.ts`; use `OPSPILOT_DB` with default `./data/opspilot.db` in production and `:memory:` in tests, preserve the five specified columns and their `data-model.md` constraints: `id` — “Primary key, required, unique”; `user_id` — “Required, non-empty; scopes every memory operation”; `fact` — “Required, non-empty after trimming”; `embedding` — “Required; 384 Float32 little-endian components (1,536 bytes) from the configured model”; `created_at` — “Required; set when the memory is first inserted”.
 
 **Checkpoint**: Shared contracts, embedding generation, and persistence boundary are ready.
 
@@ -48,15 +48,15 @@ empty recall adds no memory section, and missing `userId` is rejected before str
 
 ### Tests for User Story 1
 
-- [ ] T005 [P] [US1] Add deterministic scoring and SQLite recall tests in `src/memory/memory-store.test.ts` and `src/store/sqlite-memory-store.test.ts` for dot-product ranking, a minimum score of `0.3` (inclusive), a maximum of three results, and isolation by `user_id`.
-- [ ] T006 [P] [US1] Add chat-service tests in `src/services/chat-service.test.ts` for passing recalled facts as delimited contextual data, omitting the memory section for empty recall, and preserving conversation history and response fields.
-- [ ] T007 [P] [US1] Add HTTP tests in `src/http/server.test.ts` confirming `/chat` rejects a missing or empty `userId`, does not execute the strategy for invalid input, and keeps the existing successful response shape.
+- [X] T005 [P] [US1] Add deterministic scoring and SQLite recall tests in `src/memory/memory-store.test.ts` and `src/store/sqlite-memory-store.test.ts` for dot-product ranking, a strict score filter `> 0.3` (exclude exactly `0.3`), a maximum of three results, and isolation by `user_id`.
+- [X] T006 [P] [US1] Add chat-service tests in `src/services/chat-service.test.ts` for passing recalled facts as delimited contextual data, omitting the memory section for empty recall, and preserving conversation history and response fields.
+- [X] T007 [P] [US1] Add HTTP tests in `src/http/server.test.ts` confirming `/chat` rejects a missing or empty `userId`, does not execute the strategy for invalid input, and keeps the existing successful response shape.
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Implement user-scoped recall and dot-product ranking in `src/memory/memory-store.ts` and `src/store/sqlite-memory-store.ts`; exclude scores below `0.3`, sort by descending score, and return no more than three memories.
-- [ ] T009 [US1] Extend `ChatInput` and the chat strategy context in `src/services/chat-service.ts` to recall by `userId` and add a labeled, delimited memory section only when facts are returned.
-- [ ] T010 [US1] Require a non-empty `userId` in the strict request schema, inject the memory store into the `/chat` service, and create/close its production SQLite store in `src/http/server.ts` while preserving existing error and response behavior.
+- [X] T008 [US1] Implement user-scoped recall and dot-product ranking in `src/memory/memory-store.ts` and `src/store/sqlite-memory-store.ts`; take the top three by descending score, then retain only scores strictly greater than `0.3`.
+- [X] T009 [US1] Extend `ChatInput` and the chat strategy context in `src/services/chat-service.ts` to recall by `userId` and add a labeled, delimited memory section only when facts are returned.
+- [X] T010 [US1] Require a non-empty `userId` in the strict request schema, inject the memory store into the `/chat` service, and create/close its production SQLite store in `src/http/server.ts` while preserving existing error and response behavior.
 
 **Checkpoint**: `/chat` uses only the requesting user's qualifying memories and remains testable
 with a deterministic memory-store test double.
@@ -74,12 +74,12 @@ the real-model recall case with a semantically related query that shares no word
 
 ### Tests for User Story 2
 
-- [ ] T011 [P] [US2] Add `remember` tests in `src/store/sqlite-memory-store.test.ts` for required non-empty user/fact inputs, persisted user/fact/embedding/creation time, strict similarity `> 0.92` deduplication (including exactly `0.92`), and user isolation.
-- [ ] T012 [P] [US2] Add a real-model semantic recall test in `src/memory/semantic-recall.test.ts` that remembers “Deployments happen on Tuesdays.” and recalls it for “What weekday are releases scheduled for?” using the local model.
+- [X] T011 [P] [US2] Add `remember` tests in `src/store/sqlite-memory-store.test.ts` for required non-empty user/fact inputs, persisted user/fact/embedding/creation time, strict similarity `> 0.92` deduplication (including exactly `0.92`), and user isolation.
+- [X] T012 [P] [US2] Add a real-model semantic recall test in `src/memory/semantic-recall.test.ts` that remembers “Deployments happen on Tuesdays.” and recalls it for “What weekday are releases scheduled for?” using the local model.
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Implement `remember(userId, fact)` in `src/store/sqlite-memory-store.ts` to validate inputs, embed the fact, compare only that user's stored vectors, and insert `id`, `user_id`, `fact`, `embedding`, and `created_at` only when no similarity is strictly greater than `0.92`.
+- [X] T013 [US2] Implement `remember(userId, fact)` in `src/store/sqlite-memory-store.ts` to validate inputs, embed the fact, compare only that user's stored vectors, and insert `id`, `user_id`, `fact`, `embedding`, and `created_at` only when no similarity is strictly greater than `0.92`.
 
 **Checkpoint**: Facts can be persisted per user, deduplicated at the specified strict threshold,
 and recalled semantically without shared words.
@@ -95,11 +95,11 @@ user's row is removed; forgetting a non-existent fact leaves all rows unchanged.
 
 ### Tests for User Story 3
 
-- [ ] T014 [US3] Add forget tests in `src/store/sqlite-memory-store.test.ts` for exact fact removal, a missing-fact no-op, and preservation of another user's matching fact.
+- [X] T014 [US3] Add forget tests in `src/store/sqlite-memory-store.test.ts` for exact fact removal, a missing-fact no-op, and preservation of another user's matching fact.
 
 ### Implementation for User Story 3
 
-- [ ] T015 [US3] Implement `forget(userId, fact)` in `src/store/sqlite-memory-store.ts` with a prepared delete scoped by both `user_id` and exact `fact`; validate both inputs and leave other users' rows unchanged.
+- [X] T015 [US3] Implement `forget(userId, fact)` in `src/store/sqlite-memory-store.ts` with a prepared delete scoped by both `user_id` and exact `fact`; validate both inputs and leave other users' rows unchanged.
 
 **Checkpoint**: A user can remove an exact stored fact without affecting another user's memory.
 
@@ -109,8 +109,8 @@ user's row is removed; forgetting a non-existent fact leaves all rows unchanged.
 
 **Purpose**: Keep validation guidance aligned with the implementation and run project-wide checks.
 
-- [ ] T016 [P] Update `specs/008-semantic-memory/quickstart.md` with the final focused test command, the real-model semantic example, and the local model-cache/offline prerequisites.
-- [ ] T017 [P] Run `npm run typecheck` and `npm test` from the repository root using the scripts in `package.json`; resolve any feature-related failures.
+- [X] T016 [P] Update `specs/008-semantic-memory/quickstart.md` with the final focused test command, the real-model semantic example, and the local model-cache/offline prerequisites.
+- [X] T017 [P] Run `npm run typecheck` and `npm test` from the repository root using the scripts in `package.json`; resolve any feature-related failures.
 
 ---
 

@@ -32,7 +32,7 @@ deterministic store and chat tests, a semantic recall test using the configured 
 
 **Project Type**: TypeScript backend application with an Express HTTP API and agent workflows
 
-**Performance Goals**: Return at most three memories meeting the 0.3 relevance threshold. No
+**Performance Goals**: Return at most three memories scoring greater than 0.3. No
 request-latency target is specified; the model is loaded lazily, and a user's stored embeddings are
 scored in-process.
 
@@ -116,7 +116,7 @@ controller boundary. No new public memory endpoints are specified.
   vector-search dependency for the unspecified per-user scale.
 - `remember` validates and embeds a fact, compares it only with that user's vectors, and inserts
   only if no similarity is strictly greater than 0.92. `recall` embeds the current chat message,
-  keeps scores at or above 0.3, sorts by descending dot product, and returns at most three facts.
+  sorts by descending dot product, takes the top three, and filters to scores strictly above 0.3.
   `forget` removes only the exact stored fact for that user.
 - Recall happens within the chat service and is passed as separate context to the existing
   strategy adapter. Render a labeled, delimited memory section as contextual data only when recall

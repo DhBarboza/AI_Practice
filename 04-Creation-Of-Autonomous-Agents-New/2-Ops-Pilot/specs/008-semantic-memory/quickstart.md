@@ -30,7 +30,7 @@ Expected outcomes:
 
 - Similar facts for one user are deduplicated only above `0.92`; the same fact can be stored for a
   different user.
-- Recall returns no more than three user-scoped facts scoring at least `0.3`, and forgetting a
+- Recall returns no more than three user-scoped facts scoring greater than `0.3`, and forgetting a
   fact does not change another user's memories.
 - The real-model semantic recall case remembers “Deployments happen on Tuesdays.” and retrieves
   it for “What weekday are releases scheduled for?”, despite having no words in common.

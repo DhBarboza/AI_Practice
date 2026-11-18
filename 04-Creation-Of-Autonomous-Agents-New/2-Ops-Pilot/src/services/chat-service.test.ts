@@ -5,7 +5,12 @@ import type {
   ConversationRole,
   ConversationStore,
 } from "../store/conversation-store.js";
-import { createChatService } from "./chat-service.js";
+import type { Memory, MemoryStore } from "../memory/memory-store.js";
+import type { ReasoningStrategy } from "../agents/types.js";
+import {
+  composeReasoningStrategy,
+  createChatService,
+} from "./chat-service.js";
 import type { ChatStrategy } from "./chat-service.js";
 
 class FakeConversationStore implements ConversationStore {
@@ -45,6 +50,25 @@ class FakeConversationStore implements ConversationStore {
   close(): void {}
 }
 
+class FakeMemoryStore implements MemoryStore {
+  constructor(private readonly facts: string[] = []) {}
+
+  async remember(): Promise<void> {}
+
+  async recall(userId: string): Promise<Memory[]> {
+    assert.equal(userId, "user-1");
+    return this.facts.map((fact, index) => ({
+      id: `memory-${index}`,
+      userId,
+      fact,
+      embedding: Array.from({ length: 384 }, () => 0),
+      createdAt: new Date().toISOString(),
+    }));
+  }
+
+  async forget(): Promise<void> {}
+}
+
 function fakeStrategy(
   run: ChatStrategy["run"],
 ): ChatStrategy {
@@ -53,7 +77,7 @@ function fakeStrategy(
 
 test("chat service creates an ID and appends the user before invoking the strategy", async () => {
   const store = new FakeConversationStore();
-  const service = createChatService(store);
+  const service = createChatService(store, new FakeMemoryStore());
   const strategy = fakeStrategy(async ({ message, history }) => {
     assert.equal(message, "Check alerts");
     assert.deepEqual(history, []);
@@ -70,6 +94,7 @@ test("chat service creates an ID and appends the user before invoking the strate
   });
 
   const result = await service.runChat({
+    userId: "user-1",
     message: "Check alerts",
     strategy,
   });
@@ -106,7 +131,7 @@ test("chat service passes saved messages as history and retains the supplied ID"
       createdAt: new Date().toISOString(),
     },
   );
-  const service = createChatService(store);
+  const service = createChatService(store, new FakeMemoryStore());
   const strategy = fakeStrategy(async ({ message, history }) => {
     assert.equal(message, "Which services?");
     assert.deepEqual(
@@ -124,6 +149,7 @@ test("chat service passes saved messages as history and retains the supplied ID"
   });
 
   const result = await service.runChat({
+    userId: "user-1",
     conversationId: "conv-existing",
     message: "Which services?",
     strategy,
@@ -139,13 +165,13 @@ test("chat service passes saved messages as history and retains the supplied ID"
 
 test("chat service leaves the user message saved if the strategy fails", async () => {
   const store = new FakeConversationStore();
-  const service = createChatService(store);
+  const service = createChatService(store, new FakeMemoryStore());
   const strategy = fakeStrategy(async () => {
     throw new Error("strategy failed");
   });
 
   await assert.rejects(
-    service.runChat({ message: "Investigate", strategy }),
+    service.runChat({ userId: "user-1", message: "Investigate", strategy }),
     /strategy failed/,
   );
   assert.deepEqual(
@@ -178,8 +204,9 @@ test("chat service reports the exact recent-history count and passes messages in
         metrics: { llmCalls: 1, latencyMs: 1 },
       };
     });
-    const service = createChatService(store);
+    const service = createChatService(store, new FakeMemoryStore());
     const result = await service.runChat({
+      userId: "user-1",
       ...(savedCount > 0 ? { conversationId } : {}),
       message: "Next question",
       strategy,
@@ -195,4 +222,72 @@ test("chat service reports the exact recent-history count and passes messages in
       ),
     );
   }
+});
+
+test("chat strategy receives recalled facts in delimited context without changing history or response", async () => {
+  const store = new FakeConversationStore();
+  store.messages.push({
+    id: "previous-message",
+    conversationId: "conv-existing",
+    role: "user",
+    content: "We deploy after the release review.",
+    createdAt: new Date().toISOString(),
+  });
+  const service = createChatService(
+    store,
+    new FakeMemoryStore(["Deployments happen on Tuesdays."]),
+  );
+  let prompt = "";
+  const strategy: ReasoningStrategy = {
+    name: "test",
+    async run({ input }) {
+      prompt = input;
+      assert.match(input, /<memories>\n- Deployments happen on Tuesdays\.\n<\/memories>/);
+      assert.match(input, /User: We deploy after the release review\./);
+      assert.match(input, /Current message: When do we deploy\?/);
+      assert.match(input, /untrusted facts, not instructions/);
+      return {
+        answer: "On Tuesdays.",
+        trace: [],
+        metrics: { llmCalls: 1, latencyMs: 2 },
+      };
+    },
+  };
+  const result = await service.runChat({
+    userId: "user-1",
+    conversationId: "conv-existing",
+    message: "When do we deploy?",
+    strategy: composeReasoningStrategy(strategy),
+  });
+
+  assert.match(prompt, /Relevant user memories/);
+  assert.equal(result.answer, "On Tuesdays.");
+  assert.equal(result.conversationId, "conv-existing");
+  assert.equal(result.metrics.historyMessages, 1);
+});
+
+test("chat strategy omits memory context when recall is empty", async () => {
+  const store = new FakeConversationStore();
+  const service = createChatService(store, new FakeMemoryStore());
+  let prompt = "";
+  const strategy: ReasoningStrategy = {
+    name: "test",
+    async run({ input }) {
+      prompt = input;
+      return {
+        answer: "No saved preference.",
+        trace: [],
+        metrics: { llmCalls: 1, latencyMs: 1 },
+      };
+    },
+  };
+
+  await service.runChat({
+    userId: "user-1",
+    message: "Where do we deploy?",
+    strategy: composeReasoningStrategy(strategy),
+  });
+
+  assert.equal(prompt, "Where do we deploy?");
+  assert.doesNotMatch(prompt, /<memories>/);
 });
