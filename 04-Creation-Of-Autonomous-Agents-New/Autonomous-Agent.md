@@ -1784,3 +1784,71 @@ Keep-Alive: timeout=5
 
 {"error":"Unknown conversation"}
 ```
+
+## O VECTOR STORE: SPEC, IMPLEMENTAÇÃO E A MEMÓRIA FUNCIONANDO
+
+### 1. Prompt - Specify:
+
+#### Input:
+
+```md
+/speckit.specify Memória semântica: MemoryStore por userId — remember (dedup > 0.92),
+recall top-3 por produto escalar (min 0.3), forget; tabela memories, embedding all-
+MiniLM-L6-v2 local em BLOB;
+/chat ganha userId e injeta o recall no prompt; teste: recall acha fato sem palavra em
+comum.
+user: @huggingface/transformers com pooling: mean + normalize: true e lazy singleton
+em src/memory/embeddings.ts e src/memory/memory-store.ts.
+As colunas de memories: id, user_id, fact, embedding, created_at
+```
+
+#### Outputs:
+
+```md
+**Criados:**
+
+- `2-Ops-Pilot/specs/008-semantic-memory/checklists/requirements.md`
+- `2-Ops-Pilot/specs/008-semantic-memory/spec.md`
+```
+
+### 2. Prompt - Plan:
+
+#### Input:
+
+```md
+/speckit.plan 008-semantic-memory
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 3. Prompt - Task:
+
+#### Input:
+
+```md
+/speckit.tasks 008-semantic-memory
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 4. Prompt - Implement:
+
+#### Input:
+
+```md
+
+```
+
+#### Outputs:
+
+```md
+
+```
