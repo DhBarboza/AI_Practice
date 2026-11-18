@@ -1822,7 +1822,13 @@ As colunas de memories: id, user_id, fact, embedding, created_at
 #### Outputs:
 
 ```md
+**Criados:**
 
+- `2-Ops-Pilot/specs/008-semantic-memory/contracts/chat-api.md`
+- `2-Ops-Pilot/specs/008-semantic-memory/data-model.md`
+- `2-Ops-Pilot/specs/008-semantic-memory/plan.md`
+- `2-Ops-Pilot/specs/008-semantic-memory/quickstart.md`
+- `2-Ops-Pilot/specs/008-semantic-memory/research.md`
 ```
 
 ### 3. Prompt - Task:
