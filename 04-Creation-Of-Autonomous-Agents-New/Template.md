@@ -3,7 +3,7 @@
 #### Input:
 
 ```md
-
+/speckit.specify
 ```
 
 #### Outputs:
@@ -45,7 +45,7 @@
 #### Input:
 
 ```md
-
+/speckit.implement 007-conversation-persistence
 ```
 
 #### Outputs:

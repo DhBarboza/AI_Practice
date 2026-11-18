@@ -18,6 +18,10 @@ paths. There is no `users` table in this feature, so `user_id` is not a foreign 
 ## Relationships and lifecycle
 
 - A user may have zero or more memories; each memory belongs to exactly one `user_id`.
+- The asynchronous store contract exposes `remember(userId, fact): Promise<void>`,
+  `recall(userId, query): Promise<Memory[]>`, and
+  `forget(userId, fact): Promise<void>`. Recall returns the selected memory records; ranking scores
+  remain internal to the store.
 - `remember(userId, fact)` validates both inputs, embeds the fact, and compares it only with that
   user's existing embeddings. If any dot-product similarity is strictly greater than `0.92`, it
   does not insert a duplicate. A score of exactly `0.92` is not a duplicate.

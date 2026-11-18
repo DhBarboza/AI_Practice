@@ -79,6 +79,7 @@ specs/008-semantic-memory/
 src/
 ├── memory/
 │   ├── embeddings.ts                 # Lazy local embedding-model singleton
+│   ├── embeddings.test.ts            # Lazy initialization and output validation
 │   ├── memory-store.ts               # Memory model, validation, and store interface
 │   ├── memory-store.test.ts          # Store behavior with injected embeddings
 │   └── semantic-recall.test.ts       # Real-model semantic recall without shared words
@@ -103,6 +104,8 @@ controller boundary. No new public memory endpoints are specified.
 
 - Use the same `OPSPILOT_DB` setting as the existing operational and conversation stores. The
   production HTTP composition owns and closes the memory store; tests inject an in-memory store.
+- Allow the SQLite adapter to receive an injected database connection and embedding function in
+  tests, so fixtures can seed rows and exercise ranking without loading model weights.
 - Use a lazy, shared model-loading promise so concurrent first calls initialize one local
   embedding pipeline; clear a failed initialization so later calls can retry. The selected model
   produces normalized 384-dimensional embeddings that can be compared by dot product. Model setup

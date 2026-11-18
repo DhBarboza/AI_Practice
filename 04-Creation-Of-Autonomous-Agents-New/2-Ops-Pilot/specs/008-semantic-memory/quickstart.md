@@ -18,6 +18,7 @@ Run the focused memory, service, and HTTP tests:
 
 ```sh
 node --import tsx --test \
+  src/memory/embeddings.test.ts \
   src/memory/memory-store.test.ts \
   src/memory/semantic-recall.test.ts \
   src/store/sqlite-memory-store.test.ts \

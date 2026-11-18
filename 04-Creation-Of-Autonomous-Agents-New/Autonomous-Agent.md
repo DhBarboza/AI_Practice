@@ -1842,7 +1842,15 @@ As colunas de memories: id, user_id, fact, embedding, created_at
 #### Outputs:
 
 ```md
+**Criados:**
 
+- `2-Ops-Pilot/specs/008-semantic-memory/tasks.md`
+
+**Modificados:**
+
+- `2-Ops-Pilot/specs/008-semantic-memory/data-model.md`
+- `2-Ops-Pilot/specs/008-semantic-memory/plan.md`
+- `2-Ops-Pilot/specs/008-semantic-memory/quickstart.md`
 ```
 
 ### 4. Prompt - Implement:
@@ -1850,7 +1858,7 @@ As colunas de memories: id, user_id, fact, embedding, created_at
 #### Input:
 
 ```md
-
+/speckit.implement 007-conversation-persistence
 ```
 
 #### Outputs:
