@@ -1995,3 +1995,37 @@ async function recall(userId: string, query: string, k = 3) {
 - `2-Ops-Pilot/src/store/sqlite-memory-store.test.ts`
 - `2-Ops-Pilot/src/store/sqlite-memory-store.ts`
 ```
+
+### 5. Run:
+
+1. Configure `OPENROUTER_API_KEY` e `OPENROUTER_MODEL` no ambiente local — não envie credenciais no chat — e inicie a API:
+
+```bash
+npm run http
+```
+
+O comando está definido em `package.json`. Por padrão, a API escuta na porta `3000`.
+
+2. Envie uma preferência durável:
+
+```bash
+curl -sS http://localhost:3000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"userId":"demo-user","message":"Para conversas futuras, prefiro respostas em português e em tópicos curtos."}'
+```
+
+O aprendizado acontece em segundo plano; aguarde alguns segundos. Depois pergunte usando o mesmo `userId`:
+
+```bash
+curl -sS http://localhost:3000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"userId":"demo-user","message":"Como você deve formatar suas respostas para mim?"}'
+```
+
+3. Teste o esquecimento pedindo ao agente para remover aquela preferência:
+
+```bash
+curl -sS http://localhost:3000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"userId":"demo-user","message":"Esqueça minha preferência por respostas em português e em tópicos curtos."}'
+```
