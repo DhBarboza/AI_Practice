@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { SqliteOpsStore } from "../store/sqlite-ops-store.js";
-import { createOpsTools } from "./tools.js";
+import { createChatOpsTools, createOpsTools } from "./tools.js";
 
 test("list_alerts accepts all and filters firing/resolved alerts", async (t) => {
   const store = new SqliteOpsStore(":memory:");
@@ -189,4 +189,73 @@ test("tool iteration limiter blocks mutations after the allowed action budget", 
   assert.equal((JSON.parse(first) as unknown[]).length, 3);
   assert.match(second, /Iteration limit reached/);
   assert.equal(allowedCalls, 1);
+});
+
+test("forget_preference deletes one exact fact for trusted user context only", async (t) => {
+  const opsStore = new SqliteOpsStore(":memory:");
+  t.after(() => opsStore.close());
+  const facts = new Set([
+    "user-a:Prefers concise incident summaries.",
+    "user-b:Prefers concise incident summaries.",
+  ]);
+  const memoryStore = {
+    async remember() {},
+    async recall() {
+      return [];
+    },
+    async forget(userId: string, fact: string) {
+      const key = `${userId}:${fact}`;
+      const found = facts.delete(key);
+      return found;
+    },
+  };
+  const chatTools = createChatOpsTools(
+    opsStore,
+    undefined,
+    fetch,
+    { memoryStore, userId: "user-a" },
+  );
+  const forgetPreference = chatTools[6];
+
+  assert.ok(forgetPreference);
+  assert.equal(forgetPreference.name, "forget_preference");
+  assert.equal(
+    forgetPreference.schema.safeParse({
+      fact: "Prefers concise incident summaries.",
+    }).success,
+    true,
+  );
+  assert.equal(
+    forgetPreference.schema.safeParse({
+      fact: "Prefers concise incident summaries.",
+      userId: "user-b",
+    }).success,
+    false,
+  );
+  assert.equal(forgetPreference.schema.safeParse({ fact: " " }).success, false);
+
+  assert.deepEqual(
+    JSON.parse(
+      await forgetPreference.invoke({
+        fact: "Prefers concise incident summaries.",
+      }),
+    ),
+    { forgotten: true },
+  );
+  assert.deepEqual(
+    JSON.parse(
+      await forgetPreference.invoke({
+        fact: "Prefers concise incident summaries.",
+      }),
+    ),
+    { forgotten: false },
+  );
+  assert.equal(
+    facts.has("user-b:Prefers concise incident summaries."),
+    true,
+  );
+  assert.equal(
+    createOpsTools(opsStore).length,
+    6,
+  );
 });

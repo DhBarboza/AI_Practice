@@ -5,13 +5,23 @@ import {
 import { createReactStrategy, reactStrategy } from "./react.js";
 import type { OpsStore } from "./store.js";
 import type { ReasoningStrategy } from "./types.js";
+import type { MemoryStore } from "../memory/memory-store.js";
 
-export function createAgentRegistry(store?: OpsStore): ReadonlyMap<string, ReasoningStrategy> {
-  const react = store
-    ? createReactStrategy({ createStore: () => store })
+export function createAgentRegistry(
+  store?: OpsStore,
+  memoryStore?: MemoryStore,
+): ReadonlyMap<string, ReasoningStrategy> {
+  const react = store || memoryStore
+    ? createReactStrategy({
+        ...(store ? { createStore: () => store } : {}),
+        ...(memoryStore ? { memoryStore } : {}),
+      })
     : reactStrategy;
-  const planAndExecute = store
-    ? createPlanAndExecuteStrategy({ createStore: () => store })
+  const planAndExecute = store || memoryStore
+    ? createPlanAndExecuteStrategy({
+        ...(store ? { createStore: () => store } : {}),
+        ...(memoryStore ? { memoryStore } : {}),
+      })
     : planAndExecuteStrategy;
 
   return new Map([

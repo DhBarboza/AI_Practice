@@ -5,7 +5,12 @@ import { createModel } from "./model.js";
 import { ProviderSchema } from "./provider-status.js";
 import { MemoryOpsStore } from "./store.js";
 import type { OpsStore } from "./store.js";
-import { createOpsTools } from "./tools.js";
+import {
+  createForgetPreferenceTool,
+  createOpsTools,
+} from "./tools.js";
+import type { ChatMemoryContext } from "./tools.js";
+import type { MemoryStore } from "../memory/memory-store.js";
 import { assertValidReasoningInput, ReasoningResultSchema } from "./types.js";
 import type {
   ReasoningInput,
@@ -42,6 +47,10 @@ const PlanStepSchema = z.discriminatedUnion("tool", [
   z.object({
     tool: z.literal("check_provider_status"),
     args: z.object({ provider: ProviderSchema.optional() }),
+  }).strict(),
+  z.object({
+    tool: z.literal("forget_preference"),
+    args: z.object({ fact: z.string().trim().min(1) }).strict(),
   }).strict(),
 ]);
 
@@ -102,8 +111,9 @@ export interface PlanEngine {
 }
 
 interface PlanDependencies {
-  createEngine?(store: OpsStore): PlanEngine;
+  createEngine?(store: OpsStore, memoryContext?: ChatMemoryContext): PlanEngine;
   createStore?: () => OpsStore;
+  memoryStore?: MemoryStore;
   enableReplanning?: boolean;
 }
 
@@ -131,10 +141,14 @@ function observationText(value: unknown): string {
   return JSON.stringify(value) ?? String(value);
 }
 
-function createDefaultPlanEngine(store: OpsStore): PlanEngine {
+function createDefaultPlanEngine(
+  store: OpsStore,
+  memoryContext?: ChatMemoryContext,
+): PlanEngine {
   const model = createModel();
   const planner = model.withStructuredOutput(PlanSchema);
   const replanner = model.withStructuredOutput(ReplanSchema);
+  const tools = createOpsTools(store);
   const [
     listAlertsTool,
     openIncidentTool,
@@ -142,22 +156,23 @@ function createDefaultPlanEngine(store: OpsStore): PlanEngine {
     listIncidentsTool,
     consultarRunbookTool,
     checkProviderStatusTool,
-  ] =
-    createOpsTools(store);
-  const executor = model.bindTools([
-    listAlertsTool,
-    openIncidentTool,
-    resolveIncidentTool,
-    listIncidentsTool,
-    consultarRunbookTool,
-    checkProviderStatusTool,
-  ]);
+  ] = tools;
+  const forgetPreferenceTool = memoryContext
+    ? createForgetPreferenceTool(memoryContext)
+    : undefined;
+  const executorTools = forgetPreferenceTool
+    ? [...tools, forgetPreferenceTool]
+    : [...tools];
+  const executor = model.bindTools(executorTools);
+  const plannerPrompt = memoryContext
+    ? `${PLANNER_PROMPT} forget_preference(fact) removes one exact saved preference for the active user.`
+    : PLANNER_PROMPT;
 
   return {
     async plan(prompt) {
       return PlanSchema.parse(
         await planner.invoke([
-          new SystemMessage(PLANNER_PROMPT),
+          new SystemMessage(plannerPrompt),
           new HumanMessage(prompt),
         ]),
       );
@@ -229,6 +244,15 @@ function createDefaultPlanEngine(store: OpsStore): PlanEngine {
               args: selectedStep.args,
               output: await checkProviderStatusTool.invoke(selectedStep.args),
             };
+          case "forget_preference":
+            if (!forgetPreferenceTool) {
+              throw new Error("forget_preference is unavailable without user context.");
+            }
+            return {
+              tool: selectedStep.tool,
+              args: selectedStep.args,
+              output: await forgetPreferenceTool.invoke(selectedStep.args),
+            };
         }
       } catch (error) {
         throw new ToolExecutionError(
@@ -251,8 +275,16 @@ export function createPlanAndExecuteStrategy(
       const startedAt = performance.now();
       const actionLimit = Math.min(input.maxIterations, 8);
       const store = dependencies.createStore?.() ?? new MemoryOpsStore();
+      const memoryContext =
+        input.userId && dependencies.memoryStore
+          ? {
+              memoryStore: dependencies.memoryStore,
+              userId: input.userId,
+            }
+          : undefined;
       const engine =
-        dependencies.createEngine?.(store) ?? createDefaultPlanEngine(store);
+        dependencies.createEngine?.(store, memoryContext) ??
+        createDefaultPlanEngine(store, memoryContext);
       const enableReplanning = dependencies.enableReplanning !== false;
       const PlanState = Annotation.Root({
         input: Annotation<string>(),

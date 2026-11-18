@@ -133,8 +133,8 @@ test("forget removes an exact fact only for the requesting user", async (t) => {
 
   await store.remember("user-a", "alert preference");
   await store.remember("user-b", "alert preference");
-  await store.forget("user-a", "alert preference");
-  await store.forget("user-a", "missing fact");
+  assert.equal(await store.forget("user-a", "alert preference"), true);
+  assert.equal(await store.forget("user-a", "missing fact"), false);
 
   const remaining = database
     .prepare("SELECT user_id AS userId, fact FROM memories")

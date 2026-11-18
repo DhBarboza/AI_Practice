@@ -40,10 +40,19 @@ async function withServer(
     async recall() {
       return [];
     },
-    async forget() {},
+    async forget() {
+      return false;
+    },
   };
   const server = createServer(
-    createApp({ ...options, conversationStore, memoryStore }),
+    createApp({
+      ...options,
+      conversationStore,
+      memoryStore,
+      learningReflector: options.learningReflector ?? {
+        async learn() {},
+      },
+    }),
   );
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
@@ -122,6 +131,43 @@ test("POST /chat defaults to react and returns its result with conversation meta
       trace: [{ type: "answer", content: "Firing alerts checked." }],
       metrics: { llmCalls: 2, latencyMs: 5 },
     };
+  });
+
+  test("POST /chat passes only the validated user and current message to learning", async () => {
+    let receivedLearningInput: { userId: string; message: string } | undefined;
+
+    await withServer(
+      {
+        registry: new Map([["react", fakeStrategy("react")]]),
+        learningReflector: {
+          async learn(userId, message) {
+            receivedLearningInput = { userId, message };
+          },
+        },
+      },
+      async (baseUrl) => {
+        const response = await fetch(`${baseUrl}/chat`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            userId: "user-1",
+            message: "Please check this alert.",
+          }),
+        });
+
+        assert.equal(response.status, 200);
+        assert.deepEqual(receivedLearningInput, {
+          userId: "user-1",
+          message: "Please check this alert.",
+        });
+        assert.deepEqual(Object.keys(await response.json()).sort(), [
+          "answer",
+          "conversationId",
+          "metrics",
+          "trace",
+        ]);
+      },
+    );
   });
 
   await withServer({ registry: new Map([["react", react]]) }, async (baseUrl) => {

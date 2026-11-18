@@ -44,15 +44,15 @@ and delayed or failed learning does not block or change the chat response.
 
 ### Tests for User Story 1
 
-- [ ] T001 [P] [US1] Add learning-result and eligibility tests in `src/memory/learning-reflector.test.ts` for `hasLearning` false/true, malformed or empty facts, non-durable requests, credential-like content, and validation before `MemoryStore.remember`.
-- [ ] T002 [P] [US1] Add chat-service tests in `src/services/chat-service.test.ts` proving the assessor receives only the latest user message and active `userId`, is never called after a failed answer, and delayed or rejected background learning does not delay or alter the successful response.
+- [X] T001 [P] [US1] Add learning-result and eligibility tests in `src/memory/learning-reflector.test.ts` for `hasLearning` false/true, malformed or empty facts, non-durable requests, credential-like content, and validation before `MemoryStore.remember`.
+- [X] T002 [P] [US1] Add chat-service tests in `src/services/chat-service.test.ts` proving the assessor receives only the latest user message and active `userId`, is never called after a failed answer, and delayed or rejected background learning does not delay or alter the successful response.
 
 ### Implementation for User Story 1
 
-- [ ] T003 [US1] Implement the strict structured learning result and injectable assessor in `src/memory/learning-reflector.ts`, preserving these `data-model.md` constraints verbatim: `hasLearning` — “Required”; `fact` — “Required; null when no learning is proposed; when `hasLearning` is true, non-empty after trimming”.
-- [ ] T004 [US1] Implement durable-fact eligibility and a deterministic credential-content guard in `src/memory/learning-reflector.ts`; reject one-off requests and passwords, access/API tokens, private keys, recovery codes, or other authentication credentials found in the source message or candidate before calling `MemoryStore.remember`, and ensure diagnostics do not include message or fact content.
-- [ ] T005 [US1] Integrate the reflector into successful chat completion in `src/services/chat-service.ts`; pass only `userId` and the current user message, start learning without awaiting it, and attach a rejection handler that cannot change the response.
-- [ ] T006 [US1] Wire the production learning reflector and a deterministic test seam through `src/http/server.ts` and `src/http/server.test.ts` without changing the existing `/chat` response shape.
+- [X] T003 [US1] Implement the strict structured learning result and injectable assessor in `src/memory/learning-reflector.ts`, preserving these `data-model.md` constraints verbatim: `hasLearning` — “Required”; `fact` — “Required; null when no learning is proposed; when `hasLearning` is true, non-empty after trimming”.
+- [X] T004 [US1] Implement durable-fact eligibility and a deterministic credential-content guard in `src/memory/learning-reflector.ts`; reject one-off requests and passwords, access/API tokens, private keys, recovery codes, or other authentication credentials found in the source message or candidate before calling `MemoryStore.remember`, and ensure diagnostics do not include message or fact content.
+- [X] T005 [US1] Integrate the reflector into successful chat completion in `src/services/chat-service.ts`; pass only `userId` and the current user message, start learning without awaiting it, and attach a rejection handler that cannot change the response.
+- [X] T006 [US1] Wire the production learning reflector and a deterministic test seam through `src/http/server.ts` and `src/http/server.test.ts` without changing the existing `/chat` response shape.
 
 **Checkpoint**: A successful chat response remains independent of learning, and only eligible facts
 from the latest user message are remembered for that user.
@@ -70,18 +70,18 @@ non-matching request reports no deletion without changing other facts.
 
 ### Tests for User Story 2
 
-- [ ] T007 [P] [US2] Add SQLite forget-result tests in `src/store/sqlite-memory-store.test.ts` for exact deletion returning true, missing facts returning false, and preservation of another user's matching fact.
-- [ ] T008 [P] [US2] Add `forget_preference` tool tests in `src/agents/tools.test.ts` for strict input validation, exact deletion, truthful no-match output, isolation between two user scopes, and absence from the default non-chat tool list.
-- [ ] T009 [P] [US2] Add strategy-context tests in `src/agents/strategies.test.ts` proving chat `userId` reaches both ReAct and Plan-and-Execute tool factories as trusted context and is not required or accepted as model-supplied tool input.
+- [X] T007 [P] [US2] Add SQLite forget-result tests in `src/store/sqlite-memory-store.test.ts` for exact deletion returning true, missing facts returning false, and preservation of another user's matching fact.
+- [X] T008 [P] [US2] Add `forget_preference` tool tests in `src/agents/tools.test.ts` for strict input validation, exact deletion, truthful no-match output, isolation between two user scopes, and absence from the default non-chat tool list.
+- [X] T009 [P] [US2] Add strategy-context tests in `src/agents/strategies.test.ts` proving chat `userId` reaches both ReAct and Plan-and-Execute tool factories as trusted context and is not required or accepted as model-supplied tool input.
 
 ### Implementation for User Story 2
 
-- [ ] T010 [P] [US2] Change `MemoryStore.forget` to return whether an exact row was removed in `src/memory/memory-store.ts` and `src/store/sqlite-memory-store.ts`, preserving `data-model.md`: `fact` — “Required, non-empty after trimming; exact fact to forget”; `userId` — “Required trusted context; never supplied by the model as a tool argument”.
-- [ ] T011 [P] [US2] Pass the validated active `userId` through the internal chat strategy context in `src/services/chat-service.ts` and `src/agents/types.ts`, without adding it to the prompt or model-generated tool arguments.
-- [ ] T012 [US2] Implement the strict `forget_preference` tool in `src/agents/tools.ts` with only the exact target `fact` as a model-supplied argument, bind `MemoryStore` and `userId` from trusted invocation context, and return `{ forgotten: boolean }`.
-- [ ] T013 [P] [US2] Register the scoped `forget_preference` tool for ReAct chat invocations in `src/agents/react.ts` only when the memory store and active user context are available.
-- [ ] T014 [P] [US2] Add `forget_preference` to Plan-and-Execute planning and execution in `src/agents/plan-and-execute.ts`, restricting it to chat invocations with a trusted user context.
-- [ ] T015 [US2] Inject the existing memory store into the chat agent registry in `src/agents/index.ts` and `src/http/server.ts`; keep the tool unavailable to non-chat or MCP invocations without user context.
+- [X] T010 [P] [US2] Change `MemoryStore.forget` to return whether an exact row was removed in `src/memory/memory-store.ts` and `src/store/sqlite-memory-store.ts`, preserving `data-model.md`: `fact` — “Required, non-empty after trimming; exact fact to forget”; `userId` — “Required trusted context; never supplied by the model as a tool argument”.
+- [X] T011 [P] [US2] Pass the validated active `userId` through the internal chat strategy context in `src/services/chat-service.ts` and `src/agents/types.ts`, without adding it to the prompt or model-generated tool arguments.
+- [X] T012 [US2] Implement the strict `forget_preference` tool in `src/agents/tools.ts` with only the exact target `fact` as a model-supplied argument, bind `MemoryStore` and `userId` from trusted invocation context, and return `{ forgotten: boolean }`.
+- [X] T013 [P] [US2] Register the scoped `forget_preference` tool for ReAct chat invocations in `src/agents/react.ts` only when the memory store and active user context are available.
+- [X] T014 [P] [US2] Add `forget_preference` to Plan-and-Execute planning and execution in `src/agents/plan-and-execute.ts`, restricting it to chat invocations with a trusted user context.
+- [X] T015 [US2] Inject the existing memory store into the chat agent registry in `src/agents/index.ts` and `src/http/server.ts`; keep the tool unavailable to non-chat or MCP invocations without user context.
 
 **Checkpoint**: Both chat strategies can forget only the active user's exact preference and report
 the actual deletion outcome.
@@ -92,8 +92,8 @@ the actual deletion outcome.
 
 **Purpose**: Keep the validation guide aligned and verify the feature against project-wide checks.
 
-- [ ] T016 [P] Update `specs/009-learning-reflector/quickstart.md` with the final focused test selectors and expected outcomes for background learning, secret rejection, and preference forgetting.
-- [ ] T017 [P] Run `npm run typecheck` and `npm test` from the repository root using the scripts in `package.json`; resolve feature-related failures.
+- [X] T016 [P] Update `specs/009-learning-reflector/quickstart.md` with the final focused test selectors and expected outcomes for background learning, secret rejection, and preference forgetting.
+- [X] T017 [P] Run `npm run typecheck` and `npm test` from the repository root using the scripts in `package.json`; resolve feature-related failures.
 
 ---
 

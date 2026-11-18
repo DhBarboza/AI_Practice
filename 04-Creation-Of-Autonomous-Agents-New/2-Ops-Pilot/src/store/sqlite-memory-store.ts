@@ -213,9 +213,10 @@ export class SqliteMemoryStore implements MemoryStore {
     );
   }
 
-  async forget(userId: string, fact: string): Promise<void> {
+  async forget(userId: string, fact: string): Promise<boolean> {
     const parsedUserId = MemoryUserIdSchema.parse(userId);
     const parsedFact = MemoryFactSchema.parse(fact);
-    this.statements.deleteByFact.run(parsedUserId, parsedFact);
+    const result = this.statements.deleteByFact.run(parsedUserId, parsedFact);
+    return Number(result.changes) > 0;
   }
 }

@@ -309,3 +309,62 @@ test("Plan-and-Execute includes tool failures in observations and final answer",
     ),
   );
 });
+
+test("chat user context reaches both strategy tool factories without changing model input", async () => {
+  const memoryStore = {
+    async remember() {},
+    async recall() {
+      return [];
+    },
+    async forget() {
+      return false;
+    },
+  };
+  let reactContext: unknown;
+  const react = createReactStrategy({
+    memoryStore,
+    runAgent: async (input, _maxIterations, _store, _allowToolCall, context) => {
+      reactContext = context;
+      assert.equal(input, "Please forget my old preference.");
+      assert.doesNotMatch(input, /user-a/);
+      return [new AIMessage("ReAct complete.")];
+    },
+  });
+
+  await react.run({
+    input: "Please forget my old preference.",
+    maxIterations: 1,
+    userId: "user-a",
+  });
+
+  assert.deepEqual(reactContext, { memoryStore, userId: "user-a" });
+
+  let planContext: unknown;
+  const plan = createPlanAndExecuteStrategy({
+    memoryStore,
+    createEngine: (_store, context) => {
+      planContext = context;
+      return {
+        async plan(prompt) {
+          assert.equal(prompt, "Please forget my old preference.");
+          assert.doesNotMatch(prompt, /user-a/);
+          return { steps: [], answer: "Plan complete." };
+        },
+        async replan() {
+          return { decision: "finish", answer: "Plan complete." };
+        },
+        async execute() {
+          throw new Error("No execution expected.");
+        },
+      };
+    },
+  });
+
+  await plan.run({
+    input: "Please forget my old preference.",
+    maxIterations: 1,
+    userId: "user-a",
+  });
+
+  assert.deepEqual(planContext, { memoryStore, userId: "user-a" });
+});

@@ -1971,5 +1971,27 @@ async function recall(userId: string, query: string, k = 3) {
 #### Outputs:
 
 ```md
+**Criados:**
 
+- `2-Ops-Pilot/src/memory/learning-reflector.test.ts`
+- `2-Ops-Pilot/src/memory/learning-reflector.ts`
+
+**Modificados:**
+
+- `2-Ops-Pilot/specs/009-learning-reflector/quickstart.md`
+- `2-Ops-Pilot/specs/009-learning-reflector/tasks.md`
+- `2-Ops-Pilot/src/agents/index.ts`
+- `2-Ops-Pilot/src/agents/plan-and-execute.ts`
+- `2-Ops-Pilot/src/agents/react.ts`
+- `2-Ops-Pilot/src/agents/strategies.test.ts`
+- `2-Ops-Pilot/src/agents/tools.test.ts`
+- `2-Ops-Pilot/src/agents/tools.ts`
+- `2-Ops-Pilot/src/agents/types.ts`
+- `2-Ops-Pilot/src/http/server.test.ts`
+- `2-Ops-Pilot/src/http/server.ts`
+- `2-Ops-Pilot/src/memory/memory-store.ts`
+- `2-Ops-Pilot/src/services/chat-service.test.ts`
+- `2-Ops-Pilot/src/services/chat-service.ts`
+- `2-Ops-Pilot/src/store/sqlite-memory-store.test.ts`
+- `2-Ops-Pilot/src/store/sqlite-memory-store.ts`
 ```

@@ -15,11 +15,13 @@ import {
   MemoryFactSchema,
 } from "../memory/memory-store.js";
 import type { MemoryStore } from "../memory/memory-store.js";
+import type { LearningReflector } from "../memory/learning-reflector.js";
 
 export const MAX_HISTORY_MESSAGES = 12;
 
 const ChatStrategyInputSchema = z
   .object({
+    userId: MemoryUserIdSchema,
     message: z.string().trim().min(1),
     history: z.array(ConversationMessageSchema),
     memories: z.array(MemoryFactSchema),
@@ -37,6 +39,11 @@ export interface ChatInput {
   message: string;
   conversationId?: ConversationId;
   strategy: ChatStrategy;
+}
+
+export interface ChatServiceOptions {
+  learningReflector?: LearningReflector;
+  onLearningError?: (category: string) => void;
 }
 
 const ChatResponseSchema = ReasoningResultSchema.extend({
@@ -88,11 +95,17 @@ export function composeReasoningStrategy(
   strategy: ReasoningStrategy,
 ): ChatStrategy {
   return {
-    async run({ message, history, memories }): Promise<ReasoningResult> {
-      const input = ChatStrategyInputSchema.parse({ message, history, memories });
+    async run({ userId, message, history, memories }): Promise<ReasoningResult> {
+      const input = ChatStrategyInputSchema.parse({
+        userId,
+        message,
+        history,
+        memories,
+      });
       return strategy.run({
         input: composePrompt(input.message, input.history, input.memories),
         maxIterations: 8,
+        userId: input.userId,
       });
     },
   };
@@ -101,6 +114,7 @@ export function composeReasoningStrategy(
 export function createChatService(
   conversations: ConversationStore,
   memoryStore: MemoryStore,
+  options: ChatServiceOptions = {},
 ): {
   runChat(input: ChatInput): Promise<ChatResponse>;
 } {
@@ -123,6 +137,7 @@ export function createChatService(
       conversations.append(conversationId, "user", input.message);
       const result = ReasoningResultSchema.parse(
         await input.strategy.run({
+          userId,
           message: input.message,
           history,
           memories: memories.map(({ fact }) => fact),
@@ -130,7 +145,7 @@ export function createChatService(
       );
       conversations.append(conversationId, "assistant", result.answer);
 
-      return ChatResponseSchema.parse({
+      const response = ChatResponseSchema.parse({
         ...result,
         conversationId,
         metrics: {
@@ -138,6 +153,23 @@ export function createChatService(
           historyMessages: history.length,
         },
       });
+
+      const learningReflector = options.learningReflector;
+      if (learningReflector) {
+        void Promise.resolve()
+          .then(() => learningReflector.learn(userId, input.message))
+          .catch((error: unknown) => {
+            const category =
+              error instanceof z.ZodError ? "ValidationError" : "LearningError";
+            if (options.onLearningError) {
+              options.onLearningError(category);
+            } else {
+              console.error("Background learning failed", category);
+            }
+          });
+      }
+
+      return response;
     },
   };
 }

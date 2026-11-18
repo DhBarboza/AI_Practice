@@ -13,6 +13,7 @@ Run the focused tests for the reflector and its integration:
 
 ```sh
 node --import tsx --test \
+  --test-name-pattern='learning reflector|chat service|POST /chat passes|forget_preference|forget removes|chat user context' \
   src/memory/learning-reflector.test.ts \
   src/services/chat-service.test.ts \
   src/agents/tools.test.ts \
@@ -29,7 +30,8 @@ Expected outcomes:
 - The successful chat response is returned without waiting for learning to complete; learning
   failures do not change that response.
 - `forget_preference` removes only the requested user's exact fact and accurately reports a
-  no-match.
+  no-match. Its model input accepts only `fact`; the active `userId` is trusted chat context, and
+  the tool is absent from the default non-chat tool list.
 - Existing response fields and user isolation remain unchanged.
 
 Run project-wide verification:

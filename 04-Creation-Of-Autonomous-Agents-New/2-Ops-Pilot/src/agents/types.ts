@@ -69,6 +69,7 @@ export const ReasoningInputSchema = z
   .object({
     input: z.string().trim().min(1),
     maxIterations: z.number().int().positive(),
+    userId: z.string().trim().min(1).optional(),
   })
   .strict();
 

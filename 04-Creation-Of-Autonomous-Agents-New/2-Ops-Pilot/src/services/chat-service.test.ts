@@ -66,7 +66,9 @@ class FakeMemoryStore implements MemoryStore {
     }));
   }
 
-  async forget(): Promise<void> {}
+  async forget(): Promise<boolean> {
+    return false;
+  }
 }
 
 function fakeStrategy(
@@ -166,12 +168,22 @@ test("chat service passes saved messages as history and retains the supplied ID"
 test("chat service leaves the user message saved if the strategy fails", async () => {
   const store = new FakeConversationStore();
   const service = createChatService(store, new FakeMemoryStore());
+  let learningCalls = 0;
   const strategy = fakeStrategy(async () => {
     throw new Error("strategy failed");
   });
+  const learningReflector = {
+    async learn() {
+      learningCalls += 1;
+    },
+  };
 
   await assert.rejects(
-    service.runChat({ userId: "user-1", message: "Investigate", strategy }),
+    service.runChat({
+      userId: "user-1",
+      message: "Investigate",
+      strategy,
+    }),
     /strategy failed/,
   );
   assert.deepEqual(
@@ -179,6 +191,87 @@ test("chat service leaves the user message saved if the strategy fails", async (
     [{ role: "user", content: "Investigate" }],
   );
   assert.deepEqual(store.calls, ["create", "lastMessages", "append:user"]);
+  assert.equal(learningCalls, 0);
+});
+
+test("chat service starts learning from only the latest user message without awaiting it", async () => {
+  const store = new FakeConversationStore();
+  store.messages.push({
+    id: "previous-user-message",
+    conversationId: "conv-existing",
+    role: "user",
+    content: "I prefer short reports.",
+    createdAt: new Date().toISOString(),
+  });
+  let resolveLearning!: () => void;
+  let startedLearning: { userId: string; message: string } | undefined;
+  const pendingLearning = new Promise<void>((resolve) => {
+    resolveLearning = resolve;
+  });
+  const service = createChatService(store, new FakeMemoryStore(), {
+    learningReflector: {
+      learn(userId, message) {
+        startedLearning = { userId, message };
+        return pendingLearning;
+      },
+    },
+  });
+  const strategy = fakeStrategy(async () => ({
+    answer: "I will keep reports short.",
+    trace: [],
+    metrics: { llmCalls: 1, latencyMs: 1 },
+  }));
+  const responsePromise = service.runChat({
+    userId: "user-1",
+    conversationId: "conv-existing",
+    message: "Check this alert.",
+    strategy,
+  });
+
+  try {
+    const completedWithoutLearning = await Promise.race([
+      responsePromise.then(() => true),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 100)),
+    ]);
+    assert.equal(completedWithoutLearning, true);
+    assert.deepEqual(startedLearning, {
+      userId: "user-1",
+      message: "Check this alert.",
+    });
+    const response = await responsePromise;
+    assert.equal(response.answer, "I will keep reports short.");
+    assert.equal(response.metrics.historyMessages, 1);
+  } finally {
+    resolveLearning();
+  }
+});
+
+test("chat service reports learning failures without leaking their message or changing the answer", async () => {
+  let reportedErrorName = "";
+  const service = createChatService(new FakeConversationStore(), new FakeMemoryStore(), {
+    learningReflector: {
+      async learn() {
+        throw new Error("sensitive message content");
+      },
+    },
+    onLearningError(errorName) {
+      reportedErrorName = errorName;
+    },
+  });
+  const response = await service.runChat({
+    userId: "user-1",
+    message: "Keep this private.",
+    strategy: fakeStrategy(async () => ({
+      answer: "The answer is complete.",
+      trace: [],
+      metrics: { llmCalls: 1, latencyMs: 1 },
+    })),
+  });
+
+  await new Promise<void>((resolve) => setImmediate(resolve));
+
+  assert.equal(response.answer, "The answer is complete.");
+  assert.equal(reportedErrorName, "LearningError");
 });
 
 test("chat service reports the exact recent-history count and passes messages in order", async () => {

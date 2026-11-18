@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import express from "express";
 import type { ErrorRequestHandler, Express } from "express";
 import { z } from "zod";
-import { agentRegistry, createAgentRegistry } from "../agents/index.js";
+import { createAgentRegistry } from "../agents/index.js";
 import { withReflection } from "../agents/reflection.js";
 import type { ReasoningStrategy } from "../agents/types.js";
 import { ConversationIdSchema } from "../store/conversation-store.js";
@@ -14,6 +14,8 @@ import { SqliteConversationStore } from "../store/sqlite-conversation-store.js";
 import { SqliteMemoryStore } from "../store/sqlite-memory-store.js";
 import { MemoryUserIdSchema } from "../memory/memory-store.js";
 import type { MemoryStore } from "../memory/memory-store.js";
+import { createLearningReflector } from "../memory/learning-reflector.js";
+import type { LearningReflector } from "../memory/learning-reflector.js";
 import {
   composeReasoningStrategy,
   createChatService,
@@ -38,6 +40,8 @@ export interface ChatServerOptions {
   registry?: ReadonlyMap<string, ReasoningStrategy>;
   timeoutMs?: number;
   reflect?: (strategy: ReasoningStrategy) => ReasoningStrategy;
+  learningReflector?: LearningReflector;
+  onLearningError?: (category: string) => void;
 }
 
 class RequestTimeoutError extends Error {
@@ -76,7 +80,8 @@ function isJsonParserError(error: unknown): boolean {
 }
 
 export function createApp(options: ChatServerOptions): Express {
-  const registry = options.registry ?? agentRegistry;
+  const registry =
+    options.registry ?? createAgentRegistry(undefined, options.memoryStore);
   const timeoutMs = options.timeoutMs ?? DEFAULT_CHAT_TIMEOUT_MS;
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
     throw new Error("timeoutMs must be a positive finite number.");
@@ -85,6 +90,14 @@ export function createApp(options: ChatServerOptions): Express {
   const chatService = createChatService(
     options.conversationStore,
     options.memoryStore,
+    {
+      learningReflector:
+        options.learningReflector ??
+        createLearningReflector({ memoryStore: options.memoryStore }),
+      ...(options.onLearningError
+        ? { onLearningError: options.onLearningError }
+        : {}),
+    },
   );
   const app = express();
 
@@ -175,7 +188,7 @@ async function main(): Promise<void> {
   }
   const server = createServer(
     createApp({
-      registry: createAgentRegistry(store),
+      registry: createAgentRegistry(store, memoryStore),
       conversationStore,
       memoryStore,
     }),

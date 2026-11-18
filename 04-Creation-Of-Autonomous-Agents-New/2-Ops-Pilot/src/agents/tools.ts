@@ -1,5 +1,10 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
+import {
+  MemoryFactSchema,
+  MemoryUserIdSchema,
+} from "../memory/memory-store.js";
+import type { MemoryStore } from "../memory/memory-store.js";
 import { defaultOpsStore } from "./store.js";
 import { fetchProviderStatus, ProviderSchema } from "./provider-status.js";
 import {
@@ -16,6 +21,11 @@ export type ToolCallLimiter = (
   name: string,
   args: Record<string, unknown>,
 ) => boolean;
+
+export interface ChatMemoryContext {
+  memoryStore: MemoryStore;
+  userId: string;
+}
 
 const listAlertsInputSchema = z
   .object({
@@ -65,6 +75,37 @@ const checkProviderStatusInputSchema = z
     ),
   })
   .strict();
+const forgetPreferenceInputSchema = z
+  .object({
+    fact: MemoryFactSchema.describe(
+      "The exact saved preference or fact to forget.",
+    ),
+  })
+  .strict();
+
+export function createForgetPreferenceTool(
+  memoryContext: ChatMemoryContext,
+  allowToolCall?: ToolCallLimiter,
+) {
+  const userId = MemoryUserIdSchema.parse(memoryContext.userId);
+  return tool(
+    async ({ fact }) => {
+      if (allowToolCall && !allowToolCall("forget_preference", { fact })) {
+        return "Iteration limit reached; this tool call was not executed.";
+      }
+      const forgotten = await memoryContext.memoryStore.forget(userId, fact);
+      return JSON.stringify(
+        z.object({ forgotten: z.boolean() }).parse({ forgotten }),
+      );
+    },
+    {
+      name: "forget_preference",
+      description:
+        "Esquece uma preferência salva exata do usuário atual. Use quando ele pedir para remover uma preferência ou fato memorizado. Informe somente o texto exato a esquecer; retorna forgotten=true somente se o fato foi removido.",
+      schema: forgetPreferenceInputSchema,
+    },
+  );
+}
 
 export function createOpsTools(
   store: OpsStore = defaultOpsStore,
@@ -185,6 +226,18 @@ export function createOpsTools(
     listIncidents,
     consultarRunbook,
     checkProviderStatus,
+  ] as const;
+}
+
+export function createChatOpsTools(
+  store: OpsStore,
+  allowToolCall: ToolCallLimiter | undefined,
+  doFetch: typeof fetch,
+  memoryContext: ChatMemoryContext,
+) {
+  return [
+    ...createOpsTools(store, allowToolCall, doFetch),
+    createForgetPreferenceTool(memoryContext, allowToolCall),
   ] as const;
 }
 

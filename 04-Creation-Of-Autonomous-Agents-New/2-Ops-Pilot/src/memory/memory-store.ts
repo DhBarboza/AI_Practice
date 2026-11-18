@@ -51,5 +51,5 @@ export function isDuplicateMemoryScore(score: number): boolean {
 export interface MemoryStore {
   remember(userId: string, fact: string): Promise<void>;
   recall(userId: string, query: string, k?: number): Promise<Memory[]>;
-  forget(userId: string, fact: string): Promise<void>;
+  forget(userId: string, fact: string): Promise<boolean>;
 }
