@@ -1937,7 +1937,13 @@ async function recall(userId: string, query: string, k = 3) {
 #### Outputs:
 
 ```md
+**Criados:**
 
+- `2-Ops-Pilot/specs/009-learning-reflector/contracts/learning-tools.md`
+- `2-Ops-Pilot/specs/009-learning-reflector/data-model.md`
+- `2-Ops-Pilot/specs/009-learning-reflector/plan.md`
+- `2-Ops-Pilot/specs/009-learning-reflector/quickstart.md`
+- `2-Ops-Pilot/specs/009-learning-reflector/research.md`
 ```
 
 ### 3. Prompt - Task:
@@ -1951,7 +1957,7 @@ async function recall(userId: string, query: string, k = 3) {
 #### Outputs:
 
 ```md
-
+- `2-Ops-Pilot/specs/009-learning-reflector/tasks.md`
 ```
 
 ### 4. Prompt - Implement:
