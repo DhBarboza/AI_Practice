@@ -1920,7 +1920,10 @@ async function recall(userId: string, query: string, k = 3) {
 #### Outputs:
 
 ```md
+**Criados:**
 
+- `2-Ops-Pilot/specs/009-learning-reflector/checklists/requirements.md`
+- `2-Ops-Pilot/specs/009-learning-reflector/spec.md`
 ```
 
 ### 2. Prompt - Plan:
@@ -1928,7 +1931,7 @@ async function recall(userId: string, query: string, k = 3) {
 #### Input:
 
 ```md
-/speckit.plan 004-ops-persistence
+/speckit.plan 009-learning-reflector
 ```
 
 #### Outputs:
@@ -1942,7 +1945,7 @@ async function recall(userId: string, query: string, k = 3) {
 #### Input:
 
 ```md
-/speckit.tasks 004-ops-persistence
+/speckit.tasks 009-learning-reflector
 ```
 
 #### Outputs:
@@ -1956,7 +1959,7 @@ async function recall(userId: string, query: string, k = 3) {
 #### Input:
 
 ```md
-/speckit.implement 007-conversation-persistence
+/speckit.implement 009-learning-reflector
 ```
 
 #### Outputs:
