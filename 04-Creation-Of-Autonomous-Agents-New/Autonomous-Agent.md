@@ -2029,3 +2029,65 @@ curl -sS http://localhost:3000/chat \
   -H 'Content-Type: application/json' \
   -d '{"userId":"demo-user","message":"Esqueça minha preferência por respostas em português e em tópicos curtos."}'
 ```
+
+## O CONTEXTO COMO ORÇAMENTO: ANATOMIA, MEDIÇÃO E SUMARIZAÇÃO
+
+### 1. Prompt - Specify:
+
+#### Input:
+
+```md
+/speckit.specify
+Instrumente a medição de contexto: src/context/tokens.ts com estimateTokens (chars/4) e o usage real do LangChain; métricas do chat com promptTokens real e contextBreakdown estimado por fontes; conversa-longa.sh imprime o promptTokens por turno. Com testes.
+```
+
+#### Outputs:
+
+```md
+**Criados:**
+
+- 2-Ops-Pilot/specs/010-context-token-metrics/checklists/requirements.md
+- 2-Ops-Pilot/specs/010-context-token-metrics/spec.md
+```
+
+### 2. Prompt - Plan:
+
+#### Input:
+
+```md
+/speckit.plan 004-ops-persistence
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 3. Prompt - Task:
+
+#### Input:
+
+```md
+/speckit.tasks 004-ops-persistence
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 4. Prompt - Implement:
+
+#### Input:
+
+```md
+/speckit.implement 007-conversation-persistence
+```
+
+#### Outputs:
+
+```md
+
+```

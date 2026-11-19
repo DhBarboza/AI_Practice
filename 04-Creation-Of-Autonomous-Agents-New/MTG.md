@@ -56,3 +56,7 @@ Mana base:
 1 Ancient Bronze Dragon (CLB)
 1 Canopy Gargantuan (TDC)
 1 Bolt Bend (WAR)
+
+Remove:
+Spitebellows
+Tyrant's Familiar
