@@ -2202,5 +2202,23 @@ Responda só o resumo, em tópicos telegráficos.`;
 #### Outputs:
 
 ```md
+**Criados:**
 
+- `2-Ops-Pilot/src/services/conversation-summarizer.test.ts`
+- `2-Ops-Pilot/src/services/conversation-summarizer.ts`
+
+**Modificados:**
+
+- `2-Ops-Pilot/specs/011-conversation-history-pruning/quickstart.md`
+- `2-Ops-Pilot/specs/011-conversation-history-pruning/tasks.md`
+- `2-Ops-Pilot/src/agents/trace.test.ts`
+- `2-Ops-Pilot/src/agents/trace.ts`
+- `2-Ops-Pilot/src/agents/types.ts`
+- `2-Ops-Pilot/src/http/server.test.ts`
+- `2-Ops-Pilot/src/http/server.ts`
+- `2-Ops-Pilot/src/services/chat-service.test.ts`
+- `2-Ops-Pilot/src/services/chat-service.ts`
+- `2-Ops-Pilot/src/store/conversation-store.ts`
+- `2-Ops-Pilot/src/store/sqlite-conversation-store.test.ts`
+- `2-Ops-Pilot/src/store/sqlite-conversation-store.ts`
 ```
