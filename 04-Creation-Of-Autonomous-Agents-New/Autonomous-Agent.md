@@ -2063,13 +2063,11 @@ Instrumente a medição de contexto: src/context/tokens.ts com estimateTokens (c
 ```md
 **Criados:**
 
-- `2-Ops-Pilot/specs/010-context-token-metrics/checklists/requirements.md`
-- `2-Ops-Pilot/specs/010-context-token-metrics/spec.md`
-
-**Modificados:**
-
-- `2-Ops-Pilot/specs/010-context-token-metrics/checklists/requirements.md`
-- `2-Ops-Pilot/specs/010-context-token-metrics/spec.md`
+- `2-Ops-Pilot/specs/010-context-token-metrics/contracts/chat-context-metrics.md`
+- `2-Ops-Pilot/specs/010-context-token-metrics/data-model.md`
+- `2-Ops-Pilot/specs/010-context-token-metrics/plan.md`
+- `2-Ops-Pilot/specs/010-context-token-metrics/quickstart.md`
+- `2-Ops-Pilot/specs/010-context-token-metrics/research.md`
 ```
 
 ### 3. Prompt - Task:
@@ -2083,7 +2081,9 @@ Instrumente a medição de contexto: src/context/tokens.ts com estimateTokens (c
 #### Outputs:
 
 ```md
+**Criados:**
 
+- `2-Ops-Pilot/specs/010-context-token-metrics/tasks.md`
 ```
 
 ### 4. Prompt - Implement:
