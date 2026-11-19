@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { emptyContextMetrics } from "../context/tokens.js";
 import { withReflection } from "./reflection.js";
 import type {
   ReasoningInput,
@@ -14,7 +15,12 @@ function createResult(answer: string, observation: string): ReasoningResult {
       { type: "observation", tool: "list_alerts", content: observation },
       { type: "answer", content: answer },
     ],
-    metrics: { llmCalls: 2, latencyMs: 1 },
+    metrics: {
+      llmCalls: 2,
+      latencyMs: 1,
+      ...emptyContextMetrics(),
+      promptTokens: 5,
+    },
   };
 }
 
@@ -58,6 +64,51 @@ test("reflection returns an initially approved response after one critique", asy
   );
   assert.equal(result.metrics.llmCalls, 3);
   assert.equal(result.trace.filter((event) => event.type === "critique").length, 1);
+});
+
+test("reflection aggregates real prompt usage from candidate and critic calls", async () => {
+  const strategy = createStrategy(() =>
+    createResult("There is one firing alert.", "One alert is firing."),
+  );
+  const reflected = withReflection(strategy, {
+    critic: async (_input, _result, recordUsage) => {
+      recordUsage({
+        inputTokens: 7,
+        sources: {
+          currentMessage: "How many alerts?",
+          conversationHistory: "",
+          recalledMemories: "",
+          agentInstructions: "Review the answer.",
+          operationalToolContext: "",
+        },
+      });
+      return { approved: true, feedback: "Supported by the observation." };
+    },
+  });
+
+  const result = await reflected.run({
+    input: "How many alerts?",
+    maxIterations: 1,
+  });
+
+  assert.equal(result.metrics.promptTokens, 12);
+  assert.equal(result.metrics.contextBreakdown.sources.currentMessage, 4);
+});
+
+test("reflection reports real prompt usage unavailable if the critic has no usage", async () => {
+  const reflected = withReflection(
+    createStrategy(() =>
+      createResult("There is one firing alert.", "One alert is firing."),
+    ),
+    { critic: async () => ({ approved: true, feedback: "Supported." }) },
+  );
+
+  const result = await reflected.run({
+    input: "How many alerts?",
+    maxIterations: 1,
+  });
+
+  assert.equal(result.metrics.promptTokens, null);
 });
 
 test("reflection regenerates with rejection feedback and returns the approved answer", async () => {

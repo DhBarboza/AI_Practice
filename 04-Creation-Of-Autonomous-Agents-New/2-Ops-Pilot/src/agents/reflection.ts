@@ -1,5 +1,17 @@
 import { z } from "zod";
+import { AIMessage } from "@langchain/core/messages";
+import {
+  aggregateContextMetrics,
+  combineContextMetrics,
+  UsageObservationSchema,
+} from "../context/tokens.js";
+import type {
+  ContextSourceTexts,
+  ContextMetrics,
+  UsageObservation,
+} from "../context/tokens.js";
 import { createModel } from "./model.js";
+import { contextSourcesForInput } from "./helpers.js";
 import { ReasoningResultSchema } from "./types.js";
 import type {
   ReasoningInput,
@@ -36,9 +48,13 @@ export interface Critique {
   feedback: string;
 }
 
+export type ReflectionUsageRecorder = (observation: UsageObservation) => void;
+
 export type ReflectionCritic = (
   input: string,
   result: ReasoningResult,
+  recordUsage: ReflectionUsageRecorder,
+  contextSources: ContextSourceTexts,
 ) => Promise<Critique>;
 
 export interface ReflectionOptions {
@@ -53,29 +69,71 @@ function observationsOf(trace: readonly TraceEvent[]): string {
     : "No observations were recorded.";
 }
 
-function createDefaultCritic(): ReflectionCritic {
-  const criticModel = createModel().withStructuredOutput(CritiqueSchema);
+function joinSourceText(...sources: string[]): string {
+  return sources.filter((source) => source.length > 0).join("\n");
+}
 
-  return async (input, result) => {
-    const critique = await criticModel.invoke([
+function createDefaultCritic(): ReflectionCritic {
+  const criticModel = createModel().withStructuredOutput(CritiqueSchema, {
+    includeRaw: true,
+  });
+
+  return async (input, result, recordUsage, contextSources) => {
+    const observations = observationsOf(result.trace);
+    const response = await criticModel.invoke([
       ["system", CRITIC_PROMPT],
       [
         "user",
         `Request: ${input}\n` +
-          `Observations: ${observationsOf(result.trace)}\n` +
+          `Observations: ${observations}\n` +
           `Answer: ${result.answer}`,
       ],
     ]);
-    return CritiqueSchema.parse(critique);
+    recordUsage({
+      inputTokens:
+        response.raw instanceof AIMessage
+          ? response.raw.usage_metadata?.input_tokens ?? null
+          : null,
+      sources: {
+        currentMessage: contextSources.currentMessage,
+        conversationHistory: contextSources.conversationHistory,
+        recalledMemories: contextSources.recalledMemories,
+        agentInstructions: [
+          contextSources.agentInstructions,
+          CRITIC_PROMPT,
+          "Request:",
+        ]
+          .filter((source) => source.length > 0)
+          .join("\n"),
+        operationalToolContext: [
+          contextSources.operationalToolContext,
+          `Observations: ${observations}`,
+          `Answer: ${result.answer}`,
+        ]
+          .filter((source) => source.length > 0)
+          .join("\n"),
+      },
+    });
+    return CritiqueSchema.parse(response.parsed);
   };
 }
 
 function feedbackInput(input: ReasoningInput, feedback: string): ReasoningInput {
+  const contextSources = contextSourcesForInput(input);
+  const feedbackContext =
+    `Reflection feedback from the critic (address it while following the original request):\n${feedback}`;
   return {
     ...input,
-    input:
-      `${input.input}\n\n` +
-      `Reflection feedback from the critic (address it while following the original request):\n${feedback}`,
+    input: `${input.input}\n\n${feedbackContext}`,
+    contextSources: {
+      ...contextSources,
+      operationalToolContext: [
+        contextSources.operationalToolContext,
+        feedbackContext,
+      ]
+        .filter((source) => source.length > 0)
+        .join("\n"),
+    },
   };
 }
 
@@ -99,11 +157,17 @@ export function withReflection(
       let llmCalls = 0;
       let reflections = 0;
       let currentInput = input;
+      const contextMetrics: ContextMetrics[] = [];
+      const contextSources = contextSourcesForInput(input);
 
       while (true) {
         const candidate = ReasoningResultSchema.parse(
           await strategy.run(currentInput),
         );
+        contextMetrics.push({
+          promptTokens: candidate.metrics.promptTokens,
+          contextBreakdown: candidate.metrics.contextBreakdown,
+        });
         trace.push(...candidate.trace);
         llmCalls += candidate.metrics.llmCalls;
 
@@ -113,9 +177,38 @@ export function withReflection(
           ...candidate,
           trace: [...trace],
         });
+        const criticObservations: UsageObservation[] = [];
+        const recordUsage: ReflectionUsageRecorder = (observation) => {
+          criticObservations.push(UsageObservationSchema.parse(observation));
+        };
         const critique = CritiqueSchema.parse(
-          await critic(input.input, criticResult),
+          await critic(
+            input.input,
+            criticResult,
+            recordUsage,
+            contextSources,
+          ),
         );
+        if (criticObservations.length === 0) {
+          const observations = observationsOf(criticResult.trace);
+          criticObservations.push({
+            inputTokens: null,
+            sources: {
+              ...contextSources,
+              agentInstructions: joinSourceText(
+                contextSources.agentInstructions,
+                CRITIC_PROMPT,
+                "Request:",
+              ),
+              operationalToolContext: joinSourceText(
+                contextSources.operationalToolContext,
+                `Observations: ${observations}`,
+                `Answer: ${candidate.answer}`,
+              ),
+            },
+          });
+        }
+        contextMetrics.push(aggregateContextMetrics(criticObservations));
         llmCalls += 1;
         trace.push({
           type: "critique",
@@ -129,6 +222,7 @@ export function withReflection(
             metrics: {
               llmCalls,
               latencyMs: Math.max(0, performance.now() - startedAt),
+              ...combineContextMetrics(contextMetrics),
             },
           });
         }

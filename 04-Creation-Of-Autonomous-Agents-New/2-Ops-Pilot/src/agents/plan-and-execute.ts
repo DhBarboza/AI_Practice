@@ -1,6 +1,14 @@
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { z } from "zod";
+import {
+  aggregateContextMetrics,
+  UsageObservationSchema,
+} from "../context/tokens.js";
+import type {
+  ContextSourceTexts,
+  UsageObservation,
+} from "../context/tokens.js";
 import { createModel } from "./model.js";
 import { ProviderSchema } from "./provider-status.js";
 import { MemoryOpsStore } from "./store.js";
@@ -11,6 +19,7 @@ import {
 } from "./tools.js";
 import type { ChatMemoryContext } from "./tools.js";
 import type { MemoryStore } from "../memory/memory-store.js";
+import { contextSourcesForInput } from "./helpers.js";
 import { assertValidReasoningInput, ReasoningResultSchema } from "./types.js";
 import type {
   ReasoningInput,
@@ -106,12 +115,19 @@ interface ExecutionContext {
 
 export interface PlanEngine {
   plan(prompt: string): Promise<Plan>;
-  replan(prompt: string): Promise<Replan>;
+  replan(prompt: string, operationalToolContext?: string): Promise<Replan>;
   execute(step: string, context: ExecutionContext): Promise<ToolExecution>;
 }
 
+type UsageRecorder = (observation: UsageObservation) => void;
+
 interface PlanDependencies {
-  createEngine?(store: OpsStore, memoryContext?: ChatMemoryContext): PlanEngine;
+  createEngine?(
+    store: OpsStore,
+    memoryContext: ChatMemoryContext | undefined,
+    recordUsage: UsageRecorder,
+    contextSources: ContextSourceTexts,
+  ): PlanEngine;
   createStore?: () => OpsStore;
   memoryStore?: MemoryStore;
   enableReplanning?: boolean;
@@ -141,13 +157,19 @@ function observationText(value: unknown): string {
   return JSON.stringify(value) ?? String(value);
 }
 
+function joinSourceText(...sources: string[]): string {
+  return sources.filter((source) => source.length > 0).join("\n");
+}
+
 function createDefaultPlanEngine(
   store: OpsStore,
-  memoryContext?: ChatMemoryContext,
+  memoryContext: ChatMemoryContext | undefined,
+  contextSources: ContextSourceTexts,
+  recordUsage: UsageRecorder,
 ): PlanEngine {
   const model = createModel();
-  const planner = model.withStructuredOutput(PlanSchema);
-  const replanner = model.withStructuredOutput(ReplanSchema);
+  const planner = model.withStructuredOutput(PlanSchema, { includeRaw: true });
+  const replanner = model.withStructuredOutput(ReplanSchema, { includeRaw: true });
   const tools = createOpsTools(store);
   const [
     listAlertsTool,
@@ -167,33 +189,73 @@ function createDefaultPlanEngine(
   const plannerPrompt = memoryContext
     ? `${PLANNER_PROMPT} forget_preference(fact) removes one exact saved preference for the active user.`
     : PLANNER_PROMPT;
+  const executorToolDescriptions = executorTools
+    .map((tool) => `${tool.name}: ${tool.description}`)
+    .join("\n");
+
+  function recordModelUsage(
+    message: unknown,
+    agentInstructions: string,
+    operationalToolContext = "",
+  ): void {
+    recordUsage({
+      inputTokens:
+        message instanceof AIMessage
+          ? message.usage_metadata?.input_tokens ?? null
+          : null,
+      sources: {
+        ...contextSources,
+        agentInstructions: joinSourceText(
+          contextSources.agentInstructions,
+          agentInstructions,
+        ),
+        operationalToolContext: joinSourceText(
+          contextSources.operationalToolContext,
+          operationalToolContext,
+        ),
+      },
+    });
+  }
 
   return {
     async plan(prompt) {
-      return PlanSchema.parse(
-        await planner.invoke([
-          new SystemMessage(plannerPrompt),
-          new HumanMessage(prompt),
-        ]),
-      );
+      const response = await planner.invoke([
+        new SystemMessage(plannerPrompt),
+        new HumanMessage(prompt),
+      ]);
+      recordModelUsage(response.raw, plannerPrompt);
+      return PlanSchema.parse(response.parsed);
     },
-    async replan(prompt) {
-      return ReplanSchema.parse(
-        await replanner.invoke([
-          new SystemMessage(REPLANNER_PROMPT),
-          new HumanMessage(prompt),
-        ]),
+    async replan(prompt, operationalToolContext = "") {
+      const response = await replanner.invoke([
+        new SystemMessage(REPLANNER_PROMPT),
+        new HumanMessage(prompt),
+      ]);
+      recordModelUsage(
+        response.raw,
+        REPLANNER_PROMPT,
+        operationalToolContext,
       );
+      return ReplanSchema.parse(response.parsed);
     },
     async execute(step, context) {
+      const executionPrompt =
+        `Request: ${context.input}\n` +
+        `Plan step: ${step}\n` +
+        `Completed steps and results: ${JSON.stringify(context.done)}`;
       const response = await executor.invoke([
         new SystemMessage(EXECUTOR_PROMPT),
-        new HumanMessage(
-          `Request: ${context.input}\n` +
-            `Plan step: ${step}\n` +
-            `Completed steps and results: ${JSON.stringify(context.done)}`,
-        ),
+        new HumanMessage(executionPrompt),
       ]);
+      recordModelUsage(
+        response,
+        EXECUTOR_PROMPT,
+        joinSourceText(
+          executorToolDescriptions,
+          `Plan step: ${step}`,
+          `Completed steps and results: ${JSON.stringify(context.done)}`,
+        ),
+      );
       const toolCalls = response.tool_calls ?? [];
       if (toolCalls.length !== 1) {
         throw new Error(
@@ -282,9 +344,24 @@ export function createPlanAndExecuteStrategy(
               userId: input.userId,
             }
           : undefined;
+      const contextSources = contextSourcesForInput(input);
+      const usageObservations: UsageObservation[] = [];
+      const recordUsage: UsageRecorder = (observation) => {
+        usageObservations.push(UsageObservationSchema.parse(observation));
+      };
       const engine =
-        dependencies.createEngine?.(store, memoryContext) ??
-        createDefaultPlanEngine(store, memoryContext);
+        dependencies.createEngine?.(
+          store,
+          memoryContext,
+          recordUsage,
+          contextSources,
+        ) ??
+        createDefaultPlanEngine(
+          store,
+          memoryContext,
+          contextSources,
+          recordUsage,
+        );
       const enableReplanning = dependencies.enableReplanning !== false;
       const PlanState = Annotation.Root({
         input: Annotation<string>(),
@@ -384,13 +461,16 @@ export function createPlanAndExecuteStrategy(
             0,
             state.maxIterations - state.iterations,
           );
+          const operationalToolContext =
+            `Completed steps and results: ${JSON.stringify(state.done)}\n` +
+            `Remaining plan: ${state.plan.join("; ") || "none"}\n` +
+            `Remaining action capacity: ${remainingCapacity}`;
           const reviewed = await engine.replan(
             `Original request: ${state.input}\n` +
-              `Completed steps and results: ${JSON.stringify(state.done)}\n` +
-              `Remaining plan: ${state.plan.join("; ") || "none"}\n` +
-              `Remaining action capacity: ${remainingCapacity}\n` +
+              `${operationalToolContext}\n` +
               `Return decision=continue to keep the remaining plan, decision=adjust to replace it, ` +
               `or decision=finish to stop. If finishing, include a final answer.`,
+            operationalToolContext,
           );
           const proposedSteps =
             reviewed.decision === "continue"
@@ -471,6 +551,17 @@ export function createPlanAndExecuteStrategy(
         },
         { recursionLimit: 3 * actionLimit + 4 },
       );
+      const missingObservations = Math.max(
+        0,
+        result.llmCalls - usageObservations.length,
+      );
+      const allUsageObservations = [
+        ...usageObservations,
+        ...Array.from({ length: missingObservations }, (): UsageObservation => ({
+          inputTokens: null,
+          sources: contextSources,
+        })),
+      ];
 
       return ReasoningResultSchema.parse({
         answer: result.answer,
@@ -478,6 +569,7 @@ export function createPlanAndExecuteStrategy(
         metrics: {
           llmCalls: result.llmCalls,
           latencyMs: Math.max(0, performance.now() - startedAt),
+          ...aggregateContextMetrics(allUsageObservations),
         },
       });
     },

@@ -1,6 +1,73 @@
 import { AIMessage, ToolMessage } from "@langchain/core/messages";
 import type { BaseMessage } from "@langchain/core/messages";
+import {
+  ContextSourceTextsSchema,
+  aggregateContextMetrics,
+} from "../context/tokens.js";
+import type {
+  ContextSourceTexts,
+  UsageObservation,
+} from "../context/tokens.js";
+import type { ReasoningInput } from "./types.js";
 import type { TraceEvent } from "./types.js";
+
+export function contextSourcesForInput(
+  input: ReasoningInput,
+): ContextSourceTexts {
+  return ContextSourceTextsSchema.parse(
+    input.contextSources ?? {
+      currentMessage: input.input,
+      conversationHistory: "",
+      recalledMemories: "",
+      agentInstructions: "",
+      operationalToolContext: "",
+    },
+  );
+}
+
+function messageToolContext(messages: readonly BaseMessage[]): string {
+  return messages
+    .flatMap((message) => {
+      if (message instanceof AIMessage) {
+        return [
+          messageText(message.content),
+          ...(message.tool_calls ?? []).map(
+            (call) => `${call.name}: ${JSON.stringify(call.args) ?? ""}`,
+          ),
+        ];
+      }
+      if (message instanceof ToolMessage) return [messageText(message.content)];
+      return [];
+    })
+    .filter((content) => content.length > 0)
+    .join("\n");
+}
+
+export function messageUsageObservations(
+  messages: readonly BaseMessage[],
+  baseSources: ContextSourceTexts,
+): UsageObservation[] {
+  const observations: UsageObservation[] = [];
+
+  messages.forEach((message, index) => {
+    if (!(message instanceof AIMessage)) return;
+    const operationalToolContext = [
+      baseSources.operationalToolContext,
+      messageToolContext(messages.slice(0, index)),
+    ]
+      .filter((content) => content.length > 0)
+      .join("\n");
+    observations.push({
+      inputTokens: message.usage_metadata?.input_tokens ?? null,
+      sources: {
+        ...baseSources,
+        operationalToolContext,
+      },
+    });
+  });
+
+  return observations;
+}
 
 export function messageText(content: unknown): string {
   if (typeof content === "string") return content;

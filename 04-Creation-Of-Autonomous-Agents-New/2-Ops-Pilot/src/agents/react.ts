@@ -7,7 +7,14 @@ import { createModel } from "./model.js";
 import { createChatOpsTools, createOpsTools } from "./tools.js";
 import type { ChatMemoryContext } from "./tools.js";
 import type { MemoryStore } from "../memory/memory-store.js";
-import { countAiMessages, lastText, toTrace } from "./helpers.js";
+import {
+  contextSourcesForInput,
+  countAiMessages,
+  lastText,
+  messageUsageObservations,
+  toTrace,
+} from "./helpers.js";
+import { aggregateContextMetrics } from "../context/tokens.js";
 import { ReasoningResultSchema } from "./types.js";
 import { assertValidReasoningInput } from "./types.js";
 import type {
@@ -22,6 +29,7 @@ type AgentRunner = (
   store: OpsStore,
   allowToolCall: () => boolean,
   memoryContext?: ChatMemoryContext,
+  recordToolContext?: (toolContext: string) => void,
 ) => Promise<readonly BaseMessage[]>;
 
 interface ReactDependencies {
@@ -36,6 +44,7 @@ const runPrebuiltReactAgent: AgentRunner = async (
   store,
   allowToolCall,
   memoryContext,
+  recordToolContext,
 ) => {
   const tools = memoryContext
     ? createChatOpsTools(
@@ -45,6 +54,9 @@ const runPrebuiltReactAgent: AgentRunner = async (
         memoryContext,
       )
     : createOpsTools(store, () => allowToolCall());
+  recordToolContext?.(
+    tools.map((tool) => `${tool.name}: ${tool.description}`).join("\n"),
+  );
   const agent = createReactAgent({ llm: createModel(), tools: [...tools] });
   const result = await agent.invoke(
     { messages: [new HumanMessage(input)] },
@@ -71,6 +83,8 @@ export function createReactStrategy(
               userId: input.userId,
             }
           : undefined;
+      const baseSources = contextSourcesForInput(input);
+      let operationalToolContext = baseSources.operationalToolContext;
       let toolCalls = 0;
       const messages = await runAgent(
         input.input,
@@ -82,12 +96,23 @@ export function createReactStrategy(
           return true;
         },
         memoryContext,
+        (toolContext) => {
+          operationalToolContext = [operationalToolContext, toolContext]
+            .filter((source) => source.length > 0)
+            .join("\n");
+        },
       );
 
       const answer = lastText(messages);
       if (!answer) {
         throw new Error("ReAct agent completed without a final answer.");
       }
+      const contextMetrics = aggregateContextMetrics(
+        messageUsageObservations(messages, {
+          ...baseSources,
+          operationalToolContext,
+        }),
+      );
 
       return ReasoningResultSchema.parse({
         answer,
@@ -95,6 +120,7 @@ export function createReactStrategy(
         metrics: {
           llmCalls: countAiMessages(messages),
           latencyMs: Math.max(0, performance.now() - startedAt),
+          ...contextMetrics,
         },
       });
     },

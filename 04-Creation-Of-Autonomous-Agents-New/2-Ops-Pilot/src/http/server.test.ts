@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import test from "node:test";
+import {
+  aggregateContextMetrics,
+  emptyContextMetrics,
+} from "../context/tokens.js";
 import { createApp } from "./server.js";
 import type { ReasoningStrategy } from "../agents/types.js";
 import type { ChatServerOptions } from "./server.js";
@@ -23,7 +27,7 @@ function fakeStrategy(
   run: ReasoningStrategy["run"] = async () => ({
     answer: `${name} answer`,
     trace: [{ type: "answer", content: `${name} answer` }],
-    metrics: { llmCalls: 1, latencyMs: 2 },
+    metrics: { llmCalls: 1, latencyMs: 2, ...emptyContextMetrics() },
   }),
 ): ReasoningStrategy {
   return { name, run };
@@ -78,7 +82,7 @@ test("POST /chat returns a conversation ID and resumes the saved history", async
     return {
       answer: "A useful answer",
       trace: [],
-      metrics: { llmCalls: 1, latencyMs: 2 },
+      metrics: { llmCalls: 1, latencyMs: 2, ...emptyContextMetrics() },
     };
   });
   const conversationStore = new SqliteConversationStore(":memory:");
@@ -129,7 +133,7 @@ test("POST /chat defaults to react and returns its result with conversation meta
     return {
       answer: "Firing alerts checked.",
       trace: [{ type: "answer", content: "Firing alerts checked." }],
-      metrics: { llmCalls: 2, latencyMs: 5 },
+      metrics: { llmCalls: 2, latencyMs: 5, ...emptyContextMetrics() },
     };
   });
 
@@ -187,11 +191,98 @@ test("POST /chat defaults to react and returns its result with conversation meta
     assert.deepEqual(result, {
       answer: "Firing alerts checked.",
       trace: [{ type: "answer", content: "Firing alerts checked." }],
-      metrics: { llmCalls: 2, latencyMs: 5, historyMessages: 0 },
+      metrics: {
+        llmCalls: 2,
+        latencyMs: 5,
+        historyMessages: 0,
+        ...emptyContextMetrics(),
+      },
       conversationId: result.conversationId,
     });
     assert.match(result.conversationId, /^conv-/);
     assert.deepEqual(inputs, ["List alerts"]);
+  });
+});
+
+test("POST /chat returns actual usage separately from estimated source counts", async () => {
+  const contextMetrics = aggregateContextMetrics([
+    {
+      inputTokens: 13,
+      sources: {
+        currentMessage: "hello",
+        conversationHistory: "old",
+        recalledMemories: "",
+        agentInstructions: "",
+        operationalToolContext: "",
+      },
+    },
+  ]);
+  const strategy = fakeStrategy("react", async () => ({
+    answer: "A measured answer.",
+    trace: [],
+    metrics: { llmCalls: 1, latencyMs: 1, ...contextMetrics },
+  }));
+
+  await withServer({ registry: new Map([["react", strategy]]) }, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/chat`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ userId: "user-1", message: "Hello" }),
+    });
+
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.deepEqual(result.metrics, {
+      llmCalls: 1,
+      latencyMs: 1,
+      historyMessages: 0,
+      promptTokens: 13,
+      contextBreakdown: {
+        estimated: true,
+        total: 3,
+        sources: {
+          currentMessage: 2,
+          conversationHistory: 1,
+          recalledMemories: 0,
+          agentInstructions: 0,
+          operationalToolContext: 0,
+        },
+      },
+    });
+  });
+});
+
+test("POST /chat preserves unavailable real usage without substituting estimates", async () => {
+  const contextMetrics = aggregateContextMetrics([
+    {
+      inputTokens: null,
+      sources: {
+        currentMessage: "hello",
+        conversationHistory: "",
+        recalledMemories: "",
+        agentInstructions: "",
+        operationalToolContext: "",
+      },
+    },
+  ]);
+  const strategy = fakeStrategy("react", async () => ({
+    answer: "An answer with unavailable usage.",
+    trace: [],
+    metrics: { llmCalls: 1, latencyMs: 1, ...contextMetrics },
+  }));
+
+  await withServer({ registry: new Map([["react", strategy]]) }, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/chat`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ userId: "user-1", message: "Hello" }),
+    });
+
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.metrics.promptTokens, null);
+    assert.equal(result.metrics.contextBreakdown.estimated, true);
+    assert.equal(result.metrics.contextBreakdown.sources.currentMessage, 2);
   });
 });
 
@@ -206,7 +297,7 @@ test("POST /chat supports a strategy composed with an injected SQLite store", as
     return {
       answer: `${alerts.length} alerts firing.`,
       trace: [],
-      metrics: { llmCalls: 0, latencyMs: 1 },
+      metrics: { llmCalls: 0, latencyMs: 1, ...emptyContextMetrics() },
     };
   });
 
@@ -235,7 +326,7 @@ test("POST /chat selects an explicit strategy and decorates it only when request
     return {
       answer: "Selected strategy response",
       trace: [],
-      metrics: { llmCalls: 1, latencyMs: 1 },
+      metrics: { llmCalls: 1, latencyMs: 1, ...emptyContextMetrics() },
     };
   });
   const registry = new Map([["selected", selected]]);
@@ -288,7 +379,7 @@ test("POST /chat returns 400 issues for invalid and malformed bodies", async () 
     return {
       answer: "Unexpected call",
       trace: [],
-      metrics: { llmCalls: 1, latencyMs: 1 },
+      metrics: { llmCalls: 1, latencyMs: 1, ...emptyContextMetrics() },
     };
   });
 
@@ -321,7 +412,7 @@ test("POST /chat returns 422 for unknown strategies without execution", async ()
     return {
       answer: "Unexpected call",
       trace: [],
-      metrics: { llmCalls: 1, latencyMs: 1 },
+      metrics: { llmCalls: 1, latencyMs: 1, ...emptyContextMetrics() },
     };
   });
 
@@ -349,7 +440,7 @@ test("POST /chat rejects malformed and unknown conversation IDs without executin
     return {
       answer: "Unexpected call",
       trace: [],
-      metrics: { llmCalls: 1, latencyMs: 1 },
+      metrics: { llmCalls: 1, latencyMs: 1, ...emptyContextMetrics() },
     };
   });
   const conversationStore: ConversationStore = {
@@ -401,7 +492,7 @@ test("POST /chat returns 504 when strategy execution exceeds the deadline", asyn
     () => new Promise((resolve) => setTimeout(() => resolve({
       answer: "Too late",
       trace: [],
-      metrics: { llmCalls: 1, latencyMs: 50 },
+      metrics: { llmCalls: 1, latencyMs: 50, ...emptyContextMetrics() },
     }), 50)),
   );
 

@@ -2097,5 +2097,97 @@ Instrumente a medição de contexto: src/context/tokens.ts com estimateTokens (c
 #### Outputs:
 
 ```md
+**Criados:**
+
+- `2-Ops-Pilot/conversa-longa.sh`
+- `2-Ops-Pilot/src/cli/conversa-longa.test.ts`
+- `2-Ops-Pilot/src/cli/conversa-longa.ts`
+- `2-Ops-Pilot/src/context/tokens.test.ts`
+- `2-Ops-Pilot/src/context/tokens.ts`
+
+**Modificados:**
+
+- `2-Ops-Pilot/specs/010-context-token-metrics/tasks.md`
+- `2-Ops-Pilot/src/agents/helpers.ts`
+- `2-Ops-Pilot/src/agents/plan-and-execute.ts`
+- `2-Ops-Pilot/src/agents/react.ts`
+- `2-Ops-Pilot/src/agents/reflection.test.ts`
+- `2-Ops-Pilot/src/agents/reflection.ts`
+- `2-Ops-Pilot/src/agents/strategies.test.ts`
+- `2-Ops-Pilot/src/agents/types.ts`
+- `2-Ops-Pilot/src/arena.test.ts`
+- `2-Ops-Pilot/src/bench.test.ts`
+- `2-Ops-Pilot/src/http/server.test.ts`
+- `2-Ops-Pilot/src/services/chat-service.test.ts`
+- `2-Ops-Pilot/src/services/chat-service.ts`
+```
+
+## Sumarizar histórico (resumo)
+
+### 1. Prompt - Specify:
+
+#### Input:
+
+```md
+/speckit.specify
+Sumarização de histórico (pruning): tabela conversation_summaries; o que sai das 8 mensagens recentes vira um resumo de ~150 tokens, preservando decisões, fatos e pendências, mesclado ao resumo anterior e persistido. O resumo é refeito só quando 8 novas mensagens saem da janela, nunca a cada request. O resumo entra no contexto; evento summarize. Com teste fake.
+```
+
+#### Outputs:
+
+```md
+**Criados:**
+
+- `2-Ops-Pilot/specs/010-context-token-metrics/checklists/requirements.md`
+- `2-Ops-Pilot/specs/010-context-token-metrics/spec.md`
+```
+
+### 2. Prompt - Plan:
+
+#### Input:
+
+```md
+/speckit.plan 010-context-token-metrics
+```
+
+#### Outputs:
+
+```md
+**Criados:**
+
+- `2-Ops-Pilot/specs/010-context-token-metrics/contracts/chat-context-metrics.md`
+- `2-Ops-Pilot/specs/010-context-token-metrics/data-model.md`
+- `2-Ops-Pilot/specs/010-context-token-metrics/plan.md`
+- `2-Ops-Pilot/specs/010-context-token-metrics/quickstart.md`
+- `2-Ops-Pilot/specs/010-context-token-metrics/research.md`
+```
+
+### 3. Prompt - Task:
+
+#### Input:
+
+```md
+/speckit.tasks 010-context-token-metrics
+```
+
+#### Outputs:
+
+```md
+**Criados:**
+
+- `2-Ops-Pilot/specs/010-context-token-metrics/tasks.md`
+```
+
+### 4. Prompt - Implement:
+
+#### Input:
+
+```md
+/speckit.implement 010-context-token-metrics
+```
+
+#### Outputs:
+
+```md
 
 ```

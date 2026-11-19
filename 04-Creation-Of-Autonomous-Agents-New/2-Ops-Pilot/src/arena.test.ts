@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { emptyContextMetrics } from "./context/tokens.js";
 import { createArenaStrategies, parseArenaArgs, runArena } from "./arena.js";
 import { withReflection } from "./agents/reflection.js";
 import { MemoryOpsStore } from "./agents/store.js";
@@ -20,7 +21,7 @@ function createStrategy(
       return {
         answer: `${name} answer`,
         trace: [{ type: "answer", content: `${name} answer` }],
-        metrics: { llmCalls: 1, latencyMs: 2 },
+        metrics: { llmCalls: 1, latencyMs: 2, ...emptyContextMetrics() },
       };
     },
   };

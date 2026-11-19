@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { emptyContextMetrics } from "./context/tokens.js";
 import {
   formatBenchmarkTable,
   parseBenchmarkArgs,
@@ -70,7 +71,7 @@ test("benchmark verifies scenario results against each run's isolated store", as
                     },
                   ]
                 : [],
-            metrics: { llmCalls: 2, latencyMs: 1.5 },
+            metrics: { llmCalls: 2, latencyMs: 1.5, ...emptyContextMetrics() },
           };
         },
       };

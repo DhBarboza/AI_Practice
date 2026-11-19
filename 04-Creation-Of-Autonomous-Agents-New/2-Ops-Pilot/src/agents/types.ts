@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  ContextMetricsSchema,
+  ContextSourceTextsSchema,
+} from "../context/tokens.js";
 
 export const AlertStatusSchema = z.enum(["firing", "resolved"]);
 export const AlertFilterStatusSchema = z.enum(["firing", "resolved", "all"]);
@@ -70,6 +74,7 @@ export const ReasoningInputSchema = z
     input: z.string().trim().min(1),
     maxIterations: z.number().int().positive(),
     userId: z.string().trim().min(1).optional(),
+    contextSources: ContextSourceTextsSchema.optional(),
   })
   .strict();
 
@@ -110,6 +115,7 @@ export const ReasoningResultSchema = z
       .object({
         llmCalls: z.number().int().nonnegative(),
         latencyMs: z.number().nonnegative(),
+        ...ContextMetricsSchema.shape,
       })
       .strict(),
   })
@@ -129,10 +135,9 @@ export type Runbook = z.infer<typeof RunbookSchema>;
 export type TraceEvent = z.infer<typeof TraceEventSchema>;
 export type ReasoningInput = z.infer<typeof ReasoningInputSchema>;
 
-export interface ReasoningMetrics {
-  llmCalls: number;
-  latencyMs: number;
-}
+export type ReasoningMetrics = z.infer<
+  typeof ReasoningResultSchema.shape.metrics
+>;
 
 export interface ReasoningResult {
   answer: string;

@@ -43,6 +43,149 @@ test("ReAct strategy produces a typed trace and counts returned model messages",
   assert.deepEqual(ReasoningResultSchema.parse(result), result);
 });
 
+test("ReAct strategy sums real input-token usage across AI messages", async () => {
+  const strategy = createReactStrategy({
+    runAgent: async () => [
+      new AIMessage({
+        content: "Checking the alerts.",
+        usage_metadata: {
+          input_tokens: 7,
+          output_tokens: 3,
+          total_tokens: 10,
+        },
+      }),
+      new AIMessage({
+        content: "There are no firing alerts.",
+        usage_metadata: {
+          input_tokens: 13,
+          output_tokens: 6,
+          total_tokens: 19,
+        },
+      }),
+    ],
+  });
+
+  const result = await strategy.run({
+    input: "List alerts",
+    maxIterations: 1,
+  });
+
+  assert.equal(result.metrics.llmCalls, 2);
+  assert.equal(result.metrics.promptTokens, 20);
+});
+
+test("ReAct strategy reports usage unavailable if one AI message lacks metadata", async () => {
+  const strategy = createReactStrategy({
+    runAgent: async () => [
+      new AIMessage({
+        content: "Checking.",
+        usage_metadata: {
+          input_tokens: 7,
+          output_tokens: 2,
+          total_tokens: 9,
+        },
+      }),
+      new AIMessage("No firing alerts."),
+    ],
+  });
+
+  const result = await strategy.run({
+    input: "List alerts",
+    maxIterations: 1,
+  });
+
+  assert.equal(result.metrics.promptTokens, null);
+});
+
+test("Plan-and-Execute records actual usage from each engine model call", async () => {
+  const strategy = createPlanAndExecuteStrategy({
+    enableReplanning: false,
+    createEngine: (_store, _memoryContext, recordUsage) => ({
+      async plan() {
+        recordUsage?.({
+          inputTokens: 17,
+          sources: {
+            currentMessage: "List alerts",
+            conversationHistory: "",
+            recalledMemories: "",
+            agentInstructions: "Create a plan.",
+            operationalToolContext: "",
+          },
+        });
+        return { steps: ["list alerts"] };
+      },
+      async replan() {
+        throw new Error("The empty plan must not be replanned.");
+      },
+      async execute() {
+        recordUsage?.({
+          inputTokens: 23,
+          sources: {
+            currentMessage: "List alerts",
+            conversationHistory: "",
+            recalledMemories: "",
+            agentInstructions: "Execute this plan.",
+            operationalToolContext: "",
+          },
+        });
+        return {
+          tool: "list_alerts",
+          args: {},
+          output: [],
+        };
+      },
+    }),
+  });
+
+  const result = await strategy.run({
+    input: "List alerts",
+    maxIterations: 1,
+  });
+
+  assert.equal(result.metrics.llmCalls, 2);
+  assert.equal(result.metrics.promptTokens, 40);
+  assert.equal(result.metrics.contextBreakdown.sources.agentInstructions, 9);
+});
+
+test("Plan-and-Execute reports usage unavailable when an engine call omits it", async () => {
+  const strategy = createPlanAndExecuteStrategy({
+    enableReplanning: false,
+    createEngine: (_store, _memoryContext, recordUsage) => ({
+      async plan() {
+        recordUsage?.({
+          inputTokens: 17,
+          sources: {
+            currentMessage: "List alerts",
+            conversationHistory: "",
+            recalledMemories: "",
+            agentInstructions: "Create a plan.",
+            operationalToolContext: "",
+          },
+        });
+        return { steps: ["list alerts"] };
+      },
+      async replan() {
+        throw new Error("Replanning is disabled.");
+      },
+      async execute() {
+        return {
+          tool: "list_alerts",
+          args: {},
+          output: [],
+        };
+      },
+    }),
+  });
+
+  const result = await strategy.run({
+    input: "List alerts",
+    maxIterations: 1,
+  });
+
+  assert.equal(result.metrics.llmCalls, 2);
+  assert.equal(result.metrics.promptTokens, null);
+});
+
 test("ReAct strategy rejects invalid inputs before invoking its agent", async () => {
   let invoked = false;
   const strategy = createReactStrategy({

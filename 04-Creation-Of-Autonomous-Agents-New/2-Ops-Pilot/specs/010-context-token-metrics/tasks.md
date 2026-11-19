@@ -36,9 +36,9 @@ no dependency or project setup change is needed.
 
 **Purpose**: Shared token utilities and strict metric types required by the user stories.
 
-- [ ] T001 Add failing unit tests for the four-character estimate baseline and prompt-usage aggregation in `src/context/tokens.test.ts`.
-- [ ] T002 Implement `estimateTokens` (four characters per estimated token, rounded up; empty text is zero) and pure prompt-usage/context-breakdown aggregation in `src/context/tokens.ts`; return `null` for real usage if any call lacks a reported input-token count.
-- [ ] T003 Add strict shared context-source and reasoning-metric schemas in `src/agents/types.ts`, including optional source-attributed input that preserves existing direct strategy callers, and update existing reasoning-result fixtures in `src/agents/strategies.test.ts`, `src/agents/reflection.test.ts`, `src/services/chat-service.test.ts`, `src/http/server.test.ts`, `src/bench.test.ts`, and `src/arena.test.ts`. Enforce `promptTokens` as a non-negative integer or `null`; breakdown counts as non-negative integers; `estimated` as literal `true`; and `total` as the sum of the five source values.
+- [X] T001 Add failing unit tests for the four-character estimate baseline and prompt-usage aggregation in `src/context/tokens.test.ts`.
+- [X] T002 Implement `estimateTokens` (four characters per estimated token, rounded up; empty text is zero) and pure prompt-usage/context-breakdown aggregation in `src/context/tokens.ts`; return `null` for real usage if any call lacks a reported input-token count.
+- [X] T003 Add strict shared context-source and reasoning-metric schemas in `src/agents/types.ts`, including optional source-attributed input that preserves existing direct strategy callers, and update existing reasoning-result fixtures in `src/agents/strategies.test.ts`, `src/agents/reflection.test.ts`, `src/services/chat-service.test.ts`, `src/http/server.test.ts`, `src/bench.test.ts`, and `src/arena.test.ts`. Enforce `promptTokens` as a non-negative integer or `null`; breakdown counts as non-negative integers; `estimated` as literal `true`; and `total` as the sum of the five source values.
 
 **Checkpoint**: Shared schemas and aggregation utilities are ready; strategy-specific usage capture can begin.
 
@@ -52,17 +52,17 @@ no dependency or project setup change is needed.
 
 ### Tests for User Story 1
 
-- [ ] T004 [P] [US1] Add deterministic ReAct and Plan-and-Execute tests for summed `AIMessage.usage_metadata.input_tokens` and `null` when any contributing call omits usage in `src/agents/strategies.test.ts`.
-- [ ] T005 [P] [US1] Add reflection tests that aggregate candidate and critic usage, and return `null` when a contributing call has no reported input-token count, in `src/agents/reflection.test.ts`.
-- [ ] T006 [P] [US1] Add chat-service tests for attribution of current message, history, and recalled memories, aggregation across calls, and separation of real versus estimated values in `src/services/chat-service.test.ts`.
-- [ ] T007 [P] [US1] Add `POST /chat` contract tests for the real count, unavailable `null`, and the five-source estimated breakdown in `src/http/server.test.ts`.
+- [X] T004 [P] [US1] Add deterministic ReAct and Plan-and-Execute tests for summed `AIMessage.usage_metadata.input_tokens` and `null` when any contributing call omits usage in `src/agents/strategies.test.ts`.
+- [X] T005 [P] [US1] Add reflection tests that aggregate candidate and critic usage, and return `null` when a contributing call has no reported input-token count, in `src/agents/reflection.test.ts`.
+- [X] T006 [P] [US1] Add chat-service tests for attribution of current message, history, and recalled memories, aggregation across calls, and separation of real versus estimated values in `src/services/chat-service.test.ts`.
+- [X] T007 [P] [US1] Add `POST /chat` contract tests for the real count, unavailable `null`, and the five-source estimated breakdown in `src/http/server.test.ts`.
 
 ### Implementation for User Story 1
 
-- [ ] T008 [P] [US1] Extract usage metadata from every ReAct AI message and record its app-controlled prompt sources in `src/agents/helpers.ts` and `src/agents/react.ts`.
-- [ ] T009 [P] [US1] Retain raw AI messages from planner, replanner, and executor structured-output calls and record usage and source estimates per call in `src/agents/plan-and-execute.ts`.
-- [ ] T010 [P] [US1] Retain raw critic AI messages and aggregate critic plus candidate metrics, including incomplete-usage behavior, in `src/agents/reflection.ts`.
-- [ ] T011 [US1] Preserve current-message, conversation-history, and recalled-memory source segments when composing strategy input; combine strategy metrics into the chat response and export the Zod-validated response schema for the CLI in `src/services/chat-service.ts`.
+- [X] T008 [P] [US1] Extract usage metadata from every ReAct AI message and record its app-controlled prompt sources in `src/agents/helpers.ts` and `src/agents/react.ts`.
+- [X] T009 [P] [US1] Retain raw AI messages from planner, replanner, and executor structured-output calls and record usage and source estimates per call in `src/agents/plan-and-execute.ts`.
+- [X] T010 [P] [US1] Retain raw critic AI messages and aggregate critic plus candidate metrics, including incomplete-usage behavior, in `src/agents/reflection.ts`.
+- [X] T011 [US1] Preserve current-message, conversation-history, and recalled-memory source segments when composing strategy input; combine strategy metrics into the chat response and export the Zod-validated response schema for the CLI in `src/services/chat-service.ts`.
 
 **Checkpoint**: Chat responses distinguish complete LangChain-reported prompt usage from per-source estimates, including unavailable usage.
 
@@ -76,12 +76,12 @@ no dependency or project setup change is needed.
 
 ### Tests for User Story 2
 
-- [ ] T012 [P] [US2] Add CLI tests with stubbed responses for sequential conversation IDs, validated response data, per-turn real counts, unavailable usage, and surfaced HTTP failures in `src/cli/conversa-longa.test.ts`.
+- [X] T012 [P] [US2] Add CLI tests with stubbed responses for sequential conversation IDs, validated response data, per-turn real counts, unavailable usage, and surfaced HTTP failures in `src/cli/conversa-longa.test.ts`.
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Implement the TypeScript runner to send several turns in one conversation, validate each response with the exported chat response schema, and print only the turn number and real `promptTokens` or `unavailable` in `src/cli/conversa-longa.ts`.
-- [ ] T014 [US2] Add the executable root launcher that runs `src/cli/conversa-longa.ts` with the repository's Node.js and `tsx` setup in `conversa-longa.sh`.
+- [X] T013 [US2] Implement the TypeScript runner to send several turns in one conversation, validate each response with the exported chat response schema, and print only the turn number and real `promptTokens` or `unavailable` in `src/cli/conversa-longa.ts`.
+- [X] T014 [US2] Add the executable root launcher that runs `src/cli/conversa-longa.ts` with the repository's Node.js and `tsx` setup in `conversa-longa.sh`.
 
 **Checkpoint**: The long-conversation exercise prints one validated real-usage result per successful turn without exposing prompt contents.
 
@@ -95,7 +95,7 @@ no dependency or project setup change is needed.
 
 ### Tests for User Story 3
 
-- [ ] T015 [US3] Add direct boundary tests for empty and non-multiple-of-four text lengths to `estimateTokens` in `src/context/tokens.test.ts`.
+- [X] T015 [US3] Add direct boundary tests for empty and non-multiple-of-four text lengths to `estimateTokens` in `src/context/tokens.test.ts`.
 
 **Checkpoint**: The pure estimator behavior is independently covered in addition to the chat breakdown tests.
 
@@ -105,7 +105,7 @@ no dependency or project setup change is needed.
 
 **Purpose**: Validate the complete feature and its documented manual exercise.
 
-- [ ] T016 Run `npm run typecheck`, `npm test`, and the automated quickstart scenarios in `specs/010-context-token-metrics/quickstart.md` using stubs rather than provider credentials; resolve regressions in the touched feature paths.
+- [X] T016 Run `npm run typecheck`, `npm test`, and the automated quickstart scenarios in `specs/010-context-token-metrics/quickstart.md` using stubs rather than provider credentials; resolve regressions in the touched feature paths.
 
 ---
 
