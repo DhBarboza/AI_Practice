@@ -2180,19 +2180,35 @@ Sumarização de histórico (pruning): tabela conversation_summaries; o que sai 
 ```md
 **Criados:**
 
-- `2-Ops-Pilot/specs/010-context-token-metrics/tasks.md`
+- `2-Ops-Pilot/specs/011-conversation-history-pruning/tasks.md`
 ```
 
 ### 4. Prompt - Implement:
 
 #### Input:
 
-```md
+````md
 /speckit.implement 011-conversation-history-pruning
+
+```ts
+const SUMMARIZER_PROMPT = `Resuma o trecho de conversa em no máximo 150 tokens, preservando
+obrigatoriamente: decisões tomadas, fatos estabelecidos (nomes, datas, prazos, preferências),
+incidentes abertos/resolvidos e pendências abertas. Descarte cumprimentos e conversa social.
+Se houver um resumo anterior, incorpore-o ao novo resumo, mesclando sem duplicar.
+Responda só o resumo, em tópicos telegráficos.`;
 ```
+````
 
 #### Outputs:
 
 ```md
+
+```
+
+```
+
+```
+
+```
 
 ```
