@@ -1,7 +1,7 @@
 # Specification Quality Checklist: Conversation History Pruning
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning  
-**Created**: 2026-11-18  
+**Purpose**: Validate specification completeness and quality before proceeding to planning
+**Created**: 2026-11-18
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality

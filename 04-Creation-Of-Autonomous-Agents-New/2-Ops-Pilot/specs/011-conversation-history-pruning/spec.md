@@ -38,7 +38,7 @@ As an OpsPilot user and maintainer, I want the summary to be refreshed only afte
 2. **Given** at least eight additional unrepresented messages have left the latest-eight window, **When** context is prepared, **Then** the prior summary and all newly unrepresented older messages are combined into a replacement summary, persisted, and used in that request's context.
 3. **Given** a summary is successfully refreshed, **When** the chat response is returned, **Then** its trace contains one `summarize` event identifying the number of newly covered messages and the approximate summary size, without exposing the source transcript.
 4. **Given** a persisted conversation summary and a service restart, **When** the conversation is resumed before the next refresh threshold, **Then** the saved summary is reused without another summarizer call.
-5. **Given** summary generation fails, **When** the chat continues, **Then** the previous summary and coverage position remain intact, source messages remain available, and a later eligible request can retry.
+5. **Given** summary generation or persistence fails, **When** a refresh is attempted, **Then** the current request fails explicitly, the previous summary and coverage position remain intact, source messages remain available, and a later eligible request can retry.
 
 ### Edge Cases
 
@@ -48,7 +48,7 @@ As an OpsPilot user and maintainer, I want the summary to be refreshed only afte
 - When a successful refresh covers more than eight unrepresented messages, all currently unrepresented messages outside the recent window are included, preventing a partial or duplicate coverage position.
 - Empty conversations do not create an empty summary.
 - Summary generation must preserve decisions, factual details, and unresolved tasks; it must not invent facts or silently resolve conflicting information.
-- A failed refresh must not delete source messages, replace the previous summary, advance its coverage position, or emit a successful `summarize` event.
+- A failed refresh must not delete source messages, replace the previous summary, advance its coverage position, or emit a successful `summarize` event; the request failure is surfaced through the existing chat error boundary.
 
 ## Requirements *(mandatory)*
 
@@ -62,8 +62,10 @@ As an OpsPilot user and maintainer, I want the summary to be refreshed only afte
 - **FR-006**: A summary MUST target approximately 150 tokens, ordinarily within 120–180 tokens, while preserving decisions, facts, and pending or unresolved tasks. Preserving accurate information takes priority over the target length.
 - **FR-007**: The refreshed summary MUST be included in the context for the request that triggered its successful refresh, together with any still-pending unsummarized older messages and the latest eight prior messages.
 - **FR-008**: After a successful refresh, the conversation trace MUST contain one event with type `summarize`, identifying the newly covered message count and approximate summary size without including the source transcript.
-- **FR-009**: If refresh fails, the previous saved summary and its coverage position MUST remain unchanged, source messages MUST remain available, and no successful `summarize` event MUST be emitted.
+- **FR-009**: If refresh generation or persistence fails, the current chat request MUST fail explicitly; the previous saved summary and its coverage position MUST remain unchanged, source messages MUST remain available, and no successful `summarize` event MUST be emitted.
 - **FR-010**: Automated tests MUST use a fake summarizer and verify threshold behavior, merge and persistence behavior, context composition, event emission, and failure handling without provider credentials or external network access.
+- **FR-011**: The existing `historyMessages` metric MUST equal the number of raw prior conversation messages supplied to the final answer-producing strategy, including pending older messages and the latest-eight window, and MUST exclude the summary and current request.
+- **FR-012**: When a summary is generated for a chat request, its model call MUST be included in that response's `llmCalls`, real `promptTokens`, and estimated context breakdown; if the summary call does not report real input-token usage, `promptTokens` MUST be `null`.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -80,6 +82,8 @@ As an OpsPilot user and maintainer, I want the summary to be refreshed only afte
 - **SC-003**: A refreshed summary ordinarily measures 120–180 tokens and retains every decision, fact, and pending task present in the deterministic test scenario.
 - **SC-004**: A saved summary and its coverage position are reused after service restart, and covered source messages are not summarized a second time.
 - **SC-005**: The full refresh lifecycle, including the failure path, is verifiable with a fake summarizer and no provider credentials or external network calls.
+- **SC-006**: For every response, `historyMessages` equals the raw prior-message count supplied to the final answer-producing strategy and excludes the summary and current request.
+- **SC-007**: On a refresh request, the reported model-call and prompt-token metrics include the summary call, while the context breakdown keeps its prompt sources estimated and separate from real usage.
 
 ## Assumptions
 
@@ -88,4 +92,5 @@ As an OpsPilot user and maintainer, I want the summary to be refreshed only afte
 - The summary is a soft target of about 150 tokens; salient information takes precedence over strict length.
 - Until a refresh threshold is reached, up to seven unrepresented older messages remain available verbatim in context to avoid dropping information.
 - A successful refresh occurs before the main answer is generated, so the refreshed summary can be used immediately.
-- Summary generation is an internal context-maintenance action; failure should not erase history or invalidate the previous summary.
+- Summary generation is required to maintain bounded context; a failed refresh surfaces as a request error and does not erase history or invalidate the previous summary.
+- `historyMessages` retains its existing meaning as the count of raw prior messages included in the final answer-producing strategy context; it does not count the summary as a message.

@@ -2138,8 +2138,8 @@ Sumarização de histórico (pruning): tabela conversation_summaries; o que sai 
 ```md
 **Criados:**
 
-- `2-Ops-Pilot/specs/010-context-token-metrics/checklists/requirements.md`
-- `2-Ops-Pilot/specs/010-context-token-metrics/spec.md`
+- `2-Ops-Pilot/specs/011-conversation-history-pruning/checklists/requirements.md`
+- `2-Ops-Pilot/specs/011-conversation-history-pruning/spec.md`
 ```
 
 ### 2. Prompt - Plan:
@@ -2147,7 +2147,7 @@ Sumarização de histórico (pruning): tabela conversation_summaries; o que sai 
 #### Input:
 
 ```md
-/speckit.plan 010-context-token-metrics
+/speckit.plan 011-conversation-history-pruning
 ```
 
 #### Outputs:
@@ -2155,11 +2155,16 @@ Sumarização de histórico (pruning): tabela conversation_summaries; o que sai 
 ```md
 **Criados:**
 
-- `2-Ops-Pilot/specs/010-context-token-metrics/contracts/chat-context-metrics.md`
-- `2-Ops-Pilot/specs/010-context-token-metrics/data-model.md`
-- `2-Ops-Pilot/specs/010-context-token-metrics/plan.md`
-- `2-Ops-Pilot/specs/010-context-token-metrics/quickstart.md`
-- `2-Ops-Pilot/specs/010-context-token-metrics/research.md`
+- `2-Ops-Pilot/specs/011-conversation-history-pruning/contracts/chat-context-pruning.md`
+- `2-Ops-Pilot/specs/011-conversation-history-pruning/data-model.md`
+- `2-Ops-Pilot/specs/011-conversation-history-pruning/plan.md`
+- `2-Ops-Pilot/specs/011-conversation-history-pruning/quickstart.md`
+- `2-Ops-Pilot/specs/011-conversation-history-pruning/research.md`
+
+**Modificados:**
+
+- `2-Ops-Pilot/specs/011-conversation-history-pruning/checklists/requirements.md`
+- `2-Ops-Pilot/specs/011-conversation-history-pruning/spec.md`
 ```
 
 ### 3. Prompt - Task:
@@ -2167,7 +2172,7 @@ Sumarização de histórico (pruning): tabela conversation_summaries; o que sai 
 #### Input:
 
 ```md
-/speckit.tasks 010-context-token-metrics
+/speckit.tasks 011-conversation-history-pruning
 ```
 
 #### Outputs:
@@ -2183,7 +2188,7 @@ Sumarização de histórico (pruning): tabela conversation_summaries; o que sai 
 #### Input:
 
 ```md
-/speckit.implement 010-context-token-metrics
+/speckit.implement 011-conversation-history-pruning
 ```
 
 #### Outputs:
