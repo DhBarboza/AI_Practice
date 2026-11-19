@@ -8,6 +8,7 @@ import {
 import type {
   ConversationMessage,
   ConversationRole,
+  ConversationSummary,
   ConversationStore,
 } from "../store/conversation-store.js";
 import type { Memory, MemoryStore } from "../memory/memory-store.js";
@@ -17,10 +18,13 @@ import {
   createChatService,
 } from "./chat-service.js";
 import type { ChatStrategy } from "./chat-service.js";
+import type { ConversationSummarizer } from "./conversation-summarizer.js";
 
 class FakeConversationStore implements ConversationStore {
   readonly messages: ConversationMessage[] = [];
   readonly calls: string[] = [];
+  readonly summaries = new Map<string, ConversationSummary>();
+  saveSummaryError: Error | undefined;
   private nextId = 1;
 
   create(): string {
@@ -34,6 +38,9 @@ class FakeConversationStore implements ConversationStore {
     content: string,
   ): ConversationMessage {
     this.calls.push(`append:${role}`);
+    while (this.messages.some(({ id }) => id === `message-${this.nextId}`)) {
+      this.nextId += 1;
+    }
     const message = {
       id: `message-${this.nextId++}`,
       conversationId,
@@ -50,6 +57,28 @@ class FakeConversationStore implements ConversationStore {
     return this.messages
       .filter((message) => message.conversationId === conversationId)
       .slice(-limit);
+  }
+
+  messagesAfter(
+    conversationId: string,
+    messageId?: string,
+  ): ConversationMessage[] {
+    const messages = this.messages.filter(
+      (message) => message.conversationId === conversationId,
+    );
+    if (messageId === undefined) return [...messages];
+    const cursorIndex = messages.findIndex(({ id }) => id === messageId);
+    if (cursorIndex < 0) throw new Error("Unknown fake conversation cursor");
+    return messages.slice(cursorIndex + 1);
+  }
+
+  getSummary(conversationId: string) {
+    return this.summaries.get(conversationId) ?? null;
+  }
+
+  saveSummary(summary: ConversationSummary): void {
+    if (this.saveSummaryError) throw this.saveSummaryError;
+    this.summaries.set(summary.conversationId, summary);
   }
 
   close(): void {}
@@ -80,6 +109,46 @@ function fakeStrategy(
   run: ChatStrategy["run"],
 ): ChatStrategy {
   return { run };
+}
+
+function addPriorMessages(
+  store: FakeConversationStore,
+  conversationId: string,
+  count: number,
+): void {
+  for (let index = 1; index <= count; index += 1) {
+    store.messages.push({
+      id: `message-${index}`,
+      conversationId,
+      role: index % 2 === 0 ? "assistant" : "user",
+      content: `message-${index}`,
+      createdAt: new Date().toISOString(),
+    });
+  }
+}
+
+function measuredStrategy(
+  inputTokens: number | null,
+  captureContext?: (conversationHistory: string) => void,
+): ChatStrategy {
+  return composeReasoningStrategy({
+    name: "test",
+    async run({ contextSources }) {
+      assert.ok(contextSources);
+      captureContext?.(contextSources.conversationHistory);
+      return {
+        answer: "Answer",
+        trace: [{ type: "answer", content: "Answer" }],
+        metrics: {
+          llmCalls: 1,
+          latencyMs: 1,
+          ...aggregateContextMetrics([
+            { inputTokens, sources: contextSources },
+          ]),
+        },
+      };
+    },
+  });
 }
 
 test("chat service creates an ID and appends the user before invoking the strategy", async () => {
@@ -309,7 +378,7 @@ test("chat service reports the exact recent-history count and passes messages in
       message: "Next question",
       strategy,
     });
-    const expectedCount = Math.min(savedCount, 12);
+    const expectedCount = Math.min(savedCount, 15);
 
     assert.equal(result.metrics.historyMessages, expectedCount);
     assert.deepEqual(
@@ -320,6 +389,248 @@ test("chat service reports the exact recent-history count and passes messages in
       ),
     );
   }
+});
+
+test("chat service supplies a saved summary, pending older messages, recent history, and current request separately", async () => {
+  const store = new FakeConversationStore();
+  const conversationId = "conv-existing";
+  for (let index = 1; index <= 14; index += 1) {
+    store.messages.push({
+      id: `message-${index}`,
+      conversationId,
+      role: index % 2 === 0 ? "assistant" : "user",
+      content: `message-${index}`,
+      createdAt: new Date().toISOString(),
+    });
+  }
+  store.summaries.set(conversationId, {
+    conversationId,
+    summary: "- Decision: investigate Payments latency.",
+    coveredThroughMessageId: "message-1",
+    updatedAt: new Date().toISOString(),
+  });
+  const service = createChatService(store, new FakeMemoryStore());
+  let prompt = "";
+  let history: ConversationMessage[] = [];
+  const strategy: ReasoningStrategy = {
+    name: "test",
+    async run({ input, contextSources }) {
+      prompt = input;
+      assert.ok(contextSources);
+      return {
+        answer: "Investigating Payments.",
+        trace: [],
+        metrics: {
+          llmCalls: 1,
+          latencyMs: 1,
+          ...aggregateContextMetrics([
+            { inputTokens: 11, sources: contextSources },
+          ]),
+        },
+      };
+    },
+  };
+
+  const result = await service.runChat({
+    userId: "user-1",
+    conversationId,
+    message: "What should we do next?",
+    strategy: {
+      async run(input) {
+        history = [...input.history];
+        return composeReasoningStrategy(strategy).run(input);
+      },
+    },
+  });
+
+  assert.deepEqual(
+    history.map(({ content }) => content),
+    Array.from({ length: 13 }, (_value, index) => `message-${index + 2}`),
+  );
+  assert.match(prompt, /Conversation summary:\n- Decision: investigate Payments latency\./);
+  assert.match(prompt, /Assistant: message-2/);
+  assert.match(prompt, /Assistant: message-14/);
+  assert.match(prompt, /Current message: What should we do next\?/);
+  assert.equal(result.metrics.historyMessages, 13);
+  assert.equal(result.trace.length, 0);
+});
+
+test("chat service refreshes only at the threshold, merges, persists, reuses, and counts summary usage", async () => {
+  const store = new FakeConversationStore();
+  const conversationId = "conv-summary";
+  addPriorMessages(store, conversationId, 16);
+  const previousSummary = {
+    conversationId,
+    summary: "- Checkout errors are under investigation.",
+    coveredThroughMessageId: "message-1",
+    updatedAt: new Date().toISOString(),
+  };
+  store.summaries.set(conversationId, previousSummary);
+  const summarizeInputs: Array<{
+    previousSummary: string | null;
+    messageContents: string[];
+  }> = [];
+  let summaryCalls = 0;
+  const summarizer: ConversationSummarizer = {
+    async summarize(input) {
+      summaryCalls += 1;
+      summarizeInputs.push({
+        previousSummary: input.previousSummary,
+        messageContents: input.messages.map(({ content }) => content),
+      });
+      return {
+        summary:
+          "- Checkout errors remain under investigation; Payments latency began at 10:00.",
+        inputTokens: 7,
+      };
+    },
+  };
+  const contextHistory: string[] = [];
+  const service = createChatService(store, new FakeMemoryStore(), { summarizer });
+  const strategy = measuredStrategy(13, (history) => contextHistory.push(history));
+
+  const belowThreshold = await service.runChat({
+    userId: "user-1",
+    conversationId,
+    message: "Check progress",
+    strategy,
+  });
+  assert.equal(summaryCalls, 0);
+  assert.equal(
+    belowThreshold.trace.some((event) => event.type === "summarize"),
+    false,
+  );
+  assert.equal(belowThreshold.metrics.historyMessages, 15);
+  assert.match(contextHistory[0] ?? "", /Checkout errors are under investigation/);
+
+  const refreshed = await service.runChat({
+    userId: "user-1",
+    conversationId,
+    message: "What is next?",
+    strategy,
+  });
+  const savedSummary = store.summaries.get(conversationId);
+  assert.equal(summaryCalls, 1);
+  assert.deepEqual(summarizeInputs, [
+    {
+      previousSummary: previousSummary.summary,
+      messageContents: Array.from(
+        { length: 9 },
+        (_value, index) => `message-${index + 2}`,
+      ),
+    },
+  ]);
+  assert.equal(
+    savedSummary?.coveredThroughMessageId,
+    "message-10",
+  );
+  assert.match(
+    savedSummary?.summary ?? "",
+    /Payments latency began at 10:00/,
+  );
+  assert.deepEqual(refreshed.trace[0], {
+    type: "summarize",
+    messagesSummarized: 9,
+    estimatedTokens: estimateTokens(
+      "- Checkout errors remain under investigation; Payments latency began at 10:00.",
+    ),
+  });
+  assert.equal(refreshed.metrics.llmCalls, 2);
+  assert.equal(refreshed.metrics.promptTokens, 20);
+  assert.equal(refreshed.metrics.historyMessages, 8);
+  assert.equal(refreshed.metrics.contextBreakdown.estimated, true);
+  assert.ok(refreshed.metrics.contextBreakdown.sources.agentInstructions > 0);
+  assert.match(contextHistory[1] ?? "", /Payments latency began at 10:00/);
+
+  const reused = await service.runChat({
+    userId: "user-1",
+    conversationId,
+    message: "Any change?",
+    strategy,
+  });
+  assert.equal(summaryCalls, 1);
+  assert.equal(
+    reused.trace.some((event) => event.type === "summarize"),
+    false,
+  );
+  assert.equal(reused.metrics.historyMessages, 10);
+  assert.match(contextHistory[2] ?? "", /Payments latency began at 10:00/);
+});
+
+for (const failure of ["generation", "persistence"] as const) {
+  test(`chat service preserves summary state when ${failure} fails`, async () => {
+    const store = new FakeConversationStore();
+    const conversationId = `conv-${failure}`;
+    addPriorMessages(store, conversationId, 17);
+    const previousSummary = {
+      conversationId,
+      summary: "- Keep the incident open.",
+      coveredThroughMessageId: "message-1",
+      updatedAt: new Date().toISOString(),
+    };
+    store.summaries.set(conversationId, previousSummary);
+    if (failure === "persistence") {
+      store.saveSummaryError = new Error("summary storage failed");
+    }
+    let strategyCalls = 0;
+    const summarizer: ConversationSummarizer = {
+      async summarize() {
+        if (failure === "generation") {
+          throw new Error("summary generation failed");
+        }
+        return { summary: "- Replacement summary.", inputTokens: 9 };
+      },
+    };
+    const service = createChatService(store, new FakeMemoryStore(), {
+      summarizer,
+    });
+
+    await assert.rejects(
+      service.runChat({
+        userId: "user-1",
+        conversationId,
+        message: "Retry the incident summary",
+        strategy: fakeStrategy(async () => {
+          strategyCalls += 1;
+          return {
+            answer: "Unexpected",
+            trace: [],
+            metrics: {
+              llmCalls: 1,
+              latencyMs: 1,
+              ...emptyContextMetrics(),
+            },
+          };
+        }),
+      }),
+      new RegExp(`${failure === "generation" ? "summary generation" : "summary storage"} failed`),
+    );
+
+    assert.deepEqual(store.summaries.get(conversationId), previousSummary);
+    assert.equal(store.messages.length, 17);
+    assert.equal(strategyCalls, 0);
+  });
+}
+
+test("chat service reports unavailable prompt usage when summary usage is missing", async () => {
+  const store = new FakeConversationStore();
+  addPriorMessages(store, "conv-no-summary-usage", 16);
+  const service = createChatService(store, new FakeMemoryStore(), {
+    summarizer: {
+      async summarize() {
+        return { summary: "- A decision remains open.", inputTokens: null };
+      },
+    },
+  });
+  const response = await service.runChat({
+    userId: "user-1",
+    conversationId: "conv-no-summary-usage",
+    message: "Summarize status",
+    strategy: measuredStrategy(13),
+  });
+
+  assert.equal(response.metrics.llmCalls, 2);
+  assert.equal(response.metrics.promptTokens, null);
 });
 
 test("chat strategy receives recalled facts in delimited context without changing history or response", async () => {

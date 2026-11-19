@@ -2204,11 +2204,3 @@ Responda só o resumo, em tópicos telegráficos.`;
 ```md
 
 ```
-
-```
-
-```
-
-```
-
-```

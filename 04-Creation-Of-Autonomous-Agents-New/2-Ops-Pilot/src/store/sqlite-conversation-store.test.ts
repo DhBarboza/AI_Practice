@@ -55,6 +55,113 @@ test("SQLite conversation store keeps messages available after closing and reope
   );
 });
 
+test("SQLite conversation store persists summaries and selects messages after the coverage cursor", (t) => {
+  const store = new SqliteConversationStore(":memory:");
+  t.after(() => store.close());
+  const conversationId = store.create();
+  const first = store.append(conversationId, "user", "First");
+  const second = store.append(conversationId, "assistant", "Second");
+  const third = store.append(conversationId, "user", "Third");
+
+  assert.equal(store.getSummary(conversationId), null);
+  assert.deepEqual(
+    store.messagesAfter(conversationId).map(({ id }) => id),
+    [first.id, second.id, third.id],
+  );
+  assert.deepEqual(
+    store.messagesAfter(conversationId, first.id).map(({ id }) => id),
+    [second.id, third.id],
+  );
+
+  const summary = {
+    conversationId,
+    summary: "- Incident opened; Payments errors started at 10:00.",
+    coveredThroughMessageId: second.id,
+    updatedAt: new Date().toISOString(),
+  };
+  store.saveSummary(summary);
+  assert.deepEqual(store.getSummary(conversationId), summary);
+
+  const replacement = {
+    ...summary,
+    summary: "- Incident resolved; Payments latency returned to normal.",
+    coveredThroughMessageId: third.id,
+    updatedAt: new Date().toISOString(),
+  };
+  store.saveSummary(replacement);
+  assert.deepEqual(store.getSummary(conversationId), replacement);
+});
+
+test("SQLite conversation store persists summary coverage after reopening", (t) => {
+  const directory = mkdtempSync(join(tmpdir(), "opspilot-summary-"));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const path = join(directory, "conversations.db");
+  const firstStore = new SqliteConversationStore(path);
+  const conversationId = firstStore.create();
+  const covered = firstStore.append(conversationId, "user", "Covered");
+  const pending = firstStore.append(conversationId, "assistant", "Pending");
+  const summary = {
+    conversationId,
+    summary: "- Decision: investigate Payments latency.",
+    coveredThroughMessageId: covered.id,
+    updatedAt: new Date().toISOString(),
+  };
+  firstStore.saveSummary(summary);
+  firstStore.close();
+
+  const secondStore = new SqliteConversationStore(path);
+  t.after(() => secondStore.close());
+  assert.deepEqual(secondStore.getSummary(conversationId), summary);
+  assert.deepEqual(
+    secondStore.messagesAfter(
+      conversationId,
+      summary.coveredThroughMessageId,
+    ),
+    [pending],
+  );
+});
+
+test("SQLite conversation store rejects a summary cursor from another conversation", (t) => {
+  const store = new SqliteConversationStore(":memory:");
+  t.after(() => store.close());
+  const conversationId = store.create();
+  const otherConversationId = store.create();
+  const foreignMessage = store.append(otherConversationId, "user", "Foreign");
+
+  assert.throws(() =>
+    store.saveSummary({
+      conversationId,
+      summary: "- No cross-conversation coverage.",
+      coveredThroughMessageId: foreignMessage.id,
+      updatedAt: new Date().toISOString(),
+    }),
+  );
+  assert.equal(store.getSummary(conversationId), null);
+});
+
+test("SQLite conversation store validates summary fields before persistence", (t) => {
+  const store = new SqliteConversationStore(":memory:");
+  t.after(() => store.close());
+  const conversationId = store.create();
+  const message = store.append(conversationId, "user", "Covered");
+  const validSummary = {
+    conversationId,
+    summary: "- The incident remains open.",
+    coveredThroughMessageId: message.id,
+    updatedAt: new Date().toISOString(),
+  };
+
+  for (const invalidSummary of [
+    { ...validSummary, conversationId: " " },
+    { ...validSummary, summary: "  " },
+    { ...validSummary, coveredThroughMessageId: " " },
+    { ...validSummary, updatedAt: "not-a-datetime" },
+  ]) {
+    assert.throws(() => store.saveSummary(invalidSummary));
+  }
+  assert.equal(store.getSummary(conversationId), null);
+});
+
 test("SQLite conversation store returns the latest 12 messages in chronological order", (t) => {
   const store = new SqliteConversationStore(":memory:");
   t.after(() => store.close());

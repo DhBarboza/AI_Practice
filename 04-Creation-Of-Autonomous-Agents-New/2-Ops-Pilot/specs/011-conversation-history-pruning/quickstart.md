@@ -23,7 +23,9 @@ failure behavior.
 ```sh
 node --import tsx --test \
   src/services/chat-service.test.ts \
+  src/services/conversation-summarizer.test.ts \
   src/store/sqlite-conversation-store.test.ts \
+  src/agents/trace.test.ts \
   src/http/server.test.ts
 ```
 

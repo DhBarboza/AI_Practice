@@ -36,11 +36,11 @@ this feature; no dependency or project setup change is needed.
 **Purpose**: Add validated summary persistence and chronological cursor access required by both
 user stories.
 
-- [ ] T001 Add failing in-memory and reopen tests for summary read/upsert and cursor queries,
+- [X] T001 Add failing in-memory and reopen tests for summary read/upsert and cursor queries,
   validating `conversationId: Non-empty; primary key`, `summary: Non-empty string`,
   `coveredThroughMessageId: Non-empty identifier of a message in the same conversation`, and
   `updatedAt: ISO datetime` in `src/store/sqlite-conversation-store.test.ts`.
-- [ ] T002 Implement the `ConversationSummary` schema and store operations in
+- [X] T002 Implement the `ConversationSummary` schema and store operations in
   `src/store/conversation-store.ts` and `src/store/sqlite-conversation-store.ts`, preserving the
   field constraints `conversationId: Non-empty; primary key`, `summary: Non-empty string`,
   `coveredThroughMessageId: Non-empty identifier of a message in the same conversation`, and
@@ -63,13 +63,13 @@ raw history and that `historyMessages` counts only raw prior messages.
 
 ### Tests for User Story 1
 
-- [ ] T003 Add failing chat-service tests for saved-summary composition, pending older messages,
+- [X] T003 Add failing chat-service tests for saved-summary composition, pending older messages,
   the latest eight prior messages in chronological order, the distinct current request, and the
   `historyMessages` count in `src/services/chat-service.test.ts`.
 
 ### Implementation for User Story 1
 
-- [ ] T004 Implement the eight-message recent window and pass summary separately from raw history
+- [X] T004 Implement the eight-message recent window and pass summary separately from raw history
   through context composition in `src/services/chat-service.ts`; include summary and raw messages
   in the conversation-history source and keep `historyMessages` limited to raw prior messages.
 
@@ -89,28 +89,28 @@ Verify failure leaves the prior summary and cursor unchanged and fails the reque
 
 ### Tests for User Story 2
 
-- [ ] T005 [P] Add failing fake-summarizer service tests for below-threshold no-op behavior,
+- [X] T005 [P] Add failing fake-summarizer service tests for below-threshold no-op behavior,
   threshold refresh, merging, persistence and reuse, failure without cursor advancement, and
   aggregation of summary-call usage in `src/services/chat-service.test.ts`.
-- [ ] T006 [P] Add failing tests for the `summarize` trace contract and HTTP response/error behavior
+- [X] T006 [P] Add failing tests for the `summarize` trace contract and HTTP response/error behavior
   in `src/agents/trace.test.ts` and `src/http/server.test.ts`; verify
   `messagesSummarized: Positive integer` and `estimatedTokens: Non-negative integer`.
-- [ ] T007 [P] Add failing tests for the injectable summary adapter's validated output, usage
+- [X] T007 [P] Add failing tests for the injectable summary adapter's validated output, usage
   extraction, and invalid `summary: Non-empty string` handling in
   `src/services/conversation-summarizer.test.ts`.
 
 ### Implementation for User Story 2
 
-- [ ] T008 [P] Implement the default `ConversationSummarizer` using the existing model factory,
+- [X] T008 [P] Implement the default `ConversationSummarizer` using the existing model factory,
   a Zod-validated `summary: Non-empty string`, structured output retaining the raw AI message,
   and reported input-token usage in `src/services/conversation-summarizer.ts`.
-- [ ] T009 [P] Add the strict `summarize` trace schema and deterministic formatter output for
+- [X] T009 [P] Add the strict `summarize` trace schema and deterministic formatter output for
   `messagesSummarized: Positive integer` and `estimatedTokens: Non-negative integer` in
   `src/agents/types.ts` and `src/agents/trace.ts`.
-- [ ] T010 Implement threshold selection, prior-summary merging, atomic persistence, failure
+- [X] T010 Implement threshold selection, prior-summary merging, atomic persistence, failure
   propagation, context composition, the `summarize` event, and combined model/context metrics in
   `src/services/chat-service.ts`.
-- [ ] T011 Expose the optional fake summarizer through `ChatServerOptions` and pass it to the chat
+- [X] T011 Expose the optional fake summarizer through `ChatServerOptions` and pass it to the chat
   service so HTTP tests can validate successful events and failed refresh responses in
   `src/http/server.ts`.
 
@@ -123,7 +123,7 @@ validated event and complete usage metrics.
 
 **Purpose**: Validate the complete feature and its documented scenarios.
 
-- [ ] T012 Run `npm run typecheck`, `npm test`, and the fake-backed scenarios in
+- [X] T012 Run `npm run typecheck`, `npm test`, and the fake-backed scenarios in
   `specs/011-conversation-history-pruning/quickstart.md`; resolve regressions in the touched paths.
 
 ---

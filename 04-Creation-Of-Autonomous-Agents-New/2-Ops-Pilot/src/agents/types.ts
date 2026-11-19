@@ -101,10 +101,19 @@ const ObservationTraceEventSchema = z
   })
   .strict();
 
+const SummarizeTraceEventSchema = z
+  .object({
+    type: z.literal("summarize"),
+    messagesSummarized: z.number().int().positive(),
+    estimatedTokens: z.number().int().nonnegative(),
+  })
+  .strict();
+
 export const TraceEventSchema = z.discriminatedUnion("type", [
   ContentTraceEventSchema,
   ActionTraceEventSchema,
   ObservationTraceEventSchema,
+  SummarizeTraceEventSchema,
 ]);
 
 export const ReasoningResultSchema = z

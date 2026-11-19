@@ -13,6 +13,15 @@ export const ConversationMessageSchema = z
   })
   .strict();
 
+export const ConversationSummarySchema = z
+  .object({
+    conversationId: ConversationIdSchema,
+    summary: z.string().trim().min(1),
+    coveredThroughMessageId: z.string().trim().min(1),
+    updatedAt: z.string().datetime(),
+  })
+  .strict();
+
 export const AppendConversationMessageSchema = z
   .object({
     conversationId: ConversationIdSchema,
@@ -26,6 +35,7 @@ export const LastMessagesLimitSchema = z.number().int().positive().max(12);
 export type ConversationId = z.infer<typeof ConversationIdSchema>;
 export type ConversationRole = z.infer<typeof ConversationRoleSchema>;
 export type ConversationMessage = z.infer<typeof ConversationMessageSchema>;
+export type ConversationSummary = z.infer<typeof ConversationSummarySchema>;
 export type AppendConversationMessage = z.infer<
   typeof AppendConversationMessageSchema
 >;
@@ -41,5 +51,11 @@ export interface ConversationStore {
     conversationId: ConversationId,
     limit: number,
   ): ConversationMessage[];
+  messagesAfter(
+    conversationId: ConversationId,
+    messageId?: string,
+  ): ConversationMessage[];
+  getSummary(conversationId: ConversationId): ConversationSummary | null;
+  saveSummary(summary: ConversationSummary): void;
   close(): void;
 }

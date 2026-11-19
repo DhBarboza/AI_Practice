@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   aggregateContextMetrics,
   emptyContextMetrics,
+  estimateTokens,
 } from "../context/tokens.js";
 import { createApp } from "./server.js";
 import type { ReasoningStrategy } from "../agents/types.js";
@@ -122,6 +123,136 @@ test("POST /chat returns a conversation ID and resumes the saved history", async
       assert.match(prompts[1] ?? "", /User: First question/);
       assert.match(prompts[1] ?? "", /Assistant: A useful answer/);
       assert.match(prompts[1] ?? "", /Current message: Follow-up/);
+    },
+  );
+});
+
+test("POST /chat returns a successful summary event without exposing transcript or summary text", async () => {
+  const conversationStore = new SqliteConversationStore(":memory:");
+  const conversationId = conversationStore.create();
+  for (let index = 1; index <= 16; index += 1) {
+    conversationStore.append(
+      conversationId,
+      index % 2 === 0 ? "assistant" : "user",
+      `private-history-marker-${index}`,
+    );
+  }
+  let summaryCalls = 0;
+  let strategyInput = "";
+  const strategy = fakeStrategy("react", async ({ input, contextSources }) => {
+    strategyInput = input;
+    assert.ok(contextSources);
+    return {
+      answer: "The incident remains open.",
+      trace: [{ type: "answer", content: "The incident remains open." }],
+      metrics: {
+        llmCalls: 1,
+        latencyMs: 2,
+        ...aggregateContextMetrics([
+          { inputTokens: 5, sources: contextSources },
+        ]),
+      },
+    };
+  });
+
+  await withServer(
+    {
+      registry: new Map([["react", strategy]]),
+      conversationStore,
+      summarizer: {
+        async summarize() {
+          summaryCalls += 1;
+          return {
+            summary: "- private-summary-marker: incident remains open.",
+            inputTokens: 3,
+          };
+        },
+      },
+    },
+    async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          userId: "user-1",
+          message: "What is the incident status?",
+          conversationId,
+        }),
+      });
+
+      assert.equal(response.status, 200);
+      const payload = (await response.json()) as {
+        trace: unknown[];
+        metrics: { llmCalls: number; promptTokens: number | null };
+      };
+      assert.deepEqual(payload.trace[0], {
+        type: "summarize",
+        messagesSummarized: 8,
+        estimatedTokens: estimateTokens(
+          "- private-summary-marker: incident remains open.",
+        ),
+      });
+      assert.deepEqual(payload.trace[1], {
+        type: "answer",
+        content: "The incident remains open.",
+      });
+      assert.equal(payload.metrics.llmCalls, 2);
+      assert.equal(payload.metrics.promptTokens, 8);
+      assert.equal(summaryCalls, 1);
+      assert.match(strategyInput, /private-summary-marker/);
+      const serialized = JSON.stringify(payload);
+      assert.doesNotMatch(serialized, /private-history-marker/);
+      assert.doesNotMatch(serialized, /private-summary-marker/);
+    },
+  );
+});
+
+test("POST /chat fails explicitly when summary generation fails", async () => {
+  const conversationStore = new SqliteConversationStore(":memory:");
+  const conversationId = conversationStore.create();
+  for (let index = 1; index <= 16; index += 1) {
+    conversationStore.append(
+      conversationId,
+      index % 2 === 0 ? "assistant" : "user",
+      `history-${index}`,
+    );
+  }
+  let strategyCalls = 0;
+  const strategy = fakeStrategy("react", async () => {
+    strategyCalls += 1;
+    return {
+      answer: "Unexpected strategy call.",
+      trace: [],
+      metrics: { llmCalls: 1, latencyMs: 1, ...emptyContextMetrics() },
+    };
+  });
+
+  await withServer(
+    {
+      registry: new Map([["react", strategy]]),
+      conversationStore,
+      summarizer: {
+        async summarize() {
+          throw new Error("sensitive summary generation details");
+        },
+      },
+    },
+    async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/chat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          userId: "user-1",
+          message: "Retry summary",
+          conversationId,
+        }),
+      });
+
+      assert.equal(response.status, 500);
+      assert.deepEqual(await response.json(), {
+        error: "Internal server error",
+      });
+      assert.equal(strategyCalls, 0);
     },
   );
 });
@@ -454,6 +585,13 @@ test("POST /chat rejects malformed and unknown conversation IDs without executin
     lastMessages() {
       return [];
     },
+    messagesAfter() {
+      return [];
+    },
+    getSummary() {
+      return null;
+    },
+    saveSummary() {},
     close() {},
   };
 

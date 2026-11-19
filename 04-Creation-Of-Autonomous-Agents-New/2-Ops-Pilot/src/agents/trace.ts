@@ -13,6 +13,8 @@ export function formatTrace(trace: readonly TraceEvent[]): string {
           return `[${number}] ACTION ${event.tool}(${formatValue(event.args)})`;
         case "observation":
           return `[${number}] OBSERVATION ${event.tool}: ${event.content}`;
+        case "summarize":
+          return `[${number}] SUMMARIZE messages=${event.messagesSummarized} estimatedTokens=${event.estimatedTokens}`;
         default:
           return `[${number}] ${event.type.toUpperCase()}: ${event.content}`;
       }

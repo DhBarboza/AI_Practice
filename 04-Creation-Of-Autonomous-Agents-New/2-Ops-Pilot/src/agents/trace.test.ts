@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { formatTrace } from "./trace.js";
+import { TraceEventSchema } from "./types.js";
 
 test("trace formatter renders typed events in deterministic order", () => {
   assert.equal(
@@ -28,5 +29,36 @@ test("trace formatter renders typed events in deterministic order", () => {
       "[05] CRITIQUE: The result includes one alert.",
       "[06] ANSWER: One alert is firing.",
     ].join("\n"),
+  );
+});
+
+test("trace schema and formatter handle summary refresh events without summary content", () => {
+  const event = {
+    type: "summarize",
+    messagesSummarized: 8,
+    estimatedTokens: 148,
+  } as const;
+  assert.deepEqual(TraceEventSchema.parse(event), event);
+  assert.equal(
+    formatTrace([event]),
+    "[01] SUMMARIZE messages=8 estimatedTokens=148",
+  );
+  assert.throws(() =>
+    TraceEventSchema.parse({
+      ...event,
+      messagesSummarized: 0,
+    }),
+  );
+  assert.throws(() =>
+    TraceEventSchema.parse({
+      ...event,
+      estimatedTokens: -1,
+    }),
+  );
+  assert.throws(() =>
+    TraceEventSchema.parse({
+      ...event,
+      summary: "must not be exposed",
+    }),
   );
 });

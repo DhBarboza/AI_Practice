@@ -16,6 +16,7 @@ import { MemoryUserIdSchema } from "../memory/memory-store.js";
 import type { MemoryStore } from "../memory/memory-store.js";
 import { createLearningReflector } from "../memory/learning-reflector.js";
 import type { LearningReflector } from "../memory/learning-reflector.js";
+import type { ConversationSummarizer } from "../services/conversation-summarizer.js";
 import {
   composeReasoningStrategy,
   createChatService,
@@ -42,6 +43,7 @@ export interface ChatServerOptions {
   reflect?: (strategy: ReasoningStrategy) => ReasoningStrategy;
   learningReflector?: LearningReflector;
   onLearningError?: (category: string) => void;
+  summarizer?: ConversationSummarizer;
 }
 
 class RequestTimeoutError extends Error {
@@ -97,6 +99,7 @@ export function createApp(options: ChatServerOptions): Express {
       ...(options.onLearningError
         ? { onLearningError: options.onLearningError }
         : {}),
+      ...(options.summarizer ? { summarizer: options.summarizer } : {}),
     },
   );
   const app = express();
