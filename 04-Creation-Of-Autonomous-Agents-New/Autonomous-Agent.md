@@ -2046,8 +2046,8 @@ Instrumente a medição de contexto: src/context/tokens.ts com estimateTokens (c
 ```md
 **Criados:**
 
-- 2-Ops-Pilot/specs/010-context-token-metrics/checklists/requirements.md
-- 2-Ops-Pilot/specs/010-context-token-metrics/spec.md
+- `2-Ops-Pilot/specs/010-context-token-metrics/checklists/requirements.md`
+- `2-Ops-Pilot/specs/010-context-token-metrics/spec.md`
 ```
 
 ### 2. Prompt - Plan:
@@ -2055,13 +2055,21 @@ Instrumente a medição de contexto: src/context/tokens.ts com estimateTokens (c
 #### Input:
 
 ```md
-/speckit.plan 004-ops-persistence
+/speckit.plan 010-context-token-metrics
 ```
 
 #### Outputs:
 
 ```md
+**Criados:**
 
+- `2-Ops-Pilot/specs/010-context-token-metrics/checklists/requirements.md`
+- `2-Ops-Pilot/specs/010-context-token-metrics/spec.md`
+
+**Modificados:**
+
+- `2-Ops-Pilot/specs/010-context-token-metrics/checklists/requirements.md`
+- `2-Ops-Pilot/specs/010-context-token-metrics/spec.md`
 ```
 
 ### 3. Prompt - Task:
@@ -2069,7 +2077,7 @@ Instrumente a medição de contexto: src/context/tokens.ts com estimateTokens (c
 #### Input:
 
 ```md
-/speckit.tasks 004-ops-persistence
+/speckit.tasks 010-context-token-metrics
 ```
 
 #### Outputs:
@@ -2083,7 +2091,7 @@ Instrumente a medição de contexto: src/context/tokens.ts com estimateTokens (c
 #### Input:
 
 ```md
-/speckit.implement 007-conversation-persistence
+/speckit.implement 010-context-token-metrics
 ```
 
 #### Outputs:
