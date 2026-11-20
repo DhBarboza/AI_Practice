@@ -2266,7 +2266,13 @@ cortam na ordem certa.
 #### Outputs:
 
 ```md
+**Criados:**
 
+- `2-Ops-Pilot/specs/012-context-section-budget/contracts/context-builder.md`
+- `2-Ops-Pilot/specs/012-context-section-budget/data-model.md`
+- `2-Ops-Pilot/specs/012-context-section-budget/plan.md`
+- `2-Ops-Pilot/specs/012-context-section-budget/quickstart.md`
+- `2-Ops-Pilot/specs/012-context-section-budget/research.md`
 ```
 
 ### 3. Prompt - Task:
