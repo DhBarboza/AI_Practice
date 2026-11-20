@@ -2222,3 +2222,77 @@ Responda só o resumo, em tópicos telegráficos.`;
 - `2-Ops-Pilot/src/store/sqlite-conversation-store.test.ts`
 - `2-Ops-Pilot/src/store/sqlite-conversation-store.ts`
 ```
+
+## CONTEXT STITCHING E OS PARALELOS COM A FERRAMENTA
+
+Context stitching é a técnica de costurar fragmentos de contexto vindos de fontes distintas (históricos de conversa, documentos, resultados de ferramentas, memórias de sessões anteriores) em uma única janela coerente, de modo que o modelo responda como se tivesse acesso contínuo ao todo. Como o modelo não guarda estado entre chamadas, cabe à aplicação selecionar, resumir, ordenar e reinserir o que é relevante a cada requisição. O paralelo com a ferramenta é direto: ela funciona como esse orquestrador, coletando informações dispersas, filtrando o que importa e injetando o resultado no prompt de forma transparente, para que a experiência pareça contínua mesmo que cada chamada seja, tecnicamente, independente. Em ambos os casos, a qualidade da resposta depende menos do volume de contexto e mais de quão bem ele foi curado e encadeado.
+
+Cada sesão do contexto ganah três atributos:
+
+- Interprete de tokens (Orçamento com prioridades)
+- Cortes (teto de quem tem que ser cortado)
+- Regra de Cortes (Para definir o que é relevante ou não)
+
+### 1. Prompt - Specify:
+
+#### Input:
+
+```md
+/speckit.specify
+ContextBuilder com orçamento por seção:
+src/context/context-builder.ts monta o prompt de TODAS as estratégias com teto por
+seção via env `CONTEXT_BUDGET_*`: system e mensagem intocáveis, resumo 200, janela
+1200 (corta as mais antigas), memórias 300 (corta as de menor score). Teste: tetos baixos
+cortam na ordem certa.
+```
+
+#### Outputs:
+
+```md
+**Criados:**
+
+- `2-Ops-Pilot/specs/012-context-section-budget/checklists/requirements.md`
+- `2-Ops-Pilot/specs/012-context-section-budget/spec.md`
+```
+
+### 2. Prompt - Plan:
+
+#### Input:
+
+```md
+/speckit.plan 012-context-section-budget
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 3. Prompt - Task:
+
+#### Input:
+
+```md
+/speckit.tasks 012-context-section-budget
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 4. Prompt - Implement:
+
+#### Input:
+
+```md
+/speckit.implement 012-context-section-budget
+```
+
+#### Outputs:
+
+```md
+
+```
