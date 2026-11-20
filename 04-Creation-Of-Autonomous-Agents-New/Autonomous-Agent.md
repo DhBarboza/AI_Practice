@@ -2286,16 +2286,22 @@ cortam na ordem certa.
 #### Outputs:
 
 ```md
+**Criados:**
 
+- `2-Ops-Pilot/specs/012-context-section-budget/tasks.md`
 ```
 
 ### 4. Prompt - Implement:
 
 #### Input:
 
-```md
+````md
 /speckit.implement 012-context-section-budget
+
+```ts
+
 ```
+````
 
 #### Outputs:
 
