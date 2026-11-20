@@ -35,12 +35,12 @@ supports this feature; no dependency or project setup change is needed.
 
 **Purpose**: Add validated section-budget parsing and builder input schemas required by all stories.
 
-- [ ] T001 Add failing tests for `loadContextBudgets` in `src/context/context-builder.test.ts`:
+- [X] T001 Add failing tests for `loadContextBudgets` in `src/context/context-builder.test.ts`:
   missing or empty env uses `summary: Integer ≥ 0` default `CONTEXT_BUDGET_SUMMARY` = 200,
   `window: Integer ≥ 0` default `CONTEXT_BUDGET_WINDOW` = 1200, and
   `memory: Integer ≥ 0` default `CONTEXT_BUDGET_MEMORY` = 300; non-integer or negative values fail
   and MUST NOT disable the cap.
-- [ ] T002 Implement `Section Budget` parsing and Zod schemas for Context Builder Input
+- [X] T002 Implement `Section Budget` parsing and Zod schemas for Context Builder Input
   (`agentInstructions: String, possibly empty`, `message: Non-empty string`,
   `summary: String or null`, chronological `history`, scored `memories`) and Scored Memory
   Candidate (`fact: Non-empty string`, `score: Finite number`) in
@@ -61,20 +61,20 @@ receive the same `input` and `contextSources`.
 
 ### Tests for User Story 1
 
-- [ ] T003 [P] [US1] Add failing builder tests in `src/context/context-builder.test.ts` for
+- [X] T003 [P] [US1] Add failing builder tests in `src/context/context-builder.test.ts` for
   under-budget assembly: uncut `agentInstructions: String, possibly empty` and
   `message: Non-empty string`, existing section labels, omitted empty sections, and
   `contextSources` matching the assembled prompt.
-- [ ] T004 [P] [US1] Add failing `composeReasoningStrategy` tests in
+- [X] T004 [P] [US1] Add failing `composeReasoningStrategy` tests in
   `src/services/chat-service.test.ts` showing every wrapped strategy receives the same budgeted
   prompt and `contextSources`, and `historyMessages` equals `retainedHistory.length`.
 
 ### Implementation for User Story 1
 
-- [ ] T005 [US1] Implement `buildContext` formatting in `src/context/context-builder.ts` (system,
+- [X] T005 [US1] Implement `buildContext` formatting in `src/context/context-builder.ts` (system,
   summary, chronological window, memories, current message) using default budgets when content
   already fits; return `prompt`, `contextSources`, `retainedHistory`, and `retainedMemories`.
-- [ ] T006 [US1] Replace `composeContextSources` / `composePrompt` in
+- [X] T006 [US1] Replace `composeContextSources` / `composePrompt` in
   `src/services/chat-service.ts` with `buildContext`; pass scored recall candidates
   (`fact: Non-empty string`, `score: Finite number`) and set `historyMessages` to retained window
   length.
@@ -94,7 +94,7 @@ order, last-item shortening, zero-budget omission, and intact system/message tex
 
 ### Tests for User Story 2
 
-- [ ] T007 [US2] Add failing low-cap tests in `src/context/context-builder.test.ts`: oldest
+- [X] T007 [US2] Add failing low-cap tests in `src/context/context-builder.test.ts`: oldest
   window messages drop first; lowest `score: Finite number` memories drop first; equal scores drop
   the later-ranked candidate; summary shortens to its cap; a single remaining window or memory
   item is shortened to fit; budget `0` omits that section; system and current message stay
@@ -102,7 +102,7 @@ order, last-item shortening, zero-budget omission, and intact system/message tex
 
 ### Implementation for User Story 2
 
-- [ ] T008 [US2] Implement overflow handling in `src/context/context-builder.ts`: measure
+- [X] T008 [US2] Implement overflow handling in `src/context/context-builder.ts`: measure
   formatted sections with `estimateTokens`; drop oldest history while more than one remains;
   drop from the end of score-desc memory order (original index as tie-break); shorten summary or
   the last remaining item so the formatted section fits; omit trimmable sections when budget is 0.
@@ -122,15 +122,15 @@ overrides; confirm only numeric caps change and invalid env still fails closed.
 
 ### Tests for User Story 3
 
-- [ ] T009 [P] [US3] Add failing env-snapshot tests in `src/context/context-builder.test.ts` for
+- [X] T009 [P] [US3] Add failing env-snapshot tests in `src/context/context-builder.test.ts` for
   valid `CONTEXT_BUDGET_SUMMARY`, `CONTEXT_BUDGET_WINDOW`, and `CONTEXT_BUDGET_MEMORY` overrides
   that change section sizes but keep oldest-window and lowest-score-memory order.
-- [ ] T010 [P] [US3] Add a failing chat-service test in `src/services/chat-service.test.ts` that
+- [X] T010 [P] [US3] Add a failing chat-service test in `src/services/chat-service.test.ts` that
   production assembly uses `loadContextBudgets` from the env snapshot rather than hardcoded caps.
 
 ### Implementation for User Story 3
 
-- [ ] T011 [US3] Wire `buildContext` production calls in `src/services/chat-service.ts` to
+- [X] T011 [US3] Wire `buildContext` production calls in `src/services/chat-service.ts` to
   `loadContextBudgets` (`CONTEXT_BUDGET_SUMMARY` = 200, `CONTEXT_BUDGET_WINDOW` = 1200,
   `CONTEXT_BUDGET_MEMORY` = 300 when missing or empty) and keep explicit budgets available for
   tests.

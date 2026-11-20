@@ -5,6 +5,7 @@ import {
   emptyContextMetrics,
   estimateTokens,
 } from "../context/tokens.js";
+import type { ContextSourceTexts } from "../context/tokens.js";
 import type {
   ConversationMessage,
   ConversationRole,
@@ -784,4 +785,149 @@ test("chat strategy omits memory context when recall is empty", async () => {
 
   assert.equal(prompt, "Where do we deploy?");
   assert.doesNotMatch(prompt, /<memories>/);
+});
+
+test("composeReasoningStrategy provides identical budgeted prompt and contextSources to different strategies, and historyMessages equals retainedHistory.length", async () => {
+  const store = new FakeConversationStore();
+  const memoryStore = new FakeMemoryStore(["Deployments happen on Tuesdays."]);
+  const service = createChatService(store, memoryStore);
+
+  let capturedPrompt1 = "";
+  let capturedSources1: ContextSourceTexts | undefined;
+  const strategy1: ReasoningStrategy = {
+    name: "strategy-1",
+    async run({ input, contextSources }) {
+      capturedPrompt1 = input;
+      capturedSources1 = contextSources;
+      return {
+        answer: "Strategy 1 answer",
+        trace: [],
+        metrics: { llmCalls: 1, latencyMs: 1, ...emptyContextMetrics() },
+      };
+    },
+  };
+
+  let capturedPrompt2 = "";
+  let capturedSources2: ContextSourceTexts | undefined;
+  const strategy2: ReasoningStrategy = {
+    name: "strategy-2",
+    async run({ input, contextSources }) {
+      capturedPrompt2 = input;
+      capturedSources2 = contextSources;
+      return {
+        answer: "Strategy 2 answer",
+        trace: [],
+        metrics: { llmCalls: 1, latencyMs: 1, ...emptyContextMetrics() },
+      };
+    },
+  };
+
+  // Add 2 history messages to conv-1
+  store.messages.push({
+    id: "msg-1",
+    conversationId: "conv-1",
+    role: "user",
+    content: "First turn",
+    createdAt: new Date().toISOString(),
+  });
+  store.messages.push({
+    id: "msg-2",
+    conversationId: "conv-1",
+    role: "assistant",
+    content: "First response",
+    createdAt: new Date().toISOString(),
+  });
+
+  // Add identical 2 history messages to conv-2
+  store.messages.push({
+    id: "msg-3",
+    conversationId: "conv-2",
+    role: "user",
+    content: "First turn",
+    createdAt: new Date().toISOString(),
+  });
+  store.messages.push({
+    id: "msg-4",
+    conversationId: "conv-2",
+    role: "assistant",
+    content: "First response",
+    createdAt: new Date().toISOString(),
+  });
+
+  const res1 = await service.runChat({
+    userId: "user-1",
+    conversationId: "conv-1",
+    message: "Second turn",
+    strategy: composeReasoningStrategy(strategy1),
+  });
+
+  const res2 = await service.runChat({
+    userId: "user-1",
+    conversationId: "conv-2",
+    message: "Second turn",
+    strategy: composeReasoningStrategy(strategy2),
+  });
+
+  assert.equal(capturedPrompt1, capturedPrompt2);
+  assert.deepEqual(capturedSources1, capturedSources2);
+  assert.match(capturedPrompt1, /Conversation history:/);
+  assert.match(capturedPrompt1, /Relevant user memories/);
+  assert.equal(res1.metrics.historyMessages, 2);
+  assert.equal(res2.metrics.historyMessages, 2);
+});
+
+test("composeReasoningStrategy uses loadContextBudgets from the env snapshot rather than hardcoded caps", async () => {
+  const store = new FakeConversationStore();
+  const service = createChatService(store, new FakeMemoryStore());
+
+  let promptReceived = "";
+  const strategy: ReasoningStrategy = {
+    name: "test-env-budget",
+    async run({ input }) {
+      promptReceived = input;
+      return {
+        answer: "Acknowledged",
+        trace: [],
+        metrics: { llmCalls: 1, latencyMs: 1, ...emptyContextMetrics() },
+      };
+    },
+  };
+
+  store.messages.push({
+    id: "msg-1",
+    conversationId: "conv-env",
+    role: "user",
+    content: "Old message that should be dropped by low env budget.",
+    createdAt: new Date().toISOString(),
+  });
+  store.messages.push({
+    id: "msg-2",
+    conversationId: "conv-env",
+    role: "assistant",
+    content: "Recent message that stays.",
+    createdAt: new Date().toISOString(),
+  });
+
+  // With default budget (1200 tokens), both messages are kept (historyMessages: 2)
+  const defaultRes = await service.runChat({
+    userId: "user-1",
+    conversationId: "conv-env",
+    message: "Status query",
+    strategy: composeReasoningStrategy(strategy),
+  });
+  assert.equal(defaultRes.metrics.historyMessages, 2);
+  assert.match(promptReceived, /Old message that should be dropped/);
+
+  // With env override CONTEXT_BUDGET_WINDOW=20, older message is dropped
+  const envRes = await service.runChat({
+    userId: "user-1",
+    conversationId: "conv-env",
+    message: "Status query",
+    strategy: composeReasoningStrategy(strategy, {
+      env: { CONTEXT_BUDGET_WINDOW: "20" },
+    }),
+  });
+  // Note: conv-env now has 4 messages stored, but with budget=20 only the single most recent fits
+  assert.ok(envRes.metrics.historyMessages < 4);
+  assert.doesNotMatch(promptReceived, /Old message that should be dropped/);
 });

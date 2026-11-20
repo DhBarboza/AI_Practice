@@ -2299,12 +2299,46 @@ cortam na ordem certa.
 /speckit.implement 012-context-section-budget
 
 ```ts
+export function buildContext(input: BuildInput): BuildContext {
+    const sections = [
+        section("system", SYSTEM_PROMPT, { budget: B.system, cut: "never" }),
+        section("summary", conversations.summaryOf(input.conversationId), {
+            budget: B.summary,
+            cut: "never",
+        }),
+        section(
+            "history",
+            conversations.lastMessages(input.conversationId, 8),
+            {
+                budget: B.history,
+                cut: "oldest-first",
+            },
+        ),
+        section("memories", memories.recall(input.userId, input.message, 3), {
+            budget: B.memories,
+            cut: "lowest-score-first",
+        }),
+    ];
 
+    const fitted = sections.map(fitToBudget); // aplica teto e regra de corte por seção
+
+    return assemble(fitted, input.message); // + breakdown por seção
+}
 ```
 ````
 
 #### Outputs:
 
 ```md
+**Criados:**
 
+- `2-Ops-Pilot/src/context/context-builder.test.ts`
+- `2-Ops-Pilot/src/context/context-builder.ts`
+
+**Modificados:**
+
+- `2-Ops-Pilot/.env.example`
+- `2-Ops-Pilot/specs/012-context-section-budget/tasks.md`
+- `2-Ops-Pilot/src/services/chat-service.test.ts`
+- `2-Ops-Pilot/src/services/chat-service.ts`
 ```
