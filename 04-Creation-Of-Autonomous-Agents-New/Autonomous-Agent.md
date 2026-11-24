@@ -2632,14 +2632,224 @@ async function routerNode(state: typeof GraphState.State) {
 
 ```ts
 export function createModel() {
-  const primary = new ChatOpenAI({ model: "gpt-4o" }).withRetry({ stopAfterAttempt: 2 });
-  const backup = new ChatOpenAI({ model: "gpt-4o-mini" }).withRetry({ stopAfterAttempt: 2 });
-  return primary.withFallbacks([backup]);
+    const primary = new ChatOpenAI({ model: "gpt-4o" }).withRetry({
+        stopAfterAttempt: 2,
+    });
+    const backup = new ChatOpenAI({ model: "gpt-4o-mini" }).withRetry({
+        stopAfterAttempt: 2,
+    });
+    return primary.withFallbacks([backup]);
 }
 ```
 ````
 
 #### Outputs:
+
+```md
+
+```
+
+## CRIANDO ESTRATÉGIAS DE OBSERVABILIDADE
+
+| Peça                                       | O que é                                                                                                                  |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| **Roteador**                               | o nó classificador que lê o pedido e escolhe a estratégia sozinho — o cliente para de mandar `strategy` no body          |
+| **Retry + fallback de modelo**             | retry: tentar de novo na falha passageira; fallback: o modelo reserva assume quando o primário cai (demonstrado ao vivo) |
+| **Raio-X do grafo**                        | cada evento do trace assinado pelo **nó** que o produziu — o que a U7 vai persistir e periciar                           |
+| **Paralelismo em ondas** _(seu exercício)_ | passos do plano que não dependem uns dos outros rodando ao mesmo tempo, em grupos — as ondas                             |
+
+**Nada disso existe ainda — tudo nasce do zero, nesta unidade.**
+
+---
+
+### LangGraph: estado, nós e arestas:
+
+```text
+         ┌──────┐      ┌──────────┐  f(estado) = "b"   ┌──────┐
+START →  │ nó 1 │  →   │ decisão  │ ─────────────────→ │ nó B │ → END
+         └──────┘      └────┬─────┘                    └──────┘
+                            │ f(estado) = "a"
+                            ▼
+                        ┌──────┐
+                        │ nó A │ → END
+                        └──────┘
+```
+
+- **Estado** — objeto tipado que atravessa a execução; cada nó lê e devolve atualizações
+- **Nós** — funções que fazem trabalho: chamar modelo, rodar tool, montar contexto
+- **Arestas** — quem vem depois de quem; as **condicionais** olham o estado e decidem
+
+---
+
+### Por que grafo, e não if/else:
+
+|                                                                       |                                                                    |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **1 — O fluxo se desenha** · o grafo é dado; o diagrama sai do código | **2 — Decisão vira nó** · roteamento com entrada, saída e trace    |
+| **3 — Resiliência localizada** · retry/fallback no nó instável        | **4 — Paralelismo declarativo** · ramos independentes rodam juntos |
+
+Para usar depois: **checkpointing** (retomar do meio) e **interrupts** (aprovação humana — U7).
+
+---
+
+### O grafo-alvo do OpsPilot
+
+```text
+            ┌────────────────┐
+ mensagem → │ contexto (U5)  │
+            └──────┬─────────┘
+            ┌──────▼─────────┐        route = "react"        ┌───────────┐
+            │    roteador    │──────────────────────────────→│   react   │──┐
+            │ (classificador)│   route = "plan-execute"      ├───────────┤  │
+            │                │──────────────────────────────→│ plan-exec │──┤
+            │                │   route = "reflect"           ├───────────┤  │
+            │                │──────────────────────────────→│ +reflect  │──┤
+            └────────────────┘                               └───────────┘  │
+                                    ┌────────────────────────────────────┐  │
+                                    │ resposta: grava histórico (U4),    │←─┘
+                                    │ dispara refletor, monta métricas   │
+                                    └────────────────────────────────────┘
+```
+
+---
+
+### A escada de defesas:
+
+```text
+1. RETRY (com backoff)        falha transitória → nova tentativa
+        │ esgotou
+        ▼
+2. FALLBACK DE MODELO         o reserva assume na mesma requisição
+        │ tudo caiu
+        ▼
+3. DEGRADAÇÃO CONTROLADA      resposta honesta + 503 + rastro no trace
+```
+
+Custo e latência crescem a cada degrau — por isso a ordem: do mais barato ao mais caro.
+
+---
+
+### Onde mora a blindagem: a fábrica única:
+
+```text
+ roteador   react   plan-exec   reflect   crítico   sumarizador
+     │        │         │          │         │           │
+     └────────┴─────────┴────┬─────┴─────────┴───────────┘
+                             ▼
+              ┌────────────────────────────────┐
+              │  createModel() — fábrica única │
+              │  retry + fallback moram AQUI   │
+              └────────────────────────────────┘
+```
+
+Uma edição, todos os nós blindados — a convenção das instructions (U2) se pagando.
+
+### **Implementação**
+
+### 1. Prompt - Specify:
+
+#### Input:
+
+```md
+/speckit.specify Trace persistido + logs JSON:
+
+- /chat: requestId no corpo e no header X-Request-Id.
+- SQLite: requests (métricas) e trace_events (node, payloads).
+- src/obs/logger.ts: 1 linha JSON por evento, só metadados.
+- GET /requests/:id: registro + trace ordenado.
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 2. Prompt - Plan:
+
+#### Input:
+
+```md
+/speckit.plan 015
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 3. Prompt - Task:
+
+#### Input:
+
+```md
+/speckit.tasks 015
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 4. Prompt - Implement:
+
+#### Input:
+
+````md
+/speckit.implement 015
+
+```ts
+async function answerNode(state: typeof GraphState.State) {
+    requests.save({
+        id: state.requestId,
+        userId: state.userId,
+        route: state.route,
+        modelUsed: state.result.metrics.modelUsed,
+        promptTokens: state.result.metrics.promptTokens,
+        latencyMs: state.result.metrics.latencyMs,
+        status: "ok",
+    });
+
+    state.result.trace.forEach((e, seq) =>
+        traceEvents.save({
+            requestId: state.requestId,
+            seq,
+            node: e.node,
+            type: e.type,
+            payload: e,
+        }),
+    );
+
+    log.info({
+        requestId: state.requestId,
+        node: "resposta",
+        type: "done",
+        route: state.route,
+        tokens: state.result.metrics.promptTokens,
+    });
+
+    return state;
+}
+```
+````
+
+#### Outputs:
+
+```md
+
+```
+
+### 5. Prompt - Complementar:
+
+#### Input:
+
+```md
+Crie GET Istats?since=24h sobre requets: total, erros, tokens, custo (:free=O), p50/p95, por rota e modelo
+```
+
+#### Output:
 
 ```md
 

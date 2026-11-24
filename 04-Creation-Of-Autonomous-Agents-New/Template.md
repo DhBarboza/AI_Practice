@@ -44,9 +44,13 @@
 
 #### Input:
 
-```md
+````md
 /speckit.implement 007-conversation-persistence
+
+```ts
+
 ```
+````
 
 #### Outputs:
 
