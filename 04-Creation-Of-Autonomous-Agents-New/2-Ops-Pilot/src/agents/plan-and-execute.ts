@@ -387,6 +387,7 @@ export function createPlanAndExecuteStrategy(
 
           if (steps.length) {
             trace.push({
+              node: "planExecute",
               type: "plan",
               content: steps
                 .map((step, index) => `${index + 1}. ${stepLabel(step)}`)
@@ -396,7 +397,7 @@ export function createPlanAndExecuteStrategy(
             answer =
               proposed.answer?.trim() ||
               "No tool actions were needed to respond to the request.";
-            trace.push({ type: "answer", content: answer });
+            trace.push({ node: "planExecute", type: "answer", content: answer });
           }
 
           return {
@@ -436,15 +437,15 @@ export function createPlanAndExecuteStrategy(
           const remainingPlan = state.plan.slice(1);
           const trace: TraceEvent[] = [
             ...state.trace,
-            { type: "action", tool, args },
-            { type: "observation", tool, content: observation },
+            { node: "planExecute", type: "action", tool, args },
+            { node: "planExecute", type: "observation", tool, content: observation },
           ];
           let answer = state.answer;
           if (!enableReplanning && remainingPlan.length === 0) {
             answer = failures.length > 0
               ? `Some requested actions failed: ${failures.join("; ")}. Completed ${state.iterations + 1} planned action(s).`
               : `Completed ${state.iterations + 1} planned action(s).`;
-            trace.push({ type: "answer", content: answer });
+            trace.push({ node: "planExecute", type: "answer", content: answer });
           }
           return {
             plan: remainingPlan,
@@ -482,10 +483,11 @@ export function createPlanAndExecuteStrategy(
           const trace: TraceEvent[] = [...state.trace];
 
           if (reviewed.critique?.trim()) {
-            trace.push({ type: "critique", content: reviewed.critique });
+            trace.push({ node: "planExecute", type: "critique", content: reviewed.critique });
           }
           if (reviewed.decision === "adjust" && steps.length) {
             trace.push({
+              node: "planExecute",
               type: "plan",
               content: steps
                 .map((step, index) => `${index + 1}. ${stepLabel(step)}`)
@@ -499,7 +501,7 @@ export function createPlanAndExecuteStrategy(
             const truthfulAnswer = state.failures.length
               ? `Some requested actions failed: ${state.failures.join("; ")}. ${answer}`
               : answer;
-            trace.push({ type: "answer", content: truthfulAnswer });
+            trace.push({ node: "planExecute", type: "answer", content: truthfulAnswer });
             return {
               plan: steps,
               answer: truthfulAnswer,

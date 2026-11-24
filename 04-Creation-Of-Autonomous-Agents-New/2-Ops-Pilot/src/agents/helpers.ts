@@ -99,17 +99,22 @@ export function lastText(messages: readonly BaseMessage[]): string {
   return "";
 }
 
-export function toTrace(messages: readonly BaseMessage[]): TraceEvent[] {
+export function toTrace(
+  messages: readonly BaseMessage[],
+  nodeName = "react",
+): TraceEvent[] {
   const trace: TraceEvent[] = [];
 
   for (const message of messages) {
     if (message instanceof AIMessage) {
       for (const call of message.tool_calls ?? []) {
         trace.push({
+          node: nodeName,
           type: "thought",
           content: "The agent selected an operational tool for the request.",
         });
         trace.push({
+          node: nodeName,
           type: "action",
           tool: call.name,
           args: call.args,
@@ -117,6 +122,7 @@ export function toTrace(messages: readonly BaseMessage[]): TraceEvent[] {
       }
     } else if (message instanceof ToolMessage) {
       trace.push({
+        node: nodeName,
         type: "observation",
         tool: message.name ?? message.tool_call_id,
         content: messageText(message.content),
@@ -125,7 +131,7 @@ export function toTrace(messages: readonly BaseMessage[]): TraceEvent[] {
   }
 
   const answer = lastText(messages);
-  if (answer) trace.push({ type: "answer", content: answer });
+  if (answer) trace.push({ node: nodeName, type: "answer", content: answer });
   return trace;
 }
 

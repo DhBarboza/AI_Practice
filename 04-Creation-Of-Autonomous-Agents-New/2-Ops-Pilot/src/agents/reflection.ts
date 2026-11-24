@@ -211,6 +211,7 @@ export function withReflection(
         contextMetrics.push(aggregateContextMetrics(criticObservations));
         llmCalls += 1;
         trace.push({
+          node: "reflect",
           type: "critique",
           content: `Approved: ${critique.approved}\nFeedback: ${critique.feedback}`,
         });

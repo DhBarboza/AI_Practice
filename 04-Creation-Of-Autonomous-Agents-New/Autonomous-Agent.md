@@ -2342,3 +2342,305 @@ export function buildContext(input: BuildInput): BuildContext {
 - `2-Ops-Pilot/src/services/chat-service.test.ts`
 - `2-Ops-Pilot/src/services/chat-service.ts`
 ```
+
+## LANGGRAPH E FALLBACK DE MODELO
+
+Adicionar grafos de execução, que é um mapa explícito de etapas ligadas por setas que cada requisção percorre do começo ao fim
+
+---
+
+<!-- Bloco 1.1 — abertura (câmera + esta seção) -->
+
+## 1. O que vamos construir nesta unidade
+
+| Peça                                       | O que é                                                                                                                  |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| **Roteador**                               | o nó classificador que lê o pedido e escolhe a estratégia sozinho — o cliente para de mandar `strategy` no body          |
+| **Retry + fallback de modelo**             | retry: tentar de novo na falha passageira; fallback: o modelo reserva assume quando o primário cai (demonstrado ao vivo) |
+| **Raio-X do grafo**                        | cada evento do trace assinado pelo **nó** que o produziu — o que a U7 vai persistir e periciar                           |
+| **Paralelismo em ondas** _(seu exercício)_ | passos do plano que não dependem uns dos outros rodando ao mesmo tempo, em grupos — as ondas                             |
+
+**Nada disso existe ainda — tudo nasce do zero, nesta unidade.**
+
+---
+
+<!-- Bloco 1.2 — estado, nós e arestas -->
+
+## 2. LangGraph: estado, nós e arestas
+
+```text
+         ┌──────┐      ┌──────────┐  f(estado) = "b"   ┌──────┐
+START →  │ nó 1 │  →   │ decisão  │ ─────────────────→ │ nó B │ → END
+         └──────┘      └────┬─────┘                    └──────┘
+                            │ f(estado) = "a"
+                            ▼
+                        ┌──────┐
+                        │ nó A │ → END
+                        └──────┘
+```
+
+- **Estado** — objeto tipado que atravessa a execução; cada nó lê e devolve atualizações
+- **Nós** — funções que fazem trabalho: chamar modelo, rodar tool, montar contexto
+- **Arestas** — quem vem depois de quem; as **condicionais** olham o estado e decidem
+
+---
+
+<!-- Bloco 1.2 — os 4 argumentos contra o if/else -->
+
+## 3. Por que grafo, e não if/else
+
+|                                                                       |                                                                    |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **1 — O fluxo se desenha** · o grafo é dado; o diagrama sai do código | **2 — Decisão vira nó** · roteamento com entrada, saída e trace    |
+| **3 — Resiliência localizada** · retry/fallback no nó instável        | **4 — Paralelismo declarativo** · ramos independentes rodam juntos |
+
+Para usar depois: **checkpointing** (retomar do meio) e **interrupts** (aprovação humana — U7).
+
+---
+
+<!-- Bloco 1.2 — o grafo-alvo do OpsPilot (A seção da unidade) -->
+
+## 4. O grafo-alvo do OpsPilot
+
+```text
+            ┌────────────────┐
+ mensagem → │ contexto (U5)  │
+            └──────┬─────────┘
+            ┌──────▼─────────┐        route = "react"        ┌───────────┐
+            │    roteador    │──────────────────────────────→│   react   │──┐
+            │ (classificador)│   route = "plan-execute"      ├───────────┤  │
+            │                │──────────────────────────────→│ plan-exec │──┤
+            │                │   route = "reflect"           ├───────────┤  │
+            │                │──────────────────────────────→│ +reflect  │──┤
+            └────────────────┘                               └───────────┘  │
+                                    ┌────────────────────────────────────┐  │
+                                    │ resposta: grava histórico (U4),    │←─┘
+                                    │ dispara refletor, monta métricas   │
+                                    └────────────────────────────────────┘
+```
+
+---
+
+<!-- Bloco 1.5 — a escada de defesas -->
+
+## 5. A escada de defesas
+
+```text
+1. RETRY (com backoff)        falha transitória → nova tentativa
+        │ esgotou
+        ▼
+2. FALLBACK DE MODELO         o reserva assume na mesma requisição
+        │ tudo caiu
+        ▼
+3. DEGRADAÇÃO CONTROLADA      resposta honesta + 503 + rastro no trace
+```
+
+Custo e latência crescem a cada degrau — por isso a ordem: do mais barato ao mais caro.
+
+---
+
+<!-- Bloco 1.5 — onde mora a blindagem -->
+
+## 6. Onde mora a blindagem: a fábrica única
+
+```text
+ roteador   react   plan-exec   reflect   crítico   sumarizador
+     │        │         │          │         │           │
+     └────────┴─────────┴────┬─────┴─────────┴───────────┘
+                             ▼
+              ┌────────────────────────────────┐
+              │  createModel() — fábrica única │
+              │  retry + fallback moram AQUI   │
+              └────────────────────────────────┘
+```
+
+Uma edição, todos os nós blindados — a convenção das instructions (U2) se pagando.
+
+### 1. Prompt - Specify:
+
+#### Input:
+
+```md
+/speckit.specify Grafo unificado:
+
+- production-graph.ts: nós contexto, roteador, as 3 estratégias como nós e resposta.
+- Roteador: withStructuredOutput (route, reason); tabela no prompt; evento "route" e campo `node` em todo evento de trace.
+- /chat: strategy opcional (se vier, é override no trace)
+```
+
+#### Outputs:
+
+```md
+**Criados:**
+
+- `2-Ops-Pilot/specs/013-unified-graph/checklists/requirements.md`
+- `2-Ops-Pilot/specs/013-unified-graph/spec.md`
+```
+
+### 2. Prompt - Plan:
+
+#### Input:
+
+```md
+/speckit.plan 013-unified-graph
+```
+
+#### Outputs:
+
+```md
+**Criados:**
+
+- `2-Ops-Pilot/specs/013-unified-graph/contracts/unified-graph.md`
+- `2-Ops-Pilot/specs/013-unified-graph/data-model.md`
+- `2-Ops-Pilot/specs/013-unified-graph/plan.md`
+- `2-Ops-Pilot/specs/013-unified-graph/quickstart.md`
+- `2-Ops-Pilot/specs/013-unified-graph/research.md`
+```
+
+### 3. Prompt - Task:
+
+#### Input:
+
+```md
+/speckit.tasks 013-unified-graph
+```
+
+#### Outputs:
+
+```md
+**Criados:**
+
+- `2-Ops-Pilot/specs/013-unified-graph/tasks.md`
+```
+
+### 4. Prompt - Implement:
+
+#### Input:
+
+````md
+/speckit.implement 013-unified-graph
+
+```ts
+// src/graph/production-graph.ts
+const graph = new StateGraph(GraphState)
+    .addNode("contexto", contextNode)
+    .addNode("roteador", routerNode)
+    .addNode("react", reactNode)
+    .addNode("planExecute", planExecuteNode)
+    .addNode("reflect", reflectNode)
+    .addNode("resposta", answerNode)
+    .addEdge(START, "contexto")
+    .addEdge("contexto", "roteador")
+    .addConditionalEdges("roteador", (s) => s.route, {
+        react: "react",
+        planExecute: "planExecute",
+        reflect: "reflect",
+    })
+    .addEdge("react", "resposta")
+    .addEdge("planExecute", "resposta")
+    .addEdge("reflect", "resposta")
+    .addEdge("resposta", END)
+    .compile();
+
+// parte esquema
+const routeSchema = z.object({
+    route: z.enum(["react", "planExecute", "reflect"]),
+    reason: z.string().describe("uma frase justificando a escolha"),
+});
+
+async function routerNode(state: typeof GraphState.State) {
+    const verdict = await createModel()
+        .withStructuredOutput(routeSchema)
+        .invoke([
+            ["system", SYSTEM_PROMPT],
+            ["user", state.input],
+        ]);
+
+    trace.push({
+        node: "roteador",
+        type: "route",
+        route: verdict.route,
+        reason: verdict.reason,
+    });
+
+    return { route: verdict.route };
+}
+```
+````
+
+#### Outputs:
+
+```md
+
+```
+
+## Resiliência do modelo:
+
+### 1. Prompt - Specify:
+
+#### Input:
+
+```md
+/speckit.specify Resiliência de modelo:
+
+- .env:
+- fábrica model.ts: withRetry no primário; withFallbacks([reserva])
+- Trace: evento "fallback"; metrics.modelUsed.
+- Caso nada funcione, 503
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 2. Prompt - Plan:
+
+#### Input:
+
+```md
+/speckit.plan 014
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 3. Prompt - Task:
+
+#### Input:
+
+```md
+/speckit.tasks 014
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 4. Prompt - Implement:
+
+#### Input:
+
+````md
+/speckit.implement 014
+
+```ts
+export function createModel() {
+  const primary = new ChatOpenAI({ model: "gpt-4o" }).withRetry({ stopAfterAttempt: 2 });
+  const backup = new ChatOpenAI({ model: "gpt-4o-mini" }).withRetry({ stopAfterAttempt: 2 });
+  return primary.withFallbacks([backup]);
+}
+```
+````
+
+#### Outputs:
+
+```md
+
+```

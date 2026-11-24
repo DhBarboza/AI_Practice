@@ -32,6 +32,33 @@ test("trace formatter renders typed events in deterministic order", () => {
   );
 });
 
+test("trace schema and formatter handle route events with node attribution", () => {
+  const routeEvent = {
+    node: "roteador",
+    type: "route",
+    route: "react",
+    reason: "Direct query for alerts.",
+  } as const;
+  assert.deepEqual(TraceEventSchema.parse(routeEvent), routeEvent);
+  assert.equal(
+    formatTrace([routeEvent]),
+    "[01] ROUTE react: Direct query for alerts.",
+  );
+
+  const overrideEvent = {
+    node: "roteador",
+    type: "route",
+    route: "planExecute",
+    reason: "Manual override.",
+    override: true,
+  } as const;
+  assert.deepEqual(TraceEventSchema.parse(overrideEvent), overrideEvent);
+  assert.equal(
+    formatTrace([overrideEvent]),
+    "[01] ROUTE planExecute: Manual override. [override]",
+  );
+});
+
 test("trace schema and formatter handle summary refresh events without summary content", () => {
   const event = {
     type: "summarize",

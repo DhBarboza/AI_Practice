@@ -78,8 +78,16 @@ export const ReasoningInputSchema = z
   })
   .strict();
 
+export const routeSchema = z.object({
+  route: z.enum(["react", "planExecute", "plan-and-execute", "reflect"]),
+  reason: z.string().describe("uma frase justificando a escolha"),
+});
+export const RouteDecisionSchema = routeSchema;
+export type RouteDecision = z.infer<typeof routeSchema>;
+
 const ContentTraceEventSchema = z
   .object({
+    node: z.string().min(1).optional(),
     type: z.enum(["thought", "plan", "critique", "answer"]),
     content: z.string(),
   })
@@ -87,6 +95,7 @@ const ContentTraceEventSchema = z
 
 const ActionTraceEventSchema = z
   .object({
+    node: z.string().min(1).optional(),
     type: z.literal("action"),
     tool: z.string().min(1),
     args: z.record(z.string(), z.unknown()),
@@ -95,6 +104,7 @@ const ActionTraceEventSchema = z
 
 const ObservationTraceEventSchema = z
   .object({
+    node: z.string().min(1).optional(),
     type: z.literal("observation"),
     tool: z.string().min(1),
     content: z.string(),
@@ -103,9 +113,20 @@ const ObservationTraceEventSchema = z
 
 const SummarizeTraceEventSchema = z
   .object({
+    node: z.string().min(1).optional(),
     type: z.literal("summarize"),
     messagesSummarized: z.number().int().positive(),
     estimatedTokens: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const RouteTraceEventSchema = z
+  .object({
+    node: z.string().min(1).default("roteador"),
+    type: z.literal("route"),
+    route: z.string().min(1),
+    reason: z.string(),
+    override: z.boolean().optional(),
   })
   .strict();
 
@@ -114,6 +135,7 @@ export const TraceEventSchema = z.discriminatedUnion("type", [
   ActionTraceEventSchema,
   ObservationTraceEventSchema,
   SummarizeTraceEventSchema,
+  RouteTraceEventSchema,
 ]);
 
 export const ReasoningResultSchema = z
