@@ -2854,3 +2854,138 @@ Crie GET Istats?since=24h sobre requets: total, erros, tokens, custo (:free=O), 
 ```md
 
 ```
+
+## IMPLEMENTANDO A WAR ROOM E MODIFICANDO A MEMÓRIA DO AGENTE
+
+Criar interface para interação
+
+### 1.1 Prompt - Instructions:
+
+#### Input:
+
+```md
+Crie .github/instructions/design.instructions.md (crie um similar para o Cursor caso necessário) com applyTo: hierarquia, espaçamento em escala, estados vazios e de erro, dark mode, acessibilidade
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 1.2. Prompt - Specify:
+
+#### Input:
+
+```md
+/speckit.specify War room web/ (Vite + React + TS) com as instructions de design: chat -> /chat,
+com "ver raciocínio" abrindo o trace tipado. 202 vira cartão aprovar/negar; engrenagem com URL
+da API; base /opspilot/; CORS
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 2. Prompt - Plan:
+
+#### Input:
+
+```md
+/speckit.plan 016
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 3. Prompt - Task:
+
+#### Input:
+
+```md
+/speckit.tasks 016
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 4. Prompt - Implement:
+
+#### Input:
+
+```md
+/speckit.implement 016
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### **Deploy**:
+
+### 1. Prompt - Specify:
+
+#### Input:
+
+```md
+/speckit.specify Deploy do web/ no Github Pages via Actions:
+upload-pages-artifact + deploy-pages, permissions, README (atualizar)
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 2. Prompt - Plan:
+
+#### Input:
+
+```md
+/speckit.plan 017
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 3. Prompt - Task:
+
+#### Input:
+
+```md
+/speckit.tasks 017
+```
+
+#### Outputs:
+
+```md
+
+```
+
+### 4. Prompt - Implement:
+
+#### Input:
+
+```md
+/speckit.implement 017
+```
+
+#### Outputs:
+
+```md
+
+```

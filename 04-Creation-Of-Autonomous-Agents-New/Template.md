@@ -17,7 +17,7 @@
 #### Input:
 
 ```md
-/speckit.plan 004-ops-persistence
+/speckit.plan [folder_name]
 ```
 
 #### Outputs:
@@ -31,7 +31,7 @@
 #### Input:
 
 ```md
-/speckit.tasks 004-ops-persistence
+/speckit.tasks [folder_name]
 ```
 
 #### Outputs:
@@ -45,7 +45,7 @@
 #### Input:
 
 ````md
-/speckit.implement 007-conversation-persistence
+/speckit.implement [folder_name]
 
 ```ts
 
