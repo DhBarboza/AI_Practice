@@ -54,3 +54,17 @@ Executar o prompt estuturado
 Resultado em `05-AI-Tools-for-UI-UX/01-Projeto/Prompts/2-Diagram/output.md`
 
 O diagrama é focado na jornada do usuário
+
+## REFINAMENTO DE UX WRITING E COMUNICAÇÃO TÉCNICA
+
+### 1º Step
+
+Alterar o System instructions para em perfil de [UX Writer](/01-Projeto/System-Instructions/2-UX-Writer.md)
+
+### 2º Step
+
+Executar o prompt [UX Writer](/01-Projeto/Prompts/3-UX/Ux-Writer.md)
+
+### 3º Step
+
+Analisar o retorno em `.json` das messagens de trataivas de acordo com o fluxograma

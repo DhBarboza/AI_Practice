@@ -1,0 +1,211 @@
+Com base no fluxo mapeado no diagrama Mermaid, identificamos os cenários de erro, validação, exceção de sistema e feedbacks de sucesso.
+
+---
+
+### 1. Levantamento dos Cenários
+
+#### A. Validações de Entrada e Regras de Negócio
+
+1. **Chave Inexistente/Inativa no DICT (`ErrorDICT`)**: Chave digitada não foi encontrada no diretório do Banco Central.
+2. **Valor Inferior ao Mínimo (`ErrorZeroAmount`)**: Entrada menor que R$ 0,01.
+3. **Limite Transacional Excedido (`ErrorMaxLimit`)**: Valor informado ultrapassa o teto permitido de R$ 5.000,00.
+4. **Data Passada/Retroativa (`ErrorPastDate`)**: Seleção de data anterior ao dia de hoje.
+5. **Agendamento Além de 365 Dias (`ErrorMaxFuture`)**: Data selecionada ultrapassa a janela máxima de 1 ano.
+6. **Limite Futuro Comprometido (`ErrorTargetLimit`)**: Limite diário disponível para a data de liquidação já foi consumido por outros agendamentos/operações.
+
+#### B. Segurança e Autenticação (MFA)
+
+7. **Falha na Autenticação com Tentativas Restantes (`ErrorAuthRetry`)**: PIN ou biometria incorreta, mas com retentativa permitida.
+8. **Bloqueio Temporário por Excesso de Tentativas (`ErrorAuthBlocked`)**: Esgotamento das tentativas de validação do PIN/biometria.
+
+#### C. Exceções de Sistema e Integrações de API
+
+9. **Conta de Destino Bloqueada/Inválida - 422 (`ErrorBusinessAPI`)**: Rejeição de negócio retornada pela API (ex.: conta receptora encerrada ou sob bloqueio judicial).
+10. **Falha no Servidor / Conexão BACEN - 500/503 (`ErrorServer`)**: Indisponibilidade dos sistemas internos ou do SPI/DICT.
+11. **Timeout / Resposta Indeterminada (`StateTimeout`)**: Conexão expirou antes da confirmação do agendamento, exigindo verificação de status para evitar duplicidade.
+
+#### D. Regras de Gestão e Cancelamento
+
+12. **Bloqueio por Janela de Corte / Em Liquidação (`ErrorCutOffLocked`)**: Agendamento já entrou na fila de processamento bancário do dia e não pode ser desfeito.
+13. **Falha no Cancelamento - 4xx/5xx (`ErrorCancelFail`)**: Erro de comunicação com a API ao tentar excluir o agendamento.
+
+#### E. Estados Intermediários e Modais de Decisão
+
+14. **Seleção da Data "Hoje" (`PromptToday`)**: Interceptação para oferecer a troca para Pix imediato.
+15. **Confirmação de Cancelamento (`PromptCancelConfirm`)**: Modal de confirmação prévio ao disparo do `DELETE`.
+16. **Empty States**: Lista de contatos vazia (`EmptyContacts`) e extrato de agendamentos vazio (`EmptyScheduleList`).
+
+#### F. Feedbacks de Sucesso
+
+17. **Comprovante de Agendamento - 201 Created (`SuccessReceipt`)**: Agendamento registrado com sucesso.
+18. **Toast de Cancelamento - 200 OK (`SuccessCancelToast`)**: Agendamento excluído com sucesso.
+
+---
+
+### 2. JSON de Mensagens
+
+```json
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "modulo": "pix_agendado",
+    "versao": "2.0.0",
+    "cenarios": {
+        "validacao_e_regras": {
+            "chave_pix_inexistente": {
+                "node_id": "ErrorDICT",
+                "tipo_componente": "inline_error",
+                "titulo": "Chave não encontrada",
+                "mensagem": "Não localizamos essa chave Pix no Banco Central. Confira se os dados foram digitados corretamente.",
+                "cta_primario": "Revisar chave"
+            },
+            "valor_abaixo_minimo": {
+                "node_id": "ErrorZeroAmount",
+                "tipo_componente": "inline_error",
+                "titulo": "Valor mínimo inválido",
+                "mensagem": "O valor mínimo para agendamento é de R$ 0,01.",
+                "cta_primario": "Corrigir valor"
+            },
+            "limite_maximo_excedido": {
+                "node_id": "ErrorMaxLimit",
+                "tipo_componente": "bottom_sheet",
+                "titulo": "Valor acima do limite permitido",
+                "mensagem": "O valor máximo permitido por transação agendada é de R$ 5.000,00. Ajuste o valor ou altere seus limites nas configurações.",
+                "cta_primario": "Ajustar valor",
+                "cta_secundario": "Gerenciar limites"
+            },
+            "data_retroativa": {
+                "node_id": "ErrorPastDate",
+                "tipo_componente": "inline_error",
+                "titulo": "Data indisponível",
+                "mensagem": "Não é possível selecionar uma data passada. Escolha uma data a partir de amanhã.",
+                "cta_primario": "Escolher nova data"
+            },
+            "data_alem_limite_maximo": {
+                "node_id": "ErrorMaxFuture",
+                "tipo_componente": "inline_error",
+                "titulo": "Prazo além do permitido",
+                "mensagem": "Você pode agendar um Pix em até 365 dias a partir de hoje.",
+                "cta_primario": "Selecionar outra data"
+            },
+            "limite_dia_futuro_comprometido": {
+                "node_id": "ErrorTargetLimit",
+                "tipo_componente": "bottom_sheet",
+                "titulo": "Limite insuficiente para esta data",
+                "mensagem": "Você já possui outros agendamentos cadastrados que consom o limite diário de {data_alvo}. Reduza o valor ou agende para outro dia.",
+                "cta_primario": "Escolher outra data",
+                "cta_secundario": "Alterar valor"
+            }
+        },
+        "seguranca_e_autenticacao": {
+            "falha_autenticacao_mfa": {
+                "node_id": "ErrorAuthRetry",
+                "tipo_componente": "bottom_sheet",
+                "titulo": "PIN ou biometria inválida",
+                "mensagem": "Não conseguimos confirmar sua autenticação. Você ainda tem {tentativas_restantes} tentativa(s).",
+                "cta_primario": "Tentar novamente",
+                "cta_secundario": "Esqueci meu PIN"
+            },
+            "bloqueio_conta_mfa": {
+                "node_id": "ErrorAuthBlocked",
+                "tipo_componente": "modal_bloqueio",
+                "titulo": "Acesso temporariamente bloqueado",
+                "mensagem": "Por motivos de segurança, bloqueamos essa ação após tentativas incorretas. Siga as instruções de recuperação para desbloquear.",
+                "cta_primario": "Recuperar acesso",
+                "cta_secundario": "Voltar ao início"
+            }
+        },
+        "erros_servidor_e_api": {
+            "conta_destino_invalida_422": {
+                "node_id": "ErrorBusinessAPI",
+                "tipo_componente": "modal_alerta",
+                "titulo": "Não foi possível concluir o agendamento",
+                "mensagem": "A conta de destino está temporariamente indisponível ou bloqueada para receber transferências.",
+                "cta_primario": "Revisar dados",
+                "cta_secundario": "Cancelar"
+            },
+            "falha_servidor_bacen_500_503": {
+                "node_id": "ErrorServer",
+                "tipo_componente": "modal_alerta",
+                "titulo": "Instabilidade no sistema Pix",
+                "mensagem": "Estamos com dificuldades de conexão com o Banco Central. Nenhuma cobrança ou agendamento foi efetuado. Tente novamente em alguns minutos.",
+                "cta_primario": "Tentar novamente",
+                "cta_secundario": "Voltar mais tarde"
+            },
+            "timeout_transacao": {
+                "node_id": "StateTimeout",
+                "tipo_componente": "tela_estado_indeterminado",
+                "titulo": "Estamos processando seu agendamento",
+                "mensagem": "A resposta do sistema demorou mais que o normal. Antes de tentar de novo, confira seus agendamentos para não duplicar o envio.",
+                "cta_primario": "Ver meus agendamentos",
+                "cta_secundario": "Ir para o início"
+            }
+        },
+        "cancelamento_e_gestao": {
+            "bloqueio_janela_corte": {
+                "node_id": "ErrorCutOffLocked",
+                "tipo_componente": "bottom_sheet",
+                "titulo": "Pix em fase de liquidação",
+                "mensagem": "Este agendamento já entrou em processamento bancário para pagamento hoje e não pode mais ser cancelado.",
+                "cta_primario": "Ver extrato"
+            },
+            "falha_cancelamento_api": {
+                "node_id": "ErrorCancelFail",
+                "tipo_componente": "modal_alerta",
+                "titulo": "Não conseguimos cancelar o Pix",
+                "mensagem": "Ocorreu uma instabilidade e o cancelamento não foi concluído. Verifique sua conexão e tente novamente.",
+                "cta_primario": "Tentar novamente",
+                "cta_secundario": "Fechar"
+            }
+        },
+        "modais_decisao_e_empty_states": {
+            "redirecionamento_pix_hoje": {
+                "node_id": "PromptToday",
+                "tipo_componente": "modal_decisao",
+                "titulo": "Deseja transferir agora?",
+                "mensagem": "Você escolheu a data de hoje. Para transferir ainda hoje, você pode utilizar o Pix imediato.",
+                "cta_primario": "Fazer Pix imediato",
+                "cta_secundario": "Mudar a data"
+            },
+            "confirmacao_exclusao_agendamento": {
+                "node_id": "PromptCancelConfirm",
+                "tipo_componente": "modal_decisao",
+                "titulo": "Cancelar agendamento?",
+                "mensagem": "O valor de {valor} para {nome_destinatario} programado para o dia {data_agendamento} não será transferido.",
+                "cta_primario": "Sim, cancelar",
+                "cta_secundario": "Voltar"
+            },
+            "lista_contatos_vazia": {
+                "node_id": "EmptyContacts",
+                "tipo_componente": "empty_state",
+                "titulo": "Nenhum contato salvo",
+                "mensagem": "Você ainda não possui contatos cadastrados. Digite a chave Pix manualmente para continuar.",
+                "cta_primario": "Digitar chave Pix"
+            },
+            "lista_agendamentos_vazia": {
+                "node_id": "EmptyScheduleList",
+                "tipo_componente": "empty_state",
+                "titulo": "Sem agendamentos no momento",
+                "mensagem": "Você não tem nenhuma transferência Pix programada para os próximos meses.",
+                "cta_primario": "Agendar novo Pix"
+            }
+        },
+        "sucesso": {
+            "agendamento_criado": {
+                "node_id": "SuccessReceipt",
+                "tipo_componente": "comprovante_tela",
+                "titulo": "Pix agendado com sucesso!",
+                "mensagem": "Sua transferência de {valor} para {nome_destinatario} está confirmada para o dia {data_agendamento}.",
+                "cta_primario": "Acessar agendamentos",
+                "cta_secundario": "Compartilhar comprovante"
+            },
+            "agendamento_cancelado": {
+                "node_id": "SuccessCancelToast",
+                "tipo_componente": "toast_feedback",
+                "titulo": "Agendamento cancelado",
+                "mensagem": "O Pix agendado de {valor} para {nome_destinatario} foi cancelado com sucesso.",
+                "cta_primario": null
+            }
+        }
+    }
+}
+```
