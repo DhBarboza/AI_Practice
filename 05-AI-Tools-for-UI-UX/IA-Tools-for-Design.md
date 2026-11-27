@@ -111,4 +111,4 @@ Armazene todos os prompts utilizados em um repositório [System instructions](/0
 ### Prompt
 
 - Input: [Prompt](/01-Projeto/Prompts/6-Generate-Documentation/generate-readme.md)
-- Output: [backlogs](/01-Projeto/Prompts/5-Product-Management/backlogs.json)
+- Output: [Readme](/01-Projeto/README.md)
