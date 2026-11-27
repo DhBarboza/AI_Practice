@@ -57,14 +57,38 @@ O diagrama é focado na jornada do usuário
 
 ## REFINAMENTO DE UX WRITING E COMUNICAÇÃO TÉCNICA
 
-### 1º Step
+### Perfil:
 
 Alterar o System instructions para em perfil de [UX Writer](/01-Projeto/System-Instructions/2-UX-Writer.md)
 
-### 2º Step
+### Prompt
+
+#### Input
 
 Executar o prompt [UX Writer](/01-Projeto/Prompts/3-UX/Ux-Writer.md)
 
-### 3º Step
+#### Output
 
 Analisar o retorno em `.json` das messagens de trataivas de acordo com o fluxograma
+
+## PREPARAÇÃO E SANITIZAÇÃO DE DATASETS
+
+[Dataset](/dataset-feedbacks.json)
+
+### Perfil:
+
+[Sanitizador de Dados](/01-Projeto/System-Instructions/3-Sanitizador-de-Dados.md)
+
+### Prompt:
+
+#### Input:
+
+[Dataset](/01-Projeto/Prompts/4-Data-Sanitizer/dataset-feedbacks.json)
+
+#### Output:
+
+[Sanitized-Dataset](/01-Projeto/Prompts/4-Data-Sanitizer/sanitized-feedback.json)
+
+## LABORATÓRIO: STRUCTURED PROMPTS NO AI STUDIO
+
+Utilizar os dados limpos da etapa anterior para transforma-los em tickets ou stories (requisitos)
