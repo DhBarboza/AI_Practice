@@ -1,0 +1,26 @@
+[
+    {
+        "ticket_id": "TKT-101",
+        "original_ref": "tkt_01",
+        "category": "BUG_CRITICO",
+        "severity": "ALTA",
+        "user_pain": "Tela branca e travamento do aplicativo ao tentar realizar uma transferência Pix.",
+        "proposed_action": "Investigar falhas de renderização e exceções não tratadas no fluxo do Pix, adicionando Error Boundary e logs de monitoramento."
+    },
+    {
+        "ticket_id": "TKT-102",
+        "original_ref": "tkt_05",
+        "category": "BUG_CRITICO",
+        "severity": "ALTA",
+        "user_pain": "Crash do aplicativo no iOS ao tentar agendar pagamentos no dia 31 em meses com 30 dias.",
+        "proposed_action": "Ajustar a lógica do seletor de datas para desabilitar dias inexistentes conforme o mês selecionado e tratar exceções de parse no iOS."
+    },
+    {
+        "ticket_id": "TKT-103",
+        "original_ref": "tkt_06",
+        "category": "UX_UI_IMPROVEMENT",
+        "severity": "MEDIA",
+        "user_pain": "Excesso de cliques e dificuldade para localizar o comprovante após realizar uma transferência.",
+        "proposed_action": "Adicionar botão de ação primária 'Ver/Compartilhar Comprovante' na tela de sucesso da transferência e atalho direto no extrato."
+    }
+]

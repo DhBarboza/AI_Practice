@@ -92,3 +92,23 @@ Analisar o retorno em `.json` das messagens de trataivas de acordo com o fluxogr
 ## LABORATÓRIO: STRUCTURED PROMPTS NO AI STUDIO
 
 Utilizar os dados limpos da etapa anterior para transforma-los em tickets ou stories (requisitos)
+
+### Configurar Perfil
+
+Adicionar o system instructions [Product Management](/01-Projeto/System-Instructions/4-Product-Management.md)
+
+### Prompt
+
+- Input: [Prompt](/01-Projeto/Prompts/5-Product-Management/Input.md)
+- Output: [backlogs](/01-Projeto/Prompts/5-Product-Management/backlogs.json)
+
+## PROMPT AS CODE & INTEGRAÇÃO
+
+Adicionar tratativas de prompts como código, salvar os prompts e documenta-los para ser utilizado nos projetos, e tudo que é gerado deve ser guardado como código
+
+Armazene todos os prompts utilizados em um repositório [System instructions](/01-Projeto/System-Instructions/)
+
+### Prompt
+
+- Input: [Prompt](/01-Projeto/Prompts/6-Generate-Documentation/generate-readme.md)
+- Output: [backlogs](/01-Projeto/Prompts/5-Product-Management/backlogs.json)
